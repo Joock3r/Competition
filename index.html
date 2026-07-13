@@ -218,14 +218,41 @@ const CONFIG = {
   //     The Sheet, all bets, and all matching logic use the ID only — never the
   //     display text — so switching language never breaks a saved prediction. ---
   TEAMS: {
-    team_a1: { en:'Team A1', he:'קבוצה א1' }, team_a2: { en:'Team A2', he:'קבוצה א2' },
-    team_a3: { en:'Team A3', he:'קבוצה א3' }, team_a4: { en:'Team A4', he:'קבוצה א4' },
-    team_b1: { en:'Team B1', he:'קבוצה ב1' }, team_b2: { en:'Team B2', he:'קבוצה ב2' },
-    team_b3: { en:'Team B3', he:'קבוצה ב3' }, team_b4: { en:'Team B4', he:'קבוצה ב4' },
-    team_c1: { en:'Team C1', he:'קבוצה ג1' }, team_c2: { en:'Team C2', he:'קבוצה ג2' },
-    team_c3: { en:'Team C3', he:'קבוצה ג3' }, team_c4: { en:'Team C4', he:'קבוצה ג4' },
-    team_d1: { en:'Team D1', he:'קבוצה ד1' }, team_d2: { en:'Team D2', he:'קבוצה ד2' },
-    team_d3: { en:'Team D3', he:'קבוצה ד3' }, team_d4: { en:'Team D4', he:'קבוצה ד4' },
+    
+  team_a1: { en: 'Germany', he: 'גרמניה' },
+  team_a2: { en: 'Scotland', he: 'סקוטלנד' },
+  team_a3: { en: 'Hungary', he: 'הונגריה' },
+  team_a4: { en: 'Switzerland', he: 'שוויץ' },
+
+  // בית ב'
+  team_b1: { en: 'Spain', he: 'ספרד' },
+  team_b2: { en: 'Croatia', he: 'קרואטיה' },
+  team_b3: { en: 'Italy', he: 'איטליה' },
+  team_b4: { en: 'Albania', he: 'אלבניה' },
+
+  // בית ג'
+  team_c1: { en: 'Slovenia', he: 'סלובניה' },
+  team_c2: { en: 'Denmark', he: 'דנמרק' },
+  team_c3: { en: 'Serbia', he: 'סרביה' },
+  team_c4: { en: 'England', he: 'אנגליה' },
+
+  // בית ד'
+  team_d1: { en: 'Netherlands', he: 'הולנד' },
+  team_d2: { en: 'France', he: 'צרפת' },
+  team_d3: { en: 'Poland', he: 'פולין' },
+  team_d4: { en: 'Austria', he: 'אוסטריה' },
+
+  // בית ה'
+  team_e1: { en: 'Belgium', he: 'בלגיה' },
+  team_e2: { en: 'Slovakia', he: 'סלובקיה' },
+  team_e3: { en: 'Romania', he: 'רומניה' },
+  team_e4: { en: 'Ukraine', he: 'אוקראינה' },
+
+  // בית ו'
+  team_f1: { en: 'Portugal', he: 'פורטוגל' },
+  team_f2: { en: 'Czech Republic', he: 'צ׳כיה' },
+  team_f3: { en: 'Georgia', he: 'גאורגיה' },
+  team_f4: { en: 'Turkey', he: 'טורקיה' }
     // ...one entry per team in the tournament, id -> {en, he}
   },
 
@@ -235,6 +262,8 @@ const CONFIG = {
     B: ['team_b1', 'team_b2', 'team_b3', 'team_b4'],
     C: ['team_c1', 'team_c2', 'team_c3', 'team_c4'],
     D: ['team_d1', 'team_d2', 'team_d3', 'team_d4'],
+    E: ['team_e1', 'team_e2', 'team_e3', 'team_e4'],
+    F: ['team_f1', 'team_f2', 'team_f3', 'team_f4'],
   },
 
   // --- Rosters: teamId -> [{id, en, he, pos}], pos in GK/DF/CM/ST.
