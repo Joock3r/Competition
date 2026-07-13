@@ -212,7 +212,7 @@ const CONFIG = {
   APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbzg9u__7JX1Tw-oodrqohyXP_h5jjFueewGKixkwZnz9rtAIP6rugOP376VuPYiunDb/exec',
 
   // --- General predictions form closes automatically at this time ---
-  GENERAL_DEADLINE: '2028-06-11T00:00:00+03:00',
+  GENERAL_DEADLINE: '2028-06-09T00:00:00+03:00',
 
   // --- Teams: a stable ID (used everywhere in the Sheet) + display name per language.
   //     The Sheet, all bets, and all matching logic use the ID only — never the
@@ -290,6 +290,7 @@ const I18N = {
     statusScheduled:'Open', statusLocked:'Locked', statusFinal:'Final', earned:'earned',
     statsTitle:'Stats', statsSub:'Points over time and recent form for every participant.', pointsOverTime:'Points over time',
     hofTitle:'Hall of Fame', hofSub:'Champions of tournaments past.',
+    worldcup:'World Cup', euro:'Euro', hofChampionTeam:'Champion', runnerUpLabel:'Runner-up',
     loading:'Loading…', demoNote:'Showing sample data — connect your Google Sheet in CONFIG to go live.',
     noGames:'No games yet.', emailFirst:'Sign in to place your predictions.', noParticipants:'No participants yet — add rows to the Participants tab in the Sheet.', noHof:'No past champions yet.',
   },
@@ -309,6 +310,7 @@ const I18N = {
     statusScheduled:'פתוח', statusLocked:'נעול', statusFinal:'הסתיים', earned:'נצברו',
     statsTitle:'סטטיסטיקות', statsSub:'נקודות לאורך זמן ופורמה אחרונה לכל משתתף.', pointsOverTime:'נקודות לאורך זמן',
     hofTitle:'היכל התהילה', hofSub:'אלופי הטורנירים הקודמים.',
+    worldcup:'מונדיאל', euro:'יורו', hofChampionTeam:'אלופת הטורניר', runnerUpLabel:'מקום שני',
     loading:'טוען…', demoNote:'מוצגים נתוני דוגמה — חברו את הגיליון שלכם ב-CONFIG כדי לעלות לאוויר.',
     noGames:'אין משחקים עדיין.', emailFirst:'התחברו כדי להזין ניחושים.', noParticipants:'עדיין אין משתתפים — הוסיפו שורות לטאב Participants בגיליון.', noHof:'עדיין אין אלופים קודמים.',
   }
@@ -396,8 +398,12 @@ function demoData(){
     {id:'G3', kickoffISO:'2026-06-13T21:00:00+03:00', group:'B', teamA:'team_b1', teamB:'team_b2', status:'scheduled', scoreA:'', scoreB:''},
   ];
   const hof = [
-    {year:2022, winnerName_en:'Tamir K.', winnerName_he:'תמיר כ.', runnerUp_en:'Noa Levi', runnerUp_he:'נועה לוי', note_en:'62 points', note_he:"62 נק'"},
-    {year:2018, winnerName_en:'Roni Shani', winnerName_he:'רוני שני', runnerUp_en:'Itay Ben', runnerUp_he:'איתי בן', note_en:'55 points', note_he:"55 נק'"},
+    {year:2022, tournamentType:'worldcup', location_en:'Qatar', location_he:'קטאר',
+     championTeam_en:'Argentina', championTeam_he:'ארגנטינה',
+     winnerName_en:'Tamir K.', winnerName_he:'תמיר כ.', runnerUp_en:'Noa Levi', runnerUp_he:'נועה לוי'},
+    {year:2021, tournamentType:'euro', location_en:'Various (Europe)', location_he:'כל אירופה',
+     championTeam_en:'Italy', championTeam_he:'איטליה',
+     winnerName_en:'Roni Shani', winnerName_he:'רוני שני', runnerUp_en:'Itay Ben', runnerUp_he:'איתי בן'},
   ];
   return { participants, games, gameBets:[], generalBets:[], hof };
 }
@@ -755,14 +761,17 @@ function renderHof(){
     ${STATE.hof.sort((a,b)=>b.year-a.year).map(h => {
       const winner = h['winnerName_'+LANG] || h.winnerName_en || h.winnerName_he;
       const runnerUp = h['runnerUp_'+LANG] || h.runnerUp_en || h.runnerUp_he;
-      const note = h['note_'+LANG] || h.note_en || h.note_he;
+      const champion = h['championTeam_'+LANG] || h.championTeam_en || h.championTeam_he;
+      const location = h['location_'+LANG] || h.location_en || h.location_he;
+      const typeLabel = h.tournamentType === 'euro' ? t('euro') : t('worldcup');
       return `
       <div class="hof-item">
         <div class="hof-year">${h.year}</div>
         <div class="hof-trophy">🏆</div>
         <div>
           <div class="hof-name">${winner}</div>
-          <div class="hof-sub">${LANG==='he'?'מקום שני':'Runner-up'}: ${runnerUp} ${note?'· '+note:''}</div>
+          <div class="hof-sub">${typeLabel} · ${location} · ${t('hofChampionTeam')}: ${champion}</div>
+          <div class="hof-sub">${t('runnerUpLabel')}: ${runnerUp}</div>
         </div>
       </div>`;
     }).join('')}
