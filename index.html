@@ -79,7 +79,7 @@ main{max-width:1080px; margin:0 auto; padding:24px 16px 80px;}
 .section-sub{color:var(--text-dim); font-size:14px; margin-bottom:20px;}
 
 /* ---------- Split-flap signature element ---------- */
-.flap-board{display:flex; gap:6px; flex-wrap:wrap; align-items:center;}
+.flap-board{display:flex; gap:6px; flex-wrap:wrap; align-items:center; direction:ltr;}
 .flap-group{display:flex; flex-direction:column; align-items:center; gap:6px;}
 .flap-label{font-size:10px; text-transform:uppercase; letter-spacing:1px; color:var(--text-faint); font-weight:700;}
 .flap-char{
@@ -97,9 +97,9 @@ main{max-width:1080px; margin:0 auto; padding:24px 16px 80px;}
 html[dir="rtl"] .leaderboard th{text-align:right;}
 .leaderboard td{padding:12px 10px; border-bottom:1px solid var(--border); font-size:14px; vertical-align:middle;}
 .leaderboard tr:hover td{background:var(--surface-2);}
-.rank-cell{font-family:var(--font-mono); font-weight:700; width:36px; color:var(--text-dim);}
+.rank-cell{font-family:var(--font-mono); font-weight:700; width:36px; color:var(--text-dim); direction:ltr;}
 .rank-cell.top1{color:var(--amber);} .rank-cell.top2{color:#c9c9c9;} .rank-cell.top3{color:#c88a4d;}
-.points-cell{font-family:var(--font-mono); font-weight:700; font-size:16px; color:var(--amber); text-align:right;}
+.points-cell{font-family:var(--font-mono); font-weight:700; font-size:16px; color:var(--amber); text-align:right; direction:ltr;}
 html[dir="rtl"] .points-cell{text-align:left;}
 .form-dots{display:flex; gap:4px;}
 .form-dot{width:9px; height:9px; border-radius:50%;}
@@ -112,7 +112,7 @@ html[dir="rtl"] .points-cell{text-align:left;}
 @media(max-width:720px){.rules-grid{grid-template-columns:1fr;}}
 .rule-table{width:100%; border-collapse:collapse; font-size:13.5px;}
 .rule-table td{padding:7px 4px; border-bottom:1px solid var(--border);}
-.rule-table td:last-child{text-align:right; font-family:var(--font-mono); font-weight:700;}
+.rule-table td:last-child{text-align:right; font-family:var(--font-mono); font-weight:700; direction:ltr;}
 html[dir="rtl"] .rule-table td:last-child{text-align:left;}
 .rule-table .pos-tag{display:inline-block; font-size:10px; font-weight:800; padding:2px 6px; border-radius:4px; background:var(--surface-3); margin-inline-end:6px;}
 .badge-pos-GK{color:var(--blue);} .badge-pos-DF{color:var(--green);} .badge-pos-CM{color:var(--amber);} .badge-pos-ST{color:var(--red);}
@@ -136,7 +136,7 @@ html[dir="rtl"] .rule-table td:last-child{text-align:left;}
 }
 .drag-item.dragging{opacity:.4;}
 .drag-handle{color:var(--text-faint); font-size:14px;}
-.drag-pos{font-family:var(--font-mono); font-weight:700; color:var(--amber); width:16px;}
+.drag-pos{font-family:var(--font-mono); font-weight:700; color:var(--amber); width:16px; direction:ltr;}
 .btn{
   background:var(--amber); color:#1a1408; border:none; padding:11px 22px; border-radius:8px; font-weight:800;
   font-size:14px; letter-spacing:.3px;
@@ -152,7 +152,7 @@ html[dir="rtl"] .rule-table td:last-child{text-align:left;}
 .game-meta{display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; font-size:11.5px; color:var(--text-faint); text-transform:uppercase; letter-spacing:.4px;}
 .game-teams{display:flex; align-items:center; justify-content:center; gap:18px; margin-bottom:14px;}
 .team-name{font-weight:800; font-size:15px; flex:1; text-align:center;}
-.score-inputs{display:flex; align-items:center; gap:10px;}
+.score-inputs{display:flex; align-items:center; gap:10px; direction:ltr;}
 .score-inputs input{width:52px; text-align:center; font-family:var(--font-mono); font-size:20px; font-weight:700; background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:8px 4px; color:var(--amber);}
 .score-sep{font-family:var(--font-mono); font-weight:700; color:var(--text-faint);}
 .status-pill{font-size:10px; font-weight:800; padding:3px 8px; border-radius:20px; text-transform:uppercase;}
@@ -169,7 +169,7 @@ canvas{width:100%; height:280px; display:block;}
 
 /* ---------- Hall of fame ---------- */
 .hof-item{display:flex; align-items:center; gap:16px; padding:14px 0; border-bottom:1px solid var(--border);}
-.hof-year{font-family:var(--font-mono); font-weight:700; font-size:20px; color:var(--amber); width:64px;}
+.hof-year{font-family:var(--font-mono); font-weight:700; font-size:20px; color:var(--amber); width:64px; direction:ltr;}
 .hof-trophy{font-size:22px;}
 .hof-name{font-weight:800; font-size:15px;}
 .hof-sub{font-size:12.5px; color:var(--text-dim);}
@@ -206,7 +206,7 @@ canvas{width:100%; height:280px; display:block;}
 */
 const CONFIG = {
   // --- Google Sheet (read via gviz, write via Apps Script) ---
-  SHEET_ID: '1sE6QVBTHK3ghSkIlHx-wGDhXi34jzQ_P8wFHYDbjzqk',
+  SHEET_ID: 'YOUR_SHEET_ID_HERE',
   GIDS: {
     PARTICIPANTS:  '0',        // name, email, totalPoints, form (JSON array of W/D/L), generalPoints
     GAMES:         '1200559750',   // id, kickoffISO, group, teamA, teamB, status, scoreA, scoreB, topPlayerActual
@@ -215,28 +215,48 @@ const CONFIG = {
     HALL_OF_FAME:  '1290157268',   // year, winnerName, runnerUp, note
   },
   // --- Apps Script Web App URL, see Code.gs / SETUP.md ---
-  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbzg9u__7JX1Tw-oodrqohyXP_h5jjFueewGKixkwZnz9rtAIP6rugOP376VuPYiunDb/exec',
+  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec',
 
   // --- General predictions form closes automatically at this time ---
   GENERAL_DEADLINE: '2026-06-11T00:00:00+03:00',
 
-  // --- Groups & teams (inserted once per tournament) ---
-  GROUPS: {
-    A: ['Team A1', 'Team A2', 'Team A3', 'Team A4'],
-    B: ['Team B1', 'Team B2', 'Team B3', 'Team B4'],
-    C: ['Team C1', 'Team C2', 'Team C3', 'Team C4'],
-    D: ['Team D1', 'Team D2', 'Team D3', 'Team D4'],
+  // --- Teams: a stable ID (used everywhere in the Sheet) + display name per language.
+  //     The Sheet, all bets, and all matching logic use the ID only — never the
+  //     display text — so switching language never breaks a saved prediction. ---
+  TEAMS: {
+    team_a1: { en:'Team A1', he:'קבוצה א1' }, team_a2: { en:'Team A2', he:'קבוצה א2' },
+    team_a3: { en:'Team A3', he:'קבוצה א3' }, team_a4: { en:'Team A4', he:'קבוצה א4' },
+    team_b1: { en:'Team B1', he:'קבוצה ב1' }, team_b2: { en:'Team B2', he:'קבוצה ב2' },
+    team_b3: { en:'Team B3', he:'קבוצה ב3' }, team_b4: { en:'Team B4', he:'קבוצה ב4' },
+    team_c1: { en:'Team C1', he:'קבוצה ג1' }, team_c2: { en:'Team C2', he:'קבוצה ג2' },
+    team_c3: { en:'Team C3', he:'קבוצה ג3' }, team_c4: { en:'Team C4', he:'קבוצה ג4' },
+    team_d1: { en:'Team D1', he:'קבוצה ד1' }, team_d2: { en:'Team D2', he:'קבוצה ד2' },
+    team_d3: { en:'Team D3', he:'קבוצה ד3' }, team_d4: { en:'Team D4', he:'קבוצה ד4' },
+    // ...one entry per team in the tournament, id -> {en, he}
   },
 
-  // --- Rosters: team -> [{name, pos}], pos in GK/DF/CM/ST ---
+  // --- Groups & teams (inserted once per tournament) — lists of TEAM IDs ---
+  GROUPS: {
+    A: ['team_a1', 'team_a2', 'team_a3', 'team_a4'],
+    B: ['team_b1', 'team_b2', 'team_b3', 'team_b4'],
+    C: ['team_c1', 'team_c2', 'team_c3', 'team_c4'],
+    D: ['team_d1', 'team_d2', 'team_d3', 'team_d4'],
+  },
+
+  // --- Rosters: teamId -> [{id, en, he, pos}], pos in GK/DF/CM/ST.
+  //     `id` must be unique across the whole tournament (used in GameEvents / bets). ---
   ROSTERS: {
-    'Team A1': [
-      {name:'Player One', pos:'GK'}, {name:'Player Two', pos:'DF'},
-      {name:'Player Three', pos:'CM'}, {name:'Player Four', pos:'ST'},
+    team_a1: [
+      {id:'a1_gk1', en:'Player One',   he:'שחקן אחת',   pos:'GK'},
+      {id:'a1_df1', en:'Player Two',   he:'שחקן שתיים', pos:'DF'},
+      {id:'a1_cm1', en:'Player Three', he:'שחקן שלוש',  pos:'CM'},
+      {id:'a1_st1', en:'Player Four',  he:'שחקן ארבע',  pos:'ST'},
     ],
-    'Team A2': [
-      {name:'Player Five', pos:'GK'}, {name:'Player Six', pos:'DF'},
-      {name:'Player Seven', pos:'CM'}, {name:'Player Eight', pos:'ST'},
+    team_a2: [
+      {id:'a2_gk1', en:'Player Five',  he:'שחקן חמש',   pos:'GK'},
+      {id:'a2_df1', en:'Player Six',   he:'שחקן שש',    pos:'DF'},
+      {id:'a2_cm1', en:'Player Seven', he:'שחקן שבע',   pos:'CM'},
+      {id:'a2_st1', en:'Player Eight', he:'שחקן שמונה', pos:'ST'},
     ],
     // ...add every team's squad here (GK/DF/CM/ST only — no exact positions needed)
   },
@@ -303,6 +323,33 @@ let LANG = localStorage.getItem('md_lang') || 'en';
 function t(key,...args){ const v = I18N[LANG][key]; return typeof v==='function' ? v(...args) : v; }
 
 /* =========================================================
+   ============  2b. Bilingual display-name helpers  =========
+   Everything stored in the Sheet (teams, players, results) is
+   an ID or an explicit _en/_he pair — never plain display text —
+   so the whole site re-renders correctly in either language
+   without touching stored data.
+   ========================================================= */
+function teamName(teamId){
+  const t = CONFIG.TEAMS[teamId];
+  return t ? (t[LANG] || t.en || teamId) : teamId;
+}
+function allPlayersFlat(){
+  return Object.entries(CONFIG.ROSTERS).flatMap(([teamId, squad]) => squad.map(p => ({...p, teamId})));
+}
+function findPlayer(playerId){ return allPlayersFlat().find(p => p.id === playerId) || null; }
+function playerName(playerIdOrObj){
+  const p = typeof playerIdOrObj === 'object' ? playerIdOrObj : findPlayer(playerIdOrObj);
+  if(!p) return playerIdOrObj;
+  return p[LANG] || p.en || p.id;
+}
+/** Participant display name — Sheet stores name_en/name_he columns per person
+ *  (filled in once by whoever manages the tournament); falls back gracefully
+ *  if only one language was filled in. */
+function participantName(p){
+  return p['name_'+LANG] || p.name_en || p.name_he || p.name || p.email;
+}
+
+/* =========================================================
    ============  3. State  ===================================
    ========================================================= */
 const STATE = { user:null, participants:[], games:[], gameBets:[], generalBets:[], hof:[], demo:false };
@@ -348,19 +395,22 @@ async function loadAllData(){
 }
 
 function demoData(){
-  const names = ['Noa Levi','Itay Ben','Tamir K.','Roni Shani','Dana Cohen','Omer Gal'];
-  const participants = names.map((name,i) => ({
-    email:`${name.split(' ')[0].toLowerCase()}@example.com`, name,
+  const people = [
+    {en:'Noa Levi', he:'נועה לוי'}, {en:'Itay Ben', he:'איתי בן'}, {en:'Tamir K.', he:'תמיר כ.'},
+    {en:'Roni Shani', he:'רוני שני'}, {en:'Dana Cohen', he:'דנה כהן'}, {en:'Omer Gal', he:'עומר גל'},
+  ];
+  const participants = people.map((n,i) => ({
+    email:`${n.en.split(' ')[0].toLowerCase()}@example.com`, name_en:n.en, name_he:n.he,
     totalPoints: 34 - i*4 + (i%2), form: JSON.stringify(['W','W','D','L','W'].slice(0, 5-i%3)),
   }));
   const games = [
-    {id:'G1', kickoffISO:'2026-06-11T21:00:00+03:00', group:'A', teamA:'Team A1', teamB:'Team A2', status:'final', scoreA:2, scoreB:1, topPlayerActual:'Player Four'},
-    {id:'G2', kickoffISO:'2026-06-12T18:00:00+03:00', group:'A', teamA:'Team A3', teamB:'Team A4', status:'scheduled', scoreA:'', scoreB:''},
-    {id:'G3', kickoffISO:'2026-06-13T21:00:00+03:00', group:'B', teamA:'Team B1', teamB:'Team B2', status:'scheduled', scoreA:'', scoreB:''},
+    {id:'G1', kickoffISO:'2026-06-11T21:00:00+03:00', group:'A', teamA:'team_a1', teamB:'team_a2', status:'final', scoreA:2, scoreB:1, topPlayerActual:'a1_st1'},
+    {id:'G2', kickoffISO:'2026-06-12T18:00:00+03:00', group:'A', teamA:'team_a3', teamB:'team_a4', status:'scheduled', scoreA:'', scoreB:''},
+    {id:'G3', kickoffISO:'2026-06-13T21:00:00+03:00', group:'B', teamA:'team_b1', teamB:'team_b2', status:'scheduled', scoreA:'', scoreB:''},
   ];
   const hof = [
-    {year:2022, winnerName:'Tamir K.', runnerUp:'Noa Levi', note:'62 points'},
-    {year:2018, winnerName:'Roni Shani', runnerUp:'Itay Ben', note:'55 points'},
+    {year:2022, winnerName_en:'Tamir K.', winnerName_he:'תמיר כ.', runnerUp_en:'Noa Levi', runnerUp_he:'נועה לוי', note_en:'62 points', note_he:"62 נק'"},
+    {year:2018, winnerName_en:'Roni Shani', winnerName_he:'רוני שני', runnerUp_en:'Itay Ben', runnerUp_he:'איתי בן', note_en:'55 points', note_he:"55 נק'"},
   ];
   return { participants, games, gameBets:[], generalBets:[], hof };
 }
@@ -414,7 +464,7 @@ function demoBanner(){
 /* ---- HOME ---- */
 function rankedParticipants(){
   return [...STATE.participants]
-    .map(p => ({...p, totalPoints:+p.totalPoints || 0, form: safeParse(p.form, [])}))
+    .map(p => ({...p, displayName: participantName(p), totalPoints:+p.totalPoints || 0, form: safeParse(p.form, [])}))
     .sort((a,b) => b.totalPoints - a.totalPoints)
     .map((p,i) => ({...p, rank:i+1}));
 }
@@ -434,7 +484,7 @@ function renderHome(){
         <div class="flap-label">${t('points')}</div>
       </div>
       <div>
-        <div style="font-size:20px; font-weight:800;">${leader.name}</div>
+        <div style="font-size:20px; font-weight:800;">${leader.displayName}</div>
         <div class="form-dots" style="margin-top:8px;">${formDots(leader.form)}</div>
       </div>
     </div>
@@ -446,7 +496,7 @@ function renderHome(){
         ${ranked.map(p => `
           <tr>
             <td class="rank-cell ${p.rank<=3?'top'+p.rank:''}">${medal(p.rank)}${p.rank}</td>
-            <td><div class="player-name-cell"><div class="avatar">${initials(p.name)}</div>${p.name}</div></td>
+            <td><div class="player-name-cell"><div class="avatar">${initials(p.displayName)}</div>${p.displayName}</div></td>
             <td><div class="form-dots">${formDots(p.form)}</div></td>
             <td class="points-cell">${p.totalPoints}</td>
           </tr>`).join('')}
@@ -499,7 +549,7 @@ function renderGeneral(){
   const locked = isGeneralLocked();
   const existing = currentGeneralBet();
   const allTeams = Object.values(CONFIG.GROUPS).flat();
-  const allPlayers = Object.entries(CONFIG.ROSTERS).flatMap(([team, squad]) => squad.map(p => ({...p, team})));
+  const allPlayers = allPlayersFlat();
   const existingGroups = existing ? safeParse(existing.groupsJSON, null) : null;
 
   if(!STATE.user){
@@ -519,7 +569,7 @@ function renderGeneral(){
             <label>${t('rank'+n)}</label>
             <select name="rank${n}" ${locked?'disabled':''}>
               <option value="">${t('choose')}</option>
-              ${allTeams.map(team => `<option value="${team}" ${existing && existing['rank'+n]===team ? 'selected':''}>${team}</option>`).join('')}
+              ${allTeams.map(teamId => `<option value="${teamId}" ${existing && existing['rank'+n]===teamId ? 'selected':''}>${teamName(teamId)}</option>`).join('')}
             </select>
           </div>`).join('')}
       </div>
@@ -530,14 +580,14 @@ function renderGeneral(){
           <label>${t('topScorer')}</label>
           <select name="topScorer" ${locked?'disabled':''}>
             <option value="">${t('choose')}</option>
-            ${allPlayers.map(p => `<option value="${p.name}" ${existing && existing.topScorer===p.name?'selected':''}>${p.name} — ${p.team}</option>`).join('')}
+            ${allPlayers.map(p => `<option value="${p.id}" ${existing && existing.topScorer===p.id?'selected':''}>${playerName(p)} — ${teamName(p.teamId)}</option>`).join('')}
           </select>
         </div>
         <div class="field">
           <label>${t('topAssist')}</label>
           <select name="topAssist" ${locked?'disabled':''}>
             <option value="">${t('choose')}</option>
-            ${allPlayers.map(p => `<option value="${p.name}" ${existing && existing.topAssist===p.name?'selected':''}>${p.name} — ${p.team}</option>`).join('')}
+            ${allPlayers.map(p => `<option value="${p.id}" ${existing && existing.topAssist===p.id?'selected':''}>${playerName(p)} — ${teamName(p.teamId)}</option>`).join('')}
           </select>
         </div>
       </div>
@@ -550,7 +600,7 @@ function renderGeneral(){
         return `<div class="group-editor" data-group="${g}">
           <h4>${t('group')} ${g}</h4>
           <ul class="drag-list" data-group="${g}">
-            ${order.map((team,i) => `<li class="drag-item" draggable="${!locked}" data-team="${team}"><span class="drag-pos">${i+1}</span><span class="drag-handle">⠿</span>${team}</li>`).join('')}
+            ${order.map((teamId,i) => `<li class="drag-item" draggable="${!locked}" data-team="${teamId}"><span class="drag-pos">${i+1}</span><span class="drag-handle">⠿</span>${teamName(teamId)}</li>`).join('')}
           </ul>
         </div>`;
       }).join('')}
@@ -618,19 +668,19 @@ function renderGameCard(g){
       <span class="status-pill status-${isFinal?'final':locked?'locked':'scheduled'}">${isFinal?t('statusFinal'):locked?t('statusLocked'):t('statusScheduled')}</span>
     </div>
     <div class="game-teams">
-      <div class="team-name">${g.teamA}</div>
+      <div class="team-name">${teamName(g.teamA)}</div>
       <div class="score-inputs">
         <input type="number" min="0" max="20" data-role="scoreA" value="${bet?bet.betA:(isFinal?g.scoreA:'')}" ${locked?'disabled':''}>
         <span class="score-sep">:</span>
         <input type="number" min="0" max="20" data-role="scoreB" value="${bet?bet.betB:(isFinal?g.scoreB:'')}" ${locked?'disabled':''}>
       </div>
-      <div class="team-name">${g.teamB}</div>
+      <div class="team-name">${teamName(g.teamB)}</div>
     </div>
     <div class="field" style="margin-bottom:8px;">
       <label>${t('topPlayerOfGame')}</label>
       <select data-role="topPlayer" ${locked?'disabled':''}>
         <option value="">${t('choose')}</option>
-        ${roster.map(p => `<option value="${p.name}" ${bet && bet.betTopPlayer===p.name?'selected':''}>${p.name} (${p.pos})</option>`).join('')}
+        ${roster.map(p => `<option value="${p.id}" ${bet && bet.betTopPlayer===p.id?'selected':''}>${playerName(p)} (${p.pos})</option>`).join('')}
       </select>
     </div>
     <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
@@ -696,7 +746,7 @@ function drawStatsChart(){
     ctx.stroke();
   });
   document.getElementById('statsLegend').innerHTML = ranked.map((p,pi) =>
-    `<div class="legend-item"><span class="legend-swatch" style="background:${palette[pi%palette.length]}"></span>${p.name}</div>`).join('');
+    `<div class="legend-item"><span class="legend-swatch" style="background:${palette[pi%palette.length]}"></span>${p.displayName}</div>`).join('');
 }
 
 /* ---- HALL OF FAME ---- */
@@ -706,15 +756,20 @@ function renderHof(){
   <div class="section-title">${t('hofTitle')}</div>
   <div class="section-sub">${t('hofSub')}</div>
   <div class="card">
-    ${STATE.hof.sort((a,b)=>b.year-a.year).map(h => `
+    ${STATE.hof.sort((a,b)=>b.year-a.year).map(h => {
+      const winner = h['winnerName_'+LANG] || h.winnerName_en || h.winnerName_he;
+      const runnerUp = h['runnerUp_'+LANG] || h.runnerUp_en || h.runnerUp_he;
+      const note = h['note_'+LANG] || h.note_en || h.note_he;
+      return `
       <div class="hof-item">
         <div class="hof-year">${h.year}</div>
         <div class="hof-trophy">🏆</div>
         <div>
-          <div class="hof-name">${h.winnerName}</div>
-          <div class="hof-sub">${LANG==='he'?'מקום שני':'Runner-up'}: ${h.runnerUp} ${h.note?'· '+h.note:''}</div>
+          <div class="hof-name">${winner}</div>
+          <div class="hof-sub">${LANG==='he'?'מקום שני':'Runner-up'}: ${runnerUp} ${note?'· '+note:''}</div>
         </div>
-      </div>`).join('')}
+      </div>`;
+    }).join('')}
   </div>
   ${demoBanner()}`;
 }
@@ -725,7 +780,7 @@ function renderHof(){
 function initGoogleSignIn(){
   if(!window.google || !google.accounts){ setTimeout(initGoogleSignIn, 300); return; }
   google.accounts.id.initialize({
-    client_id: '431204508277-nm33th0fs73s81cpn09ngmmalmbvgso1.apps.googleusercontent.com', // see SETUP.md
+    client_id: 'YOUR_GOOGLE_OAUTH_CLIENT_ID.apps.googleusercontent.com', // see SETUP.md
     callback: handleCredentialResponse,
   });
   renderAuthArea();
