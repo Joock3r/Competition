@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Matchday — Tournament Predictions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Manrope:wght@400;500;700;800&family=Heebo:wght@400;500;700;800&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+/* =========================================================
+   DESIGN TOKENS
+   Theme: "Matchday scoreboard" — pitch-night dark by default,
+   amber scoreboard-lamp accent, split-flap signature motif.
+   ========================================================= */
+:root{
+  --bg:#0e1512; --surface:#16211c; --surface-2:#1d2a23; --surface-3:#233229;
+  --border:rgba(237,239,234,.09); --border-strong:rgba(237,239,234,.18);
+  --text:#edefea; --text-dim:#9aa69e; --text-faint:#6b7870;
+  --amber:#ffb020; --amber-dim:#8a611c; --green:#4c9a6a; --green-dim:#2c4636;
+  --red:#e2564f; --red-dim:#4a2723; --blue:#5b8fd6;
+  --radius:10px; --radius-lg:16px;
+  --font-en:'Manrope',sans-serif; --font-he:'Heebo',sans-serif; --font-mono:'Space Mono',monospace;
+  --shadow: 0 8px 24px rgba(0,0,0,.35);
+}
+html[data-theme="light"]{
+  --bg:#eef1ec; --surface:#ffffff; --surface-2:#f5f7f3; --surface-3:#e9ede6;
+  --border:rgba(16,32,26,.1); --border-strong:rgba(16,32,26,.2);
+  --text:#0f1c16; --text-dim:#4d5b53; --text-faint:#7c8a82;
+  --amber-dim:#ffe2ad; --green-dim:#cfe6da; --red-dim:#f6d3d1;
+  --shadow: 0 8px 24px rgba(16,32,26,.08);
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+body{background:var(--bg); color:var(--text); font-family:var(--font-en); transition:background .25s,color .25s;}
+html[dir="rtl"] body{font-family:var(--font-he);}
+.mono{font-family:var(--font-mono);}
+a{color:inherit;}
+button{font-family:inherit; cursor:pointer;}
+input,select{font-family:inherit;}
+
+/* ---------- App shell ---------- */
+.app-header{
+  position:sticky; top:0; z-index:50; background:var(--bg);
+  border-bottom:1px solid var(--border); backdrop-filter:blur(6px);
+}
+.header-top{display:flex; align-items:center; justify-content:space-between; padding:14px 20px; gap:12px;}
+.brand{display:flex; align-items:center; gap:10px; font-family:var(--font-mono); font-weight:700; font-size:19px; letter-spacing:.5px;}
+.brand .dot{width:9px; height:9px; border-radius:50%; background:var(--amber); box-shadow:0 0 8px var(--amber);}
+.header-controls{display:flex; align-items:center; gap:8px;}
+.icon-btn{
+  background:var(--surface); border:1px solid var(--border); color:var(--text);
+  border-radius:8px; padding:7px 10px; font-size:13px; font-weight:600;
+}
+.icon-btn:hover{border-color:var(--border-strong);}
+#gsi-btn-wrap{display:flex; align-items:center;}
+.user-chip{display:flex; align-items:center; gap:8px; background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:4px 12px 4px 4px;}
+html[dir="rtl"] .user-chip{padding:4px 4px 4px 12px;}
+.user-chip img{width:24px; height:24px; border-radius:50%;}
+.user-chip .name{font-size:13px; font-weight:600;}
+.user-chip .signout{font-size:11px; color:var(--text-faint); text-decoration:underline;}
+
+.tabs{display:flex; gap:2px; padding:0 16px; overflow-x:auto; scrollbar-width:none;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab-btn{
+  background:none; border:none; color:var(--text-dim); font-weight:700; font-size:13.5px;
+  padding:12px 16px; border-bottom:2px solid transparent; white-space:nowrap; letter-spacing:.2px;
+}
+.tab-btn.active{color:var(--amber); border-bottom-color:var(--amber);}
+.tab-btn:hover:not(.active){color:var(--text);}
+
+main{max-width:1080px; margin:0 auto; padding:24px 16px 80px;}
+.view{display:none; animation:fadeIn .3s ease;}
+.view.active{display:block;}
+@keyframes fadeIn{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
+
+.card{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); padding:20px; margin-bottom:16px;}
+.card-title{font-family:var(--font-mono); font-weight:700; font-size:13px; text-transform:uppercase; letter-spacing:1px; color:var(--text-faint); margin-bottom:14px;}
+.section-title{font-size:22px; font-weight:800; margin-bottom:4px;}
+.section-sub{color:var(--text-dim); font-size:14px; margin-bottom:20px;}
+
+/* ---------- Split-flap signature element ---------- */
+.flap-board{display:flex; gap:6px; flex-wrap:wrap; align-items:center;}
+.flap-group{display:flex; flex-direction:column; align-items:center; gap:6px;}
+.flap-label{font-size:10px; text-transform:uppercase; letter-spacing:1px; color:var(--text-faint); font-weight:700;}
+.flap-char{
+  width:34px; height:44px; background:#10231a; border-radius:4px; position:relative; overflow:hidden;
+  display:flex; align-items:center; justify-content:center; font-family:var(--font-mono); font-weight:700;
+  font-size:24px; color:var(--amber); box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);
+}
+.flap-char::after{content:""; position:absolute; left:0; right:0; top:50%; height:1px; background:rgba(0,0,0,.5);}
+.flap-char.flip{animation:flip .35s ease;}
+@keyframes flip{0%{transform:rotateX(0);} 50%{transform:rotateX(90deg); opacity:.4;} 100%{transform:rotateX(0); opacity:1;}}
+
+/* ---------- Leaderboard ---------- */
+.leaderboard{width:100%; border-collapse:collapse;}
+.leaderboard th{text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.6px; color:var(--text-faint); padding:8px 10px; border-bottom:1px solid var(--border); font-weight:700;}
+html[dir="rtl"] .leaderboard th{text-align:right;}
+.leaderboard td{padding:12px 10px; border-bottom:1px solid var(--border); font-size:14px; vertical-align:middle;}
+.leaderboard tr:hover td{background:var(--surface-2);}
+.rank-cell{font-family:var(--font-mono); font-weight:700; width:36px; color:var(--text-dim);}
+.rank-cell.top1{color:var(--amber);} .rank-cell.top2{color:#c9c9c9;} .rank-cell.top3{color:#c88a4d;}
+.points-cell{font-family:var(--font-mono); font-weight:700; font-size:16px; color:var(--amber); text-align:right;}
+html[dir="rtl"] .points-cell{text-align:left;}
+.form-dots{display:flex; gap:4px;}
+.form-dot{width:9px; height:9px; border-radius:50%;}
+.form-dot.W{background:var(--green);} .form-dot.D{background:var(--text-faint);} .form-dot.L{background:var(--red);}
+.player-name-cell{display:flex; align-items:center; gap:10px; font-weight:600;}
+.avatar{width:28px; height:28px; border-radius:50%; background:var(--surface-3); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; color:var(--text-dim);}
+
+/* ---------- Rules ---------- */
+.rules-grid{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+@media(max-width:720px){.rules-grid{grid-template-columns:1fr;}}
+.rule-table{width:100%; border-collapse:collapse; font-size:13.5px;}
+.rule-table td{padding:7px 4px; border-bottom:1px solid var(--border);}
+.rule-table td:last-child{text-align:right; font-family:var(--font-mono); font-weight:700;}
+html[dir="rtl"] .rule-table td:last-child{text-align:left;}
+.rule-table .pos-tag{display:inline-block; font-size:10px; font-weight:800; padding:2px 6px; border-radius:4px; background:var(--surface-3); margin-inline-end:6px;}
+.badge-pos-GK{color:var(--blue);} .badge-pos-DF{color:var(--green);} .badge-pos-CM{color:var(--amber);} .badge-pos-ST{color:var(--red);}
+
+/* ---------- Forms ---------- */
+.field{margin-bottom:16px;}
+.field label{display:block; font-size:12.5px; font-weight:700; color:var(--text-dim); margin-bottom:6px; text-transform:uppercase; letter-spacing:.4px;}
+.field select, .field input[type=number], .field input[type=text]{
+  width:100%; background:var(--surface-2); border:1px solid var(--border); color:var(--text);
+  padding:10px 12px; border-radius:8px; font-size:14px;
+}
+.field select:focus, .field input:focus{outline:2px solid var(--amber); outline-offset:1px;}
+.podium-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:10px;}
+@media(max-width:640px){.podium-grid{grid-template-columns:1fr 1fr;}}
+.group-editor{background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:12px; margin-bottom:10px;}
+.group-editor h4{font-family:var(--font-mono); font-size:12px; color:var(--text-faint); margin-bottom:8px; text-transform:uppercase;}
+.drag-list{list-style:none; display:flex; flex-direction:column; gap:6px;}
+.drag-item{
+  background:var(--surface-3); border:1px solid var(--border); border-radius:8px; padding:9px 12px;
+  display:flex; align-items:center; gap:10px; font-size:13.5px; font-weight:600; cursor:grab;
+}
+.drag-item.dragging{opacity:.4;}
+.drag-handle{color:var(--text-faint); font-size:14px;}
+.drag-pos{font-family:var(--font-mono); font-weight:700; color:var(--amber); width:16px;}
+.btn{
+  background:var(--amber); color:#1a1408; border:none; padding:11px 22px; border-radius:8px; font-weight:800;
+  font-size:14px; letter-spacing:.3px;
+}
+.btn:hover{filter:brightness(1.08);}
+.btn:disabled{background:var(--surface-3); color:var(--text-faint); cursor:not-allowed;}
+.btn-ghost{background:transparent; border:1px solid var(--border-strong); color:var(--text);}
+.lock-banner{background:var(--red-dim); border:1px solid var(--red); color:var(--text); padding:10px 14px; border-radius:8px; font-size:13.5px; margin-bottom:16px; display:flex; align-items:center; gap:8px;}
+.saved-banner{background:var(--green-dim); border:1px solid var(--green); color:var(--text); padding:10px 14px; border-radius:8px; font-size:13.5px; margin-bottom:16px;}
+
+/* ---------- Games ---------- */
+.game-card{border:1px solid var(--border); border-radius:var(--radius-lg); padding:16px; margin-bottom:12px; background:var(--surface);}
+.game-meta{display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; font-size:11.5px; color:var(--text-faint); text-transform:uppercase; letter-spacing:.4px;}
+.game-teams{display:flex; align-items:center; justify-content:center; gap:18px; margin-bottom:14px;}
+.team-name{font-weight:800; font-size:15px; flex:1; text-align:center;}
+.score-inputs{display:flex; align-items:center; gap:10px;}
+.score-inputs input{width:52px; text-align:center; font-family:var(--font-mono); font-size:20px; font-weight:700; background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:8px 4px; color:var(--amber);}
+.score-sep{font-family:var(--font-mono); font-weight:700; color:var(--text-faint);}
+.status-pill{font-size:10px; font-weight:800; padding:3px 8px; border-radius:20px; text-transform:uppercase;}
+.status-scheduled{background:var(--surface-3); color:var(--text-dim);}
+.status-locked{background:var(--red-dim); color:var(--red);}
+.status-final{background:var(--green-dim); color:var(--green);}
+.points-pill{font-family:var(--font-mono); font-weight:700; background:var(--amber-dim); color:var(--amber); padding:3px 10px; border-radius:20px; font-size:12px;}
+
+/* ---------- Stats ---------- */
+canvas{width:100%; height:280px; display:block;}
+.legend{display:flex; flex-wrap:wrap; gap:12px; margin-top:12px;}
+.legend-item{display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--text-dim);}
+.legend-swatch{width:10px; height:10px; border-radius:3px;}
+
+/* ---------- Hall of fame ---------- */
+.hof-item{display:flex; align-items:center; gap:16px; padding:14px 0; border-bottom:1px solid var(--border);}
+.hof-year{font-family:var(--font-mono); font-weight:700; font-size:20px; color:var(--amber); width:64px;}
+.hof-trophy{font-size:22px;}
+.hof-name{font-weight:800; font-size:15px;}
+.hof-sub{font-size:12.5px; color:var(--text-dim);}
+
+.empty-state{text-align:center; padding:40px 20px; color:var(--text-faint);}
+.spinner{width:22px; height:22px; border-radius:50%; border:2px solid var(--border-strong); border-top-color:var(--amber); animation:spin .7s linear infinite; margin:0 auto;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.demo-note{font-size:11.5px; color:var(--text-faint); text-align:center; padding:10px; border-top:1px dashed var(--border); margin-top:10px;}
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="header-top">
+    <div class="brand"><span class="dot"></span><span data-i18n="brandName">MATCHDAY</span></div>
+    <div class="header-controls">
+      <button class="icon-btn" id="langToggle">EN / עב</button>
+      <button class="icon-btn" id="themeToggle">🌙</button>
+      <div id="gsi-btn-wrap"></div>
+    </div>
+  </div>
+  <nav class="tabs" id="tabNav"></nav>
+</header>
+
+<main id="main"></main>
+
+<script>
+/* =========================================================
+   ============  1. CONFIG  — edit per tournament  ==========
+   =========================================================
+   Fill this in once per tournament. Team lists, rosters and
+   scoring rules live here in code (per your choice). Games,
+   bets and results live in the Google Sheet below.
+*/
+const CONFIG = {
+  // --- Google Sheet (read via gviz, write via Apps Script) ---
+  SHEET_ID: '1sE6QVBTHK3ghSkIlHx-wGDhXi34jzQ_P8wFHYDbjzqk',
+  GIDS: {
+    PARTICIPANTS:  '0',        // name, email, totalPoints, form (JSON array of W/D/L), generalPoints
+    GAMES:         '1200559750',   // id, kickoffISO, group, teamA, teamB, status, scoreA, scoreB, topPlayerActual
+    GAME_BETS:     '657411218',   // email, gameId, betA, betB, betTopPlayer, pointsEarned, timestamp
+    GENERAL_BETS:  '1891995477',   // email, rank1..rank4, topScorer, topAssist, groupsJSON, pointsEarned, timestamp
+    HALL_OF_FAME:  '1290157268',   // year, winnerName, runnerUp, note
+  },
+  // --- Apps Script Web App URL, see Code.gs / SETUP.md ---
+  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbzg9u__7JX1Tw-oodrqohyXP_h5jjFueewGKixkwZnz9rtAIP6rugOP376VuPYiunDb/exec',
+
+  // --- General predictions form closes automatically at this time ---
+  GENERAL_DEADLINE: '2026-06-11T00:00:00+03:00',
+
+  // --- Groups & teams (inserted once per tournament) ---
+  GROUPS: {
+    A: ['Team A1', 'Team A2', 'Team A3', 'Team A4'],
+    B: ['Team B1', 'Team B2', 'Team B3', 'Team B4'],
+    C: ['Team C1', 'Team C2', 'Team C3', 'Team C4'],
+    D: ['Team D1', 'Team D2', 'Team D3', 'Team D4'],
+  },
+
+  // --- Rosters: team -> [{name, pos}], pos in GK/DF/CM/ST ---
+  ROSTERS: {
+    'Team A1': [
+      {name:'Player One', pos:'GK'}, {name:'Player Two', pos:'DF'},
+      {name:'Player Three', pos:'CM'}, {name:'Player Four', pos:'ST'},
+    ],
+    'Team A2': [
+      {name:'Player Five', pos:'GK'}, {name:'Player Six', pos:'DF'},
+      {name:'Player Seven', pos:'CM'}, {name:'Player Eight', pos:'ST'},
+    ],
+    // ...add every team's squad here (GK/DF/CM/ST only — no exact positions needed)
+  },
+
+  // --- Scoring rules ---
+  SCORING: {
+    game: { exact: 2, diff: 1, outcome: 2 }, // stack: exact score also satisfies diff+outcome => up to 5
+    player: {
+      ownGoal: -5,
+      redCard: -3,
+      cleanSheetGK: 3,
+      goal:   { GK: 5, DF: 3, CM: 1, ST: 0.5 },
+      assist: { GK: 5, DF: 3, CM: 1, ST: 0.5 },
+    }
+  },
+
+  DEMO_MODE_FALLBACK: true, // if the Sheet can't be reached, show sample data instead of an error
+};
+
+/* =========================================================
+   ============  2. i18n  ====================================
+   ========================================================= */
+const I18N = {
+  en:{ brandName:'MATCHDAY', tab_home:'Home', tab_rules:'Rules', tab_general:'General', tab_games:'Games',
+    tab_stats:'Stats', tab_hof:'Hall of Fame', rank:'Rank', player:'Player', points:'Points', form:'Form',
+    leaderLabel:'Leader', signIn:'Sign in', signOut:'Sign out',
+    rulesTitle:'How scoring works', rulesGameTitle:'Match score bets', rulesPlayerTitle:'Top player of the game',
+    ruleExact:'Exact score', rulePts:(n)=>`${n} pts`, ruleDiff:'Correct goal difference', ruleOutcome:'Correct win / draw / loss',
+    ruleOwnGoal:'Own goal', ruleRedCard:'Red card', ruleCleanSheet:'GK clean sheet',
+    ruleGoal:'Goal scored', ruleAssist:'Assist', ruleStackNote:'Tiers stack — an exact score also earns the goal-difference and outcome points.',
+    generalTitle:'General predictions', generalSub:'Predict the podium, top scorer, top assister, and the finishing order of every group. Locks automatically at the deadline below.',
+    deadline:'Closes', locked:'Predictions are locked', podium:'Final four', rank1:'Champion',rank2:'Runner-up',rank3:'3rd place',rank4:'4th place',
+    topScorer:'Top goal scorer', topAssist:'Top assister', groupsTitle:'Group finishing order', dragHint:'Drag to reorder',
+    save:'Save predictions', saved:'Saved — you can edit until the deadline.', choose:'Choose…',
+    gamesTitle:'Games', gamesSub:'Predict the score and pick your top player before kickoff.',
+    yourScore:'Your score', topPlayerOfGame:'Top player', kickoff:'Kickoff', group:'Group',
+    statusScheduled:'Open', statusLocked:'Locked', statusFinal:'Final', earned:'earned',
+    statsTitle:'Stats', statsSub:'Points over time and recent form for every participant.', pointsOverTime:'Points over time',
+    hofTitle:'Hall of Fame', hofSub:'Champions of tournaments past.',
+    loading:'Loading…', demoNote:'Showing sample data — connect your Google Sheet in CONFIG to go live.',
+    noGames:'No games yet.', emailFirst:'Sign in to place your predictions.',
+  },
+  he:{ brandName:'מאצדיי', tab_home:'ראשי', tab_rules:'חוקים', tab_general:'טופס כללי', tab_games:'משחקים',
+    tab_stats:'סטטיסטיקות', tab_hof:'היכל התהילה', rank:'דירוג', player:'שם', points:'נקודות', form:'פורמה',
+    leaderLabel:'מוביל', signIn:'התחברות', signOut:'התנתקות',
+    rulesTitle:'איך מחשבים ניקוד', rulesGameTitle:'ניחושי תוצאות משחק', rulesPlayerTitle:'שחקן המשחק',
+    ruleExact:'תוצאה מדויקת', rulePts:(n)=>`${n} נק'`, ruleDiff:'הפרש שערים נכון', ruleOutcome:'ניצחון / תיקו / הפסד נכון',
+    ruleOwnGoal:'שער עצמי', ruleRedCard:'כרטיס אדום', ruleCleanSheet:'שער נקי לשוער',
+    ruleGoal:'שער', ruleAssist:'בישול', ruleStackNote:'הניקוד מצטבר — תוצאה מדויקת מזכה גם בנקודות ההפרש והתוצאה.',
+    generalTitle:'ניחושים כלליים', generalSub:'נחשו את הפודיום, מלך השערים, מלך הבישולים, וסדר הסיום בכל בית. הטופס ננעל אוטומטית במועד שלמטה.',
+    deadline:'נסגר בתאריך', locked:'הטופס נעול', podium:'הרביעייה הסופית', rank1:'אלופה',rank2:'מקום שני',rank3:'מקום שלישי',rank4:'מקום רביעי',
+    topScorer:'מלך שערים', topAssist:'מלך בישולים', groupsTitle:'סדר סיום הבתים', dragHint:'גררו כדי לשנות סדר',
+    save:'שמירת ניחושים', saved:'נשמר — ניתן לערוך עד למועד הסגירה.', choose:'בחירה…',
+    gamesTitle:'משחקים', gamesSub:'נחשו את התוצאה ובחרו את שחקן המשחק לפני הבעיטה הראשונה.',
+    yourScore:'הניחוש שלך', topPlayerOfGame:'שחקן המשחק', kickoff:'שעת התחלה', group:'בית',
+    statusScheduled:'פתוח', statusLocked:'נעול', statusFinal:'הסתיים', earned:'נצברו',
+    statsTitle:'סטטיסטיקות', statsSub:'נקודות לאורך זמן ופורמה אחרונה לכל משתתף.', pointsOverTime:'נקודות לאורך זמן',
+    hofTitle:'היכל התהילה', hofSub:'אלופי הטורנירים הקודמים.',
+    loading:'טוען…', demoNote:'מוצגים נתוני דוגמה — חברו את הגיליון שלכם ב-CONFIG כדי לעלות לאוויר.',
+    noGames:'אין משחקים עדיין.', emailFirst:'התחברו כדי להזין ניחושים.',
+  }
+};
+let LANG = localStorage.getItem('md_lang') || 'en';
+function t(key,...args){ const v = I18N[LANG][key]; return typeof v==='function' ? v(...args) : v; }
+
+/* =========================================================
+   ============  3. State  ===================================
+   ========================================================= */
+const STATE = { user:null, participants:[], games:[], gameBets:[], generalBets:[], hof:[], demo:false };
+
+/* =========================================================
+   ============  4. Data layer (Google Sheets)  ==============
+   ========================================================= */
+async function fetchSheetTab(gid){
+  const url = `https://docs.google.com/spreadsheets/d/${CONFIG.SHEET_ID}/gviz/tq?tqx=out:json&gid=${gid}`;
+  const res = await fetch(url);
+  const text = await res.text();
+  const json = JSON.parse(text.substring(text.indexOf('{'), text.lastIndexOf('}')+1));
+  const cols = json.table.cols.map(c => (c.label || c.id || '').trim());
+  return json.table.rows.map(r => {
+    const obj = {};
+    cols.forEach((c,i) => { obj[c] = r.c[i] ? (r.c[i].v ?? '') : ''; });
+    return obj;
+  });
+}
+async function postBet(payload){
+  // Apps Script web app handles auth + writes + server-side lock checks. See Code.gs
+  return fetch(CONFIG.APPS_SCRIPT_URL, {
+    method:'POST', mode:'no-cors', // no-cors: Apps Script doGet/doPost redirect responses aren't readable cross-origin
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify(payload)
+  });
+}
+
+async function loadAllData(){
+  try{
+    const [participants, games, gameBets, generalBets, hof] = await Promise.all([
+      fetchSheetTab(CONFIG.GIDS.PARTICIPANTS), fetchSheetTab(CONFIG.GIDS.GAMES),
+      fetchSheetTab(CONFIG.GIDS.GAME_BETS), fetchSheetTab(CONFIG.GIDS.GENERAL_BETS),
+      fetchSheetTab(CONFIG.GIDS.HALL_OF_FAME),
+    ]);
+    if(!participants.length && !games.length) throw new Error('empty sheet / not configured');
+    Object.assign(STATE, { participants, games, gameBets, generalBets, hof, demo:false });
+  }catch(e){
+    if(!CONFIG.DEMO_MODE_FALLBACK) throw e;
+    Object.assign(STATE, demoData());
+    STATE.demo = true;
+  }
+}
+
+function demoData(){
+  const names = ['Noa Levi','Itay Ben','Tamir K.','Roni Shani','Dana Cohen','Omer Gal'];
+  const participants = names.map((name,i) => ({
+    email:`${name.split(' ')[0].toLowerCase()}@example.com`, name,
+    totalPoints: 34 - i*4 + (i%2), form: JSON.stringify(['W','W','D','L','W'].slice(0, 5-i%3)),
+  }));
+  const games = [
+    {id:'G1', kickoffISO:'2026-06-11T21:00:00+03:00', group:'A', teamA:'Team A1', teamB:'Team A2', status:'final', scoreA:2, scoreB:1, topPlayerActual:'Player Four'},
+    {id:'G2', kickoffISO:'2026-06-12T18:00:00+03:00', group:'A', teamA:'Team A3', teamB:'Team A4', status:'scheduled', scoreA:'', scoreB:''},
+    {id:'G3', kickoffISO:'2026-06-13T21:00:00+03:00', group:'B', teamA:'Team B1', teamB:'Team B2', status:'scheduled', scoreA:'', scoreB:''},
+  ];
+  const hof = [
+    {year:2022, winnerName:'Tamir K.', runnerUp:'Noa Levi', note:'62 points'},
+    {year:2018, winnerName:'Roni Shani', runnerUp:'Itay Ben', note:'55 points'},
+  ];
+  return { participants, games, gameBets:[], generalBets:[], hof };
+}
+
+/* =========================================================
+   ============  5. Scoring helpers (client-side, read-only
+   display — authoritative calc happens in Apps Script) =====
+   ========================================================= */
+function computeGameScore(betA, betB, actualA, actualB){
+  if(actualA==='' || actualA==null || actualB==='' || actualB==null) return null;
+  betA=+betA; betB=+betB; actualA=+actualA; actualB=+actualB;
+  let pts = 0;
+  const s = CONFIG.SCORING.game;
+  const outcome = (a,b) => a>b?'W':a<b?'L':'D';
+  if(outcome(betA,betB) === outcome(actualA,actualB)) pts += s.outcome;
+  if((betA-betB) === (actualA-actualB)) pts += s.diff;
+  if(betA===actualA && betB===actualB) pts += s.exact;
+  return pts;
+}
+
+/* =========================================================
+   ============  6. Rendering  ================================
+   ========================================================= */
+const TABS = ['home','rules','general','games','stats','hof'];
+let currentTab = 'home';
+
+function renderShell(){
+  document.documentElement.lang = LANG;
+  document.documentElement.dir = LANG==='he' ? 'rtl' : 'ltr';
+  document.getElementById('tabNav').innerHTML = TABS.map(id =>
+    `<button class="tab-btn ${id===currentTab?'active':''}" data-tab="${id}">${t('tab_'+id)}</button>`
+  ).join('');
+  document.querySelectorAll('.tab-btn').forEach(b => b.onclick = () => { currentTab=b.dataset.tab; renderAll(); });
+}
+
+function renderAll(){
+  renderShell();
+  const main = document.getElementById('main');
+  const renderers = { home:renderHome, rules:renderRules, general:renderGeneral, games:renderGames, stats:renderStats, hof:renderHof };
+  main.innerHTML = renderers[currentTab]();
+  if(currentTab==='home') animateFlaps();
+  if(currentTab==='general') wireGeneralForm();
+  if(currentTab==='games') wireGamesForm();
+  if(currentTab==='stats') drawStatsChart();
+}
+
+function demoBanner(){
+  return STATE.demo ? `<div class="demo-note">${t('demoNote')}</div>` : '';
+}
+
+/* ---- HOME ---- */
+function rankedParticipants(){
+  return [...STATE.participants]
+    .map(p => ({...p, totalPoints:+p.totalPoints || 0, form: safeParse(p.form, [])}))
+    .sort((a,b) => b.totalPoints - a.totalPoints)
+    .map((p,i) => ({...p, rank:i+1}));
+}
+function safeParse(s, fallback){ try{ return typeof s==='string' ? JSON.parse(s) : (s||fallback); }catch{ return fallback; } }
+
+function renderHome(){
+  const ranked = rankedParticipants();
+  if(!ranked.length) return `<div class="card"><div class="empty-state">${t('loading')}</div></div>`;
+  const leader = ranked[0];
+  const flapChars = String(leader.totalPoints).padStart(3,'0').split('');
+  return `
+  <div class="card">
+    <div class="card-title">${t('leaderLabel')}</div>
+    <div style="display:flex; align-items:center; gap:20px; flex-wrap:wrap;">
+      <div class="flap-group">
+        <div class="flap-board">${flapChars.map(c=>`<div class="flap-char">${c}</div>`).join('')}</div>
+        <div class="flap-label">${t('points')}</div>
+      </div>
+      <div>
+        <div style="font-size:20px; font-weight:800;">${leader.name}</div>
+        <div class="form-dots" style="margin-top:8px;">${formDots(leader.form)}</div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <table class="leaderboard">
+      <thead><tr><th>${t('rank')}</th><th>${t('player')}</th><th>${t('form')}</th><th style="text-align:right">${t('points')}</th></tr></thead>
+      <tbody>
+        ${ranked.map(p => `
+          <tr>
+            <td class="rank-cell ${p.rank<=3?'top'+p.rank:''}">${medal(p.rank)}${p.rank}</td>
+            <td><div class="player-name-cell"><div class="avatar">${initials(p.name)}</div>${p.name}</div></td>
+            <td><div class="form-dots">${formDots(p.form)}</div></td>
+            <td class="points-cell">${p.totalPoints}</td>
+          </tr>`).join('')}
+      </tbody>
+    </table>
+    ${demoBanner()}
+  </div>`;
+}
+function medal(rank){ return rank===1?'🥇 ':rank===2?'🥈 ':rank===3?'🥉 ':''; }
+function initials(name){ return (name||'?').split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase(); }
+function formDots(form){ return (form||[]).map(r => `<span class="form-dot ${r}"></span>`).join(''); }
+function animateFlaps(){ document.querySelectorAll('.flap-char').forEach((el,i) => setTimeout(()=>el.classList.add('flip'), i*90)); }
+
+/* ---- RULES ---- */
+function renderRules(){
+  const s = CONFIG.SCORING;
+  return `
+  <div class="section-title">${t('rulesTitle')}</div>
+  <div class="rules-grid">
+    <div class="card">
+      <div class="card-title">${t('rulesGameTitle')}</div>
+      <table class="rule-table">
+        <tr><td>${t('ruleExact')}</td><td>${t('rulePts', s.game.exact)}</td></tr>
+        <tr><td>${t('ruleDiff')}</td><td>${t('rulePts', s.game.diff)}</td></tr>
+        <tr><td>${t('ruleOutcome')}</td><td>${t('rulePts', s.game.outcome)}</td></tr>
+      </table>
+      <div class="section-sub" style="margin-top:12px; margin-bottom:0;">${t('ruleStackNote')}</div>
+    </div>
+    <div class="card">
+      <div class="card-title">${t('rulesPlayerTitle')}</div>
+      <table class="rule-table">
+        ${['GK','DF','CM','ST'].map(pos => `<tr><td><span class="pos-tag badge-pos-${pos}">${pos}</span>${t('ruleGoal')}</td><td>${s.player.goal[pos]}</td></tr>`).join('')}
+        ${['GK','DF','CM','ST'].map(pos => `<tr><td><span class="pos-tag badge-pos-${pos}">${pos}</span>${t('ruleAssist')}</td><td>${s.player.assist[pos]}</td></tr>`).join('')}
+        <tr><td><span class="pos-tag badge-pos-GK">GK</span>${t('ruleCleanSheet')}</td><td>${s.player.cleanSheetGK}</td></tr>
+        <tr><td>${t('ruleOwnGoal')}</td><td>${s.player.ownGoal}</td></tr>
+        <tr><td>${t('ruleRedCard')}</td><td>${s.player.redCard}</td></tr>
+      </table>
+    </div>
+  </div>`;
+}
+
+/* ---- GENERAL ---- */
+function currentGeneralBet(){
+  if(!STATE.user) return null;
+  return STATE.generalBets.find(b => b.email === STATE.user.email) || null;
+}
+function isGeneralLocked(){ return new Date() > new Date(CONFIG.GENERAL_DEADLINE); }
+
+function renderGeneral(){
+  const locked = isGeneralLocked();
+  const existing = currentGeneralBet();
+  const allTeams = Object.values(CONFIG.GROUPS).flat();
+  const allPlayers = Object.entries(CONFIG.ROSTERS).flatMap(([team, squad]) => squad.map(p => ({...p, team})));
+  const existingGroups = existing ? safeParse(existing.groupsJSON, null) : null;
+
+  if(!STATE.user){
+    return `<div class="section-title">${t('generalTitle')}</div><div class="card"><div class="empty-state">${t('emailFirst')}</div></div>`;
+  }
+  return `
+  <div class="section-title">${t('generalTitle')}</div>
+  <div class="section-sub">${t('generalSub')}</div>
+  ${locked ? `<div class="lock-banner">🔒 ${t('locked')} — ${t('deadline')} ${fmtDate(CONFIG.GENERAL_DEADLINE)}</div>`
+           : `<div class="saved-banner">${t('deadline')}: ${fmtDate(CONFIG.GENERAL_DEADLINE)}</div>`}
+  <form id="generalForm">
+    <div class="card">
+      <div class="card-title">${t('podium')}</div>
+      <div class="podium-grid">
+        ${[1,2,3,4].map(n => `
+          <div class="field">
+            <label>${t('rank'+n)}</label>
+            <select name="rank${n}" ${locked?'disabled':''}>
+              <option value="">${t('choose')}</option>
+              ${allTeams.map(team => `<option value="${team}" ${existing && existing['rank'+n]===team ? 'selected':''}>${team}</option>`).join('')}
+            </select>
+          </div>`).join('')}
+      </div>
+    </div>
+    <div class="card">
+      <div class="podium-grid" style="grid-template-columns:1fr 1fr;">
+        <div class="field">
+          <label>${t('topScorer')}</label>
+          <select name="topScorer" ${locked?'disabled':''}>
+            <option value="">${t('choose')}</option>
+            ${allPlayers.map(p => `<option value="${p.name}" ${existing && existing.topScorer===p.name?'selected':''}>${p.name} — ${p.team}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field">
+          <label>${t('topAssist')}</label>
+          <select name="topAssist" ${locked?'disabled':''}>
+            <option value="">${t('choose')}</option>
+            ${allPlayers.map(p => `<option value="${p.name}" ${existing && existing.topAssist===p.name?'selected':''}>${p.name} — ${p.team}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">${t('groupsTitle')}</div>
+      <div class="section-sub" style="margin-bottom:12px;">${t('dragHint')}</div>
+      ${Object.entries(CONFIG.GROUPS).map(([g, teams]) => {
+        const order = (existingGroups && existingGroups[g]) || teams;
+        return `<div class="group-editor" data-group="${g}">
+          <h4>${t('group')} ${g}</h4>
+          <ul class="drag-list" data-group="${g}">
+            ${order.map((team,i) => `<li class="drag-item" draggable="${!locked}" data-team="${team}"><span class="drag-pos">${i+1}</span><span class="drag-handle">⠿</span>${team}</li>`).join('')}
+          </ul>
+        </div>`;
+      }).join('')}
+    </div>
+    <button class="btn" type="submit" ${locked?'disabled':''}>${t('save')}</button>
+    <div id="generalMsg" style="margin-top:10px; font-size:13px; color:var(--green);"></div>
+  </form>`;
+}
+
+function wireGeneralForm(){
+  if(isGeneralLocked() || !STATE.user) return;
+  document.querySelectorAll('.drag-list').forEach(list => {
+    let dragEl = null;
+    list.querySelectorAll('.drag-item').forEach(item => {
+      item.addEventListener('dragstart', () => { dragEl = item; item.classList.add('dragging'); });
+      item.addEventListener('dragend', () => { item.classList.remove('dragging'); renumberGroup(list); });
+    });
+    list.addEventListener('dragover', e => {
+      e.preventDefault();
+      const after = [...list.querySelectorAll('.drag-item:not(.dragging)')].find(el => e.clientY < el.getBoundingClientRect().top + el.offsetHeight/2);
+      if(after) list.insertBefore(dragEl, after); else list.appendChild(dragEl);
+    });
+  });
+  document.getElementById('generalForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const groupsJSON = {};
+    document.querySelectorAll('.drag-list').forEach(list => {
+      groupsJSON[list.dataset.group] = [...list.querySelectorAll('.drag-item')].map(li => li.dataset.team);
+    });
+    const payload = {
+      type:'generalBet', email: STATE.user.email, name: STATE.user.name,
+      rank1: fd.get('rank1'), rank2: fd.get('rank2'), rank3: fd.get('rank3'), rank4: fd.get('rank4'),
+      topScorer: fd.get('topScorer'), topAssist: fd.get('topAssist'),
+      groupsJSON: JSON.stringify(groupsJSON), timestamp: new Date().toISOString(),
+    };
+    await postBet(payload);
+    document.getElementById('generalMsg').textContent = t('saved');
+  });
+}
+function renumberGroup(list){ list.querySelectorAll('.drag-item').forEach((li,i) => li.querySelector('.drag-pos').textContent = i+1); }
+function fmtDate(iso){ return new Date(iso).toLocaleString(LANG==='he'?'he-IL':'en-GB', {dateStyle:'medium', timeStyle:'short'}); }
+
+/* ---- GAMES ---- */
+function betFor(gameId){ return STATE.user ? STATE.gameBets.find(b => b.email===STATE.user.email && b.gameId===gameId) : null; }
+function renderGames(){
+  if(!STATE.games.length) return `<div class="section-title">${t('gamesTitle')}</div><div class="card"><div class="empty-state">${t('noGames')}</div></div>`;
+  return `
+  <div class="section-title">${t('gamesTitle')}</div>
+  <div class="section-sub">${t('gamesSub')}</div>
+  ${STATE.games.map(g => renderGameCard(g)).join('')}
+  ${demoBanner()}`;
+}
+function renderGameCard(g){
+  const kickoff = new Date(g.kickoffISO);
+  const locked = new Date() > kickoff || g.status !== 'scheduled';
+  const isFinal = g.status === 'final';
+  const bet = betFor(g.id);
+  const roster = [...(CONFIG.ROSTERS[g.teamA]||[]), ...(CONFIG.ROSTERS[g.teamB]||[])];
+  const earned = isFinal && bet ? computeGameScore(bet.betA, bet.betB, g.scoreA, g.scoreB) : null;
+  return `
+  <div class="game-card">
+    <div class="game-meta">
+      <span>${t('group')} ${g.group} · ${fmtDate(g.kickoffISO)}</span>
+      <span class="status-pill status-${isFinal?'final':locked?'locked':'scheduled'}">${isFinal?t('statusFinal'):locked?t('statusLocked'):t('statusScheduled')}</span>
+    </div>
+    <div class="game-teams">
+      <div class="team-name">${g.teamA}</div>
+      <div class="score-inputs">
+        <input type="number" min="0" max="20" data-role="scoreA" value="${bet?bet.betA:(isFinal?g.scoreA:'')}" ${locked?'disabled':''}>
+        <span class="score-sep">:</span>
+        <input type="number" min="0" max="20" data-role="scoreB" value="${bet?bet.betB:(isFinal?g.scoreB:'')}" ${locked?'disabled':''}>
+      </div>
+      <div class="team-name">${g.teamB}</div>
+    </div>
+    <div class="field" style="margin-bottom:8px;">
+      <label>${t('topPlayerOfGame')}</label>
+      <select data-role="topPlayer" ${locked?'disabled':''}>
+        <option value="">${t('choose')}</option>
+        ${roster.map(p => `<option value="${p.name}" ${bet && bet.betTopPlayer===p.name?'selected':''}>${p.name} (${p.pos})</option>`).join('')}
+      </select>
+    </div>
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+      ${!locked ? `<button class="btn btn-ghost" data-role="saveGame" data-id="${g.id}">${t('save')}</button>` : `<span></span>`}
+      ${earned!==null ? `<span class="points-pill">+${earned} ${t('earned')}</span>` : ''}
+    </div>
+  </div>`;
+}
+function wireGamesForm(){
+  document.querySelectorAll('[data-role="saveGame"]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if(!STATE.user){ alert(t('emailFirst')); return; }
+      const card = btn.closest('.game-card');
+      const payload = {
+        type:'gameBet', email: STATE.user.email, name: STATE.user.name, gameId: btn.dataset.id,
+        betA: card.querySelector('[data-role="scoreA"]').value,
+        betB: card.querySelector('[data-role="scoreB"]').value,
+        betTopPlayer: card.querySelector('[data-role="topPlayer"]').value,
+        timestamp: new Date().toISOString(),
+      };
+      await postBet(payload);
+      btn.textContent = '✓';
+    });
+  });
+}
+
+/* ---- STATS ---- */
+function renderStats(){
+  return `
+  <div class="section-title">${t('statsTitle')}</div>
+  <div class="section-sub">${t('statsSub')}</div>
+  <div class="card">
+    <div class="card-title">${t('pointsOverTime')}</div>
+    <canvas id="statsCanvas"></canvas>
+    <div class="legend" id="statsLegend"></div>
+  </div>
+  ${demoBanner()}`;
+}
+function drawStatsChart(){
+  const canvas = document.getElementById('statsCanvas'); if(!canvas) return;
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width*dpr; canvas.height = 280*dpr;
+  const ctx = canvas.getContext('2d'); ctx.scale(dpr,dpr);
+  const ranked = rankedParticipants();
+  const palette = ['#ffb020','#4c9a6a','#5b8fd6','#e2564f','#c9c9c9','#8a611c'];
+  // Build a synthetic points-over-time series from each participant's form history (demo/derived).
+  const rounds = Math.max(...ranked.map(p => (p.form||[]).length), 1);
+  const W = rect.width, H = 280, padL = 30, padB = 20, padT = 10;
+  ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--border');
+  ctx.beginPath(); ctx.moveTo(padL, padT); ctx.lineTo(padL, H-padB); ctx.lineTo(W, H-padB); ctx.stroke();
+  ranked.forEach((p,pi) => {
+    const form = p.form||[];
+    let running = p.totalPoints - form.length*2; // rough back-projection for a demo trend line
+    const pts = [running, ...form.map(r => running += (r==='W'?2:r==='D'?1:0))];
+    ctx.strokeStyle = palette[pi % palette.length]; ctx.lineWidth = 2; ctx.beginPath();
+    pts.forEach((val,i) => {
+      const x = padL + (i/(pts.length-1||1)) * (W-padL-6);
+      const maxY = Math.max(...ranked.map(q => q.totalPoints), 1);
+      const y = (H-padB) - (val/maxY) * (H-padB-padT);
+      i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+    });
+    ctx.stroke();
+  });
+  document.getElementById('statsLegend').innerHTML = ranked.map((p,pi) =>
+    `<div class="legend-item"><span class="legend-swatch" style="background:${palette[pi%palette.length]}"></span>${p.name}</div>`).join('');
+}
+
+/* ---- HALL OF FAME ---- */
+function renderHof(){
+  if(!STATE.hof.length) return `<div class="section-title">${t('hofTitle')}</div><div class="card"><div class="empty-state">${t('loading')}</div></div>`;
+  return `
+  <div class="section-title">${t('hofTitle')}</div>
+  <div class="section-sub">${t('hofSub')}</div>
+  <div class="card">
+    ${STATE.hof.sort((a,b)=>b.year-a.year).map(h => `
+      <div class="hof-item">
+        <div class="hof-year">${h.year}</div>
+        <div class="hof-trophy">🏆</div>
+        <div>
+          <div class="hof-name">${h.winnerName}</div>
+          <div class="hof-sub">${LANG==='he'?'מקום שני':'Runner-up'}: ${h.runnerUp} ${h.note?'· '+h.note:''}</div>
+        </div>
+      </div>`).join('')}
+  </div>
+  ${demoBanner()}`;
+}
+
+/* =========================================================
+   ============  7. Auth (Google Sign-In)  ====================
+   ========================================================= */
+function initGoogleSignIn(){
+  if(!window.google || !google.accounts){ setTimeout(initGoogleSignIn, 300); return; }
+  google.accounts.id.initialize({
+    client_id: '431204508277-nm33th0fs73s81cpn09ngmmalmbvgso1.apps.googleusercontent.com', // see SETUP.md
+    callback: handleCredentialResponse,
+  });
+  renderAuthArea();
+}
+function handleCredentialResponse(resp){
+  const payload = JSON.parse(atob(resp.credential.split('.')[1]));
+  STATE.user = { email: payload.email, name: payload.name, picture: payload.picture, idToken: resp.credential };
+  localStorage.setItem('md_user', JSON.stringify(STATE.user));
+  renderAuthArea(); renderAll();
+}
+function signOut(){ STATE.user = null; localStorage.removeItem('md_user'); renderAuthArea(); renderAll(); }
+function renderAuthArea(){
+  const wrap = document.getElementById('gsi-btn-wrap');
+  if(STATE.user){
+    wrap.innerHTML = `<div class="user-chip"><img src="${STATE.user.picture||''}" onerror="this.style.display='none'"><span class="name">${STATE.user.name}</span><span class="signout" id="signOutBtn">${t('signOut')}</span></div>`;
+    document.getElementById('signOutBtn').onclick = signOut;
+  } else {
+    wrap.innerHTML = '';
+    if(window.google && google.accounts) google.accounts.id.renderButton(wrap, { theme:'outline', size:'medium', text:'signin' });
+  }
+}
+
+/* =========================================================
+   ============  8. Boot  ======================================
+   ========================================================= */
+document.getElementById('langToggle').onclick = () => {
+  LANG = LANG==='en' ? 'he' : 'en';
+  localStorage.setItem('md_lang', LANG);
+  renderAll();
+};
+document.getElementById('themeToggle').onclick = () => {
+  const html = document.documentElement;
+  const next = html.getAttribute('data-theme')==='light' ? 'dark' : 'light';
+  html.setAttribute('data-theme', next);
+  localStorage.setItem('md_theme', next);
+  document.getElementById('themeToggle').textContent = next==='light' ? '☀️' : '🌙';
+};
+(function boot(){
+  const savedTheme = localStorage.getItem('md_theme') || 'dark';
+  if(savedTheme==='light') document.documentElement.setAttribute('data-theme','light');
+  document.getElementById('themeToggle').textContent = savedTheme==='light' ? '☀️' : '🌙';
+  const savedUser = localStorage.getItem('md_user');
+  if(savedUser) STATE.user = JSON.parse(savedUser);
+  renderShell();
+  document.getElementById('main').innerHTML = `<div class="card"><div class="empty-state"><div class="spinner"></div><br>${t('loading')}</div></div>`;
+  initGoogleSignIn();
+  loadAllData().then(renderAll);
+})();
+</script>
+</body>
+</html>
