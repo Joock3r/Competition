@@ -291,7 +291,7 @@ const I18N = {
     statsTitle:'Stats', statsSub:'Points over time and recent form for every participant.', pointsOverTime:'Points over time',
     hofTitle:'Hall of Fame', hofSub:'Champions of tournaments past.',
     loading:'Loading…', demoNote:'Showing sample data — connect your Google Sheet in CONFIG to go live.',
-    noGames:'No games yet.', emailFirst:'Sign in to place your predictions.',
+    noGames:'No games yet.', emailFirst:'Sign in to place your predictions.', noParticipants:'No participants yet — add rows to the Participants tab in the Sheet.', noHof:'No past champions yet.',
   },
   he:{ brandName:'מאצדיי', tab_home:'ראשי', tab_rules:'חוקים', tab_general:'טופס כללי', tab_games:'משחקים',
     tab_stats:'סטטיסטיקות', tab_hof:'היכל התהילה', rank:'דירוג', player:'שם', points:'נקודות', form:'פורמה',
@@ -310,7 +310,7 @@ const I18N = {
     statsTitle:'סטטיסטיקות', statsSub:'נקודות לאורך זמן ופורמה אחרונה לכל משתתף.', pointsOverTime:'נקודות לאורך זמן',
     hofTitle:'היכל התהילה', hofSub:'אלופי הטורנירים הקודמים.',
     loading:'טוען…', demoNote:'מוצגים נתוני דוגמה — חברו את הגיליון שלכם ב-CONFIG כדי לעלות לאוויר.',
-    noGames:'אין משחקים עדיין.', emailFirst:'התחברו כדי להזין ניחושים.',
+    noGames:'אין משחקים עדיין.', emailFirst:'התחברו כדי להזין ניחושים.', noParticipants:'עדיין אין משתתפים — הוסיפו שורות לטאב Participants בגיליון.', noHof:'עדיין אין אלופים קודמים.',
   }
 };
 let LANG = localStorage.getItem('md_lang') || 'en';
@@ -346,7 +346,7 @@ function participantName(p){
 /* =========================================================
    ============  3. State  ===================================
    ========================================================= */
-const STATE = { user:null, participants:[], games:[], gameBets:[], generalBets:[], hof:[], demo:false };
+const STATE = { user:null, participants:[], games:[], gameBets:[], generalBets:[], hof:[], demo:false, loaded:false };
 
 /* =========================================================
    ============  4. Data layer (Google Sheets)  ==============
@@ -378,6 +378,7 @@ async function loadAllData(){
     Object.assign(STATE, demoData());
     STATE.demo = true;
   }
+  STATE.loaded = true;
 }
 
 function demoData(){
@@ -458,7 +459,10 @@ function safeParse(s, fallback){ try{ return typeof s==='string' ? JSON.parse(s)
 
 function renderHome(){
   const ranked = rankedParticipants();
-  if(!ranked.length) return `<div class="card"><div class="empty-state">${t('loading')}</div></div>`;
+  if(!ranked.length){
+    const msg = STATE.loaded ? t('noParticipants') : t('loading');
+    return `<div class="card"><div class="empty-state">${STATE.loaded?'':'<div class="spinner"></div><br>'}${msg}</div></div>`;
+  }
   const leader = ranked[0];
   const flapChars = String(leader.totalPoints).padStart(3,'0').split('');
   return `
@@ -634,7 +638,9 @@ function fmtDate(iso){ return new Date(iso).toLocaleString(LANG==='he'?'he-IL':'
 /* ---- GAMES ---- */
 function betFor(gameId){ return STATE.user ? STATE.gameBets.find(b => normEmail(b.email)===normEmail(STATE.user.email) && b.gameId===gameId) : null; }
 function renderGames(){
-  if(!STATE.games.length) return `<div class="section-title">${t('gamesTitle')}</div><div class="card"><div class="empty-state">${t('noGames')}</div></div>`;
+  if(!STATE.games.length){
+    return `<div class="section-title">${t('gamesTitle')}</div><div class="card"><div class="empty-state">${STATE.loaded?'':'<div class="spinner"></div><br>'}${t('noGames')}</div></div>`;
+  }
   return `
   <div class="section-title">${t('gamesTitle')}</div>
   <div class="section-sub">${t('gamesSub')}</div>
@@ -738,7 +744,10 @@ function drawStatsChart(){
 
 /* ---- HALL OF FAME ---- */
 function renderHof(){
-  if(!STATE.hof.length) return `<div class="section-title">${t('hofTitle')}</div><div class="card"><div class="empty-state">${t('loading')}</div></div>`;
+  if(!STATE.hof.length){
+    const msg = STATE.loaded ? t('noHof') : t('loading');
+    return `<div class="section-title">${t('hofTitle')}</div><div class="card"><div class="empty-state">${STATE.loaded?'':'<div class="spinner"></div><br>'}${msg}</div></div>`;
+  }
   return `
   <div class="section-title">${t('hofTitle')}</div>
   <div class="section-sub">${t('hofSub')}</div>
