@@ -205,16 +205,10 @@ canvas{width:100%; height:280px; display:block;}
    bets and results live in the Google Sheet below.
 */
 const CONFIG = {
-  // --- Google Sheet (read via gviz, write via Apps Script) ---
-  SHEET_ID: '1sE6QVBTHK3ghSkIlHx-wGDhXi34jzQ_P8wFHYDbjzqk',
-  GIDS: {
-    PARTICIPANTS:  '0',        // name, email, totalPoints, form (JSON array of W/D/L), generalPoints
-    GAMES:         '1200559750',   // id, kickoffISO, group, teamA, teamB, status, scoreA, scoreB, topPlayerActual
-    GAME_BETS:     '657411218',   // email, gameId, betA, betB, betTopPlayer, pointsEarned, timestamp
-    GENERAL_BETS:  '1891995477',   // email, rank1..rank4, topScorer, topAssist, groupsJSON, pointsEarned, timestamp
-    HALL_OF_FAME:  '1290157268',   // year, winnerName, runnerUp, note
-  },
-  // --- Apps Script Web App URL, see Code.gs / SETUP.md ---
+  // --- Apps Script Web App URL: the ONLY way this site talks to the Sheet.
+  // The Sheet itself should be fully private (no "anyone with the link") —
+  // the script runs as its owner and decides what each caller may see.
+  // See SETUP.md. ---
   APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbzg9u__7JX1Tw-oodrqohyXP_h5jjFueewGKixkwZnz9rtAIP6rugOP376VuPYiunDb/exec',
 
   // --- General predictions form closes automatically at this time ---
@@ -357,17 +351,11 @@ const STATE = { user:null, participants:[], games:[], gameBets:[], generalBets:[
 /* =========================================================
    ============  4. Data layer (Google Sheets)  ==============
    ========================================================= */
-async function fetchSheetTab(gid){
-  const url = `https://docs.google.com/spreadsheets/d/${CONFIG.SHEET_ID}/gviz/tq?tqx=out:json&gid=${gid}`;
+async function fetchTab(tabName){
+  const email = STATE.user ? STATE.user.email : '';
+  const url = `${CONFIG.APPS_SCRIPT_URL}?tab=${encodeURIComponent(tabName)}&email=${encodeURIComponent(email)}`;
   const res = await fetch(url);
-  const text = await res.text();
-  const json = JSON.parse(text.substring(text.indexOf('{'), text.lastIndexOf('}')+1));
-  const cols = json.table.cols.map(c => (c.label || c.id || '').trim());
-  return json.table.rows.map(r => {
-    const obj = {};
-    cols.forEach((c,i) => { obj[c] = r.c[i] ? (r.c[i].v ?? '') : ''; });
-    return obj;
-  });
+  return res.json();
 }
 async function postBet(payload){
   // Apps Script web app handles auth + writes + server-side lock checks. See Code.gs
@@ -381,11 +369,9 @@ async function postBet(payload){
 async function loadAllData(){
   try{
     const [participants, games, gameBets, generalBets, hof] = await Promise.all([
-      fetchSheetTab(CONFIG.GIDS.PARTICIPANTS), fetchSheetTab(CONFIG.GIDS.GAMES),
-      fetchSheetTab(CONFIG.GIDS.GAME_BETS), fetchSheetTab(CONFIG.GIDS.GENERAL_BETS),
-      fetchSheetTab(CONFIG.GIDS.HALL_OF_FAME),
+      fetchTab('Participants'), fetchTab('Games'), fetchTab('GameBets'), fetchTab('GeneralBets'), fetchTab('HallOfFame'),
     ]);
-    if(!participants.length && !games.length) throw new Error('empty sheet / not configured');
+    if(!Array.isArray(participants) || (!participants.length && !games.length)) throw new Error('empty sheet / not configured');
     Object.assign(STATE, { participants, games, gameBets, generalBets, hof, demo:false });
   }catch(e){
     if(!CONFIG.DEMO_MODE_FALLBACK) throw e;
@@ -539,9 +525,10 @@ function renderRules(){
 }
 
 /* ---- GENERAL ---- */
+function normEmail(e){ return (e||'').trim().toLowerCase(); }
 function currentGeneralBet(){
   if(!STATE.user) return null;
-  return STATE.generalBets.find(b => b.email === STATE.user.email) || null;
+  return STATE.generalBets.find(b => normEmail(b.email) === normEmail(STATE.user.email)) || null;
 }
 function isGeneralLocked(){ return new Date() > new Date(CONFIG.GENERAL_DEADLINE); }
 
@@ -567,7 +554,7 @@ function renderGeneral(){
         ${[1,2,3,4].map(n => `
           <div class="field">
             <label>${t('rank'+n)}</label>
-            <select name="rank${n}" ${locked?'disabled':''}>
+            <select name="rank${n}" required ${locked?'disabled':''}>
               <option value="">${t('choose')}</option>
               ${allTeams.map(teamId => `<option value="${teamId}" ${existing && existing['rank'+n]===teamId ? 'selected':''}>${teamName(teamId)}</option>`).join('')}
             </select>
@@ -578,14 +565,14 @@ function renderGeneral(){
       <div class="podium-grid" style="grid-template-columns:1fr 1fr;">
         <div class="field">
           <label>${t('topScorer')}</label>
-          <select name="topScorer" ${locked?'disabled':''}>
+          <select name="topScorer" required ${locked?'disabled':''}>
             <option value="">${t('choose')}</option>
             ${allPlayers.map(p => `<option value="${p.id}" ${existing && existing.topScorer===p.id?'selected':''}>${playerName(p)} — ${teamName(p.teamId)}</option>`).join('')}
           </select>
         </div>
         <div class="field">
           <label>${t('topAssist')}</label>
-          <select name="topAssist" ${locked?'disabled':''}>
+          <select name="topAssist" required ${locked?'disabled':''}>
             <option value="">${t('choose')}</option>
             ${allPlayers.map(p => `<option value="${p.id}" ${existing && existing.topAssist===p.id?'selected':''}>${playerName(p)} — ${teamName(p.teamId)}</option>`).join('')}
           </select>
@@ -645,7 +632,7 @@ function renumberGroup(list){ list.querySelectorAll('.drag-item').forEach((li,i)
 function fmtDate(iso){ return new Date(iso).toLocaleString(LANG==='he'?'he-IL':'en-GB', {dateStyle:'medium', timeStyle:'short'}); }
 
 /* ---- GAMES ---- */
-function betFor(gameId){ return STATE.user ? STATE.gameBets.find(b => b.email===STATE.user.email && b.gameId===gameId) : null; }
+function betFor(gameId){ return STATE.user ? STATE.gameBets.find(b => normEmail(b.email)===normEmail(STATE.user.email) && b.gameId===gameId) : null; }
 function renderGames(){
   if(!STATE.games.length) return `<div class="section-title">${t('gamesTitle')}</div><div class="card"><div class="empty-state">${t('noGames')}</div></div>`;
   return `
@@ -789,9 +776,9 @@ function handleCredentialResponse(resp){
   const payload = JSON.parse(atob(resp.credential.split('.')[1]));
   STATE.user = { email: payload.email, name: payload.name, picture: payload.picture, idToken: resp.credential };
   localStorage.setItem('md_user', JSON.stringify(STATE.user));
-  renderAuthArea(); renderAll();
+  renderAuthArea(); loadAllData().then(renderAll);
 }
-function signOut(){ STATE.user = null; localStorage.removeItem('md_user'); renderAuthArea(); renderAll(); }
+function signOut(){ STATE.user = null; localStorage.removeItem('md_user'); renderAuthArea(); loadAllData().then(renderAll); }
 function renderAuthArea(){
   const wrap = document.getElementById('gsi-btn-wrap');
   if(STATE.user){
