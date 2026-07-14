@@ -192,6 +192,16 @@ canvas{width:100%; height:280px; display:block;}
 .spinner{width:22px; height:22px; border-radius:50%; border:2px solid var(--border-strong); border-top-color:var(--amber); animation:spin .7s linear infinite; margin:0 auto;}
 @keyframes spin{to{transform:rotate(360deg);}}
 .demo-note{font-size:11.5px; color:var(--text-faint); text-align:center; padding:10px; border-top:1px dashed var(--border); margin-top:10px;}
+
+.md-toast{
+  position:fixed; top:16px; left:50%; transform:translate(-50%,-140%);
+  background:var(--green); color:#0b1a10; font-weight:800; font-size:14px;
+  padding:13px 22px; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,.35);
+  z-index:200; display:flex; align-items:center; gap:8px; max-width:90vw; text-align:center;
+  transition:transform .35s cubic-bezier(.34,1.56,.64,1), opacity .35s; opacity:0;
+}
+.md-toast.error{background:var(--red); color:#2a0d0b;}
+.md-toast.show{transform:translate(-50%,0); opacity:1;}
 </style>
 </head>
 <body>
@@ -594,6 +604,34 @@ function computeGameScore(betA, betB, actualA, actualB){
 const TABS = ['home','rules','general','games','stats','hof'];
 let currentTab = 'home';
 
+function showToast(message, isError){
+  let toast = document.getElementById('mdToast');
+  if(!toast){
+    toast = document.createElement('div');
+    toast.id = 'mdToast';
+    document.body.appendChild(toast);
+  }
+  toast.className = 'md-toast' + (isError ? ' error' : '');
+  toast.textContent = message;
+  toast.style.display = 'flex';
+  void toast.offsetWidth; // restart animation if triggered twice in a row
+  toast.classList.remove('show'); void toast.offsetWidth; toast.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => { toast.classList.remove('show'); }, isError ? 4500 : 2600);
+}
+/** Re-fetches from the Sheet a few times, spaced out, since Apps Script can
+ *  take a few seconds (cold start) to actually commit a write. Returns true
+ *  as soon as checkFn() finds the just-saved data, false if it never shows
+ *  up within the allotted attempts. */
+async function pollUntilSaved(checkFn, attempts=5, delayMs=1500){
+  for(let i=0; i<attempts; i++){
+    await new Promise(r => setTimeout(r, delayMs));
+    await loadAllData();
+    if(checkFn()) return true;
+  }
+  return false;
+}
+
 function renderShell(){
   document.documentElement.lang = LANG;
   document.documentElement.dir = LANG==='he' ? 'rtl' : 'ltr';
@@ -601,7 +639,11 @@ function renderShell(){
   document.getElementById('tabNav').innerHTML = TABS.map(id =>
     `<button class="tab-btn ${id===currentTab?'active':''}" data-tab="${id}">${t('tab_'+id)}</button>`
   ).join('');
-  document.querySelectorAll('.tab-btn').forEach(b => b.onclick = () => { currentTab=b.dataset.tab; renderAll(); });
+  document.querySelectorAll('.tab-btn').forEach(b => b.onclick = () => {
+    currentTab = b.dataset.tab;
+    renderAll();
+    loadAllData().then(renderAll); // re-sync with the server on every tab switch
+  });
 }
 
 function renderAll(){
@@ -869,14 +911,14 @@ function wireGeneralForm(){
     };
     const msg = document.getElementById('generalMsg');
     const saveBtn = e.target.querySelector('button[type="submit"]');
-    msg.style.color = 'var(--green)'; msg.textContent = t('saving'); saveBtn.disabled = true;
+    msg.style.color = 'var(--text-dim)'; msg.textContent = t('saving'); saveBtn.disabled = true;
     await postBet(payload);
-    await new Promise(r => setTimeout(r, 1200)); // give Apps Script a moment to write
-    await loadAllData();
-    const landed = STATE.generalBets.find(b => normEmail(b.email)===normEmail(STATE.user.email) && b.rank1===payload.rank1 && b.topScorer===payload.topScorer);
+    const landed = await pollUntilSaved(() =>
+      STATE.generalBets.find(b => normEmail(b.email)===normEmail(STATE.user.email) && b.rank1===payload.rank1 && b.topScorer===payload.topScorer)
+    );
     saveBtn.disabled = false;
-    if(landed){ renderAll(); }
-    else{ msg.style.color = 'var(--red)'; msg.textContent = t('saveFailed'); }
+    if(landed){ showToast('✅ ' + t('saved')); renderAll(); }
+    else{ msg.style.color = 'var(--red)'; msg.textContent = t('saveFailed'); showToast('⚠️ ' + t('saveFailed'), true); renderAll(); }
   });
 }
 function renumberGroup(list){ list.querySelectorAll('.drag-item').forEach((li,i) => li.querySelector('.drag-pos').textContent = i+1); }
@@ -950,12 +992,12 @@ function wireGamesForm(){
       const originalText = btn.textContent;
       btn.textContent = '…'; btn.disabled = true;
       await postBet(payload);
-      await new Promise(r => setTimeout(r, 1200)); // give Apps Script a moment to write
-      await loadAllData();
-      const landed = STATE.gameBets.find(b => normEmail(b.email)===normEmail(STATE.user.email) && b.gameId===payload.gameId
-        && String(b.betA)===String(payload.betA) && String(b.betB)===String(payload.betB));
-      if(landed){ renderAll(); }
-      else{ btn.textContent = '⚠ ' + t('saveFailed'); btn.disabled = false; }
+      const landed = await pollUntilSaved(() =>
+        STATE.gameBets.find(b => normEmail(b.email)===normEmail(STATE.user.email) && b.gameId===payload.gameId
+          && String(b.betA)===String(payload.betA) && String(b.betB)===String(payload.betB))
+      );
+      if(landed){ showToast('✅ ' + t('saved')); renderAll(); }
+      else{ showToast('⚠️ ' + t('saveFailed'), true); btn.textContent = originalText; btn.disabled = false; }
     });
   });
 }
