@@ -43,21 +43,32 @@ input,select{font-family:inherit;}
   position:sticky; top:0; z-index:50; background:var(--bg);
   border-bottom:1px solid var(--border); backdrop-filter:blur(6px);
 }
-.header-top{display:flex; align-items:center; justify-content:space-between; padding:14px 20px; gap:12px;}
-.brand{display:flex; align-items:center; gap:10px; font-family:var(--font-mono); font-weight:700; font-size:19px; letter-spacing:.5px;}
-.brand .dot{width:9px; height:9px; border-radius:50%; background:var(--amber); box-shadow:0 0 8px var(--amber);}
-.header-controls{display:flex; align-items:center; gap:8px;}
+.header-top{display:flex; align-items:center; justify-content:space-between; padding:12px 16px; gap:8px;}
+.brand{display:flex; align-items:center; gap:8px; font-family:var(--font-mono); font-weight:700; font-size:19px; letter-spacing:.5px; flex-shrink:0; white-space:nowrap;}
+.brand .dot{width:9px; height:9px; border-radius:50%; background:var(--amber); box-shadow:0 0 8px var(--amber); flex-shrink:0;}
+.header-controls{display:flex; align-items:center; gap:6px; min-width:0;}
 .icon-btn{
   background:var(--surface); border:1px solid var(--border); color:var(--text);
-  border-radius:8px; padding:7px 10px; font-size:13px; font-weight:600;
+  border-radius:8px; padding:7px 10px; font-size:13px; font-weight:600; flex-shrink:0; white-space:nowrap;
 }
 .icon-btn:hover{border-color:var(--border-strong);}
-#gsi-btn-wrap{display:flex; align-items:center;}
-.user-chip{display:flex; align-items:center; gap:8px; background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:4px 12px 4px 4px;}
-html[dir="rtl"] .user-chip{padding:4px 4px 4px 12px;}
-.user-chip img{width:24px; height:24px; border-radius:50%;}
-.user-chip .name{font-size:13px; font-weight:600;}
-.user-chip .signout{font-size:11px; color:var(--text-faint); text-decoration:underline;}
+#gsi-btn-wrap{display:flex; align-items:center; min-width:0;}
+.user-chip{display:flex; align-items:center; gap:6px; background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:4px 10px 4px 4px; min-width:0;}
+html[dir="rtl"] .user-chip{padding:4px 4px 4px 10px;}
+.user-chip img{width:24px; height:24px; border-radius:50%; flex-shrink:0;}
+.user-chip .name{font-size:13px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:90px;}
+.user-chip .signout{font-size:15px; line-height:1; color:var(--text-faint); flex-shrink:0; padding:2px; cursor:pointer;}
+@media(max-width:480px){
+  .header-top{padding:10px 12px; gap:4px;}
+  .brand{font-size:15px; gap:5px;}
+  .brand .dot{width:7px; height:7px;}
+  .header-controls{gap:4px;}
+  .icon-btn{padding:6px 8px; font-size:11.5px;}
+  .user-chip .name{max-width:46px; font-size:12px;}
+  .user-chip{gap:4px; padding:3px 8px 3px 3px;}
+  html[dir="rtl"] .user-chip{padding:3px 3px 3px 8px;}
+  .user-chip img{width:20px; height:20px;}
+}
 
 .tabs{display:flex; gap:2px; padding:0 16px; overflow-x:auto; scrollbar-width:none;}
 .tabs::-webkit-scrollbar{display:none;}
@@ -112,8 +123,10 @@ html[dir="rtl"] .points-cell{text-align:left;}
 @media(max-width:720px){.rules-grid{grid-template-columns:1fr;}}
 .rule-table{width:100%; border-collapse:collapse; font-size:13.5px;}
 .rule-table td{padding:7px 4px; border-bottom:1px solid var(--border);}
-.rule-table td:last-child{text-align:right; font-family:var(--font-mono); font-weight:700; direction:ltr;}
+.rule-table td:last-child{text-align:right; direction:ltr;}
 html[dir="rtl"] .rule-table td:last-child{text-align:left;}
+.rule-value{display:inline-block; min-width:30px; text-align:center; background:var(--surface-3); color:var(--amber); font-weight:700; font-family:var(--font-mono); font-size:13px; padding:3px 9px; border-radius:6px;}
+.rule-value.negative{color:var(--red);}
 .rule-table .pos-tag{display:inline-block; font-size:10px; font-weight:800; padding:2px 6px; border-radius:4px; background:var(--surface-3); margin-inline-end:6px;}
 .badge-pos-GK{color:var(--blue);} .badge-pos-DF{color:var(--green);} .badge-pos-CM{color:var(--amber);} .badge-pos-ST{color:var(--red);}
 
@@ -186,7 +199,7 @@ canvas{width:100%; height:280px; display:block;}
   <div class="header-top">
     <div class="brand"><span class="dot"></span><span data-i18n="brandName">MATCHDAY</span></div>
     <div class="header-controls">
-      <button class="icon-btn" id="langToggle">EN / עב</button>
+      <button class="icon-btn" id="langToggle">EN</button>
       <button class="icon-btn" id="themeToggle">🌙</button>
       <div id="gsi-btn-wrap"></div>
     </div>
@@ -218,41 +231,14 @@ const CONFIG = {
   //     The Sheet, all bets, and all matching logic use the ID only — never the
   //     display text — so switching language never breaks a saved prediction. ---
   TEAMS: {
-    
-  team_a1: { en: 'Germany', he: 'גרמניה' },
-  team_a2: { en: 'Scotland', he: 'סקוטלנד' },
-  team_a3: { en: 'Hungary', he: 'הונגריה' },
-  team_a4: { en: 'Switzerland', he: 'שוויץ' },
-
-  // בית ב'
-  team_b1: { en: 'Spain', he: 'ספרד' },
-  team_b2: { en: 'Croatia', he: 'קרואטיה' },
-  team_b3: { en: 'Italy', he: 'איטליה' },
-  team_b4: { en: 'Albania', he: 'אלבניה' },
-
-  // בית ג'
-  team_c1: { en: 'Slovenia', he: 'סלובניה' },
-  team_c2: { en: 'Denmark', he: 'דנמרק' },
-  team_c3: { en: 'Serbia', he: 'סרביה' },
-  team_c4: { en: 'England', he: 'אנגליה' },
-
-  // בית ד'
-  team_d1: { en: 'Netherlands', he: 'הולנד' },
-  team_d2: { en: 'France', he: 'צרפת' },
-  team_d3: { en: 'Poland', he: 'פולין' },
-  team_d4: { en: 'Austria', he: 'אוסטריה' },
-
-  // בית ה'
-  team_e1: { en: 'Belgium', he: 'בלגיה' },
-  team_e2: { en: 'Slovakia', he: 'סלובקיה' },
-  team_e3: { en: 'Romania', he: 'רומניה' },
-  team_e4: { en: 'Ukraine', he: 'אוקראינה' },
-
-  // בית ו'
-  team_f1: { en: 'Portugal', he: 'פורטוגל' },
-  team_f2: { en: 'Czech Republic', he: 'צ׳כיה' },
-  team_f3: { en: 'Georgia', he: 'גאורגיה' },
-  team_f4: { en: 'Turkey', he: 'טורקיה' }
+    team_a1: { en:'Team A1', he:'קבוצה א1' }, team_a2: { en:'Team A2', he:'קבוצה א2' },
+    team_a3: { en:'Team A3', he:'קבוצה א3' }, team_a4: { en:'Team A4', he:'קבוצה א4' },
+    team_b1: { en:'Team B1', he:'קבוצה ב1' }, team_b2: { en:'Team B2', he:'קבוצה ב2' },
+    team_b3: { en:'Team B3', he:'קבוצה ב3' }, team_b4: { en:'Team B4', he:'קבוצה ב4' },
+    team_c1: { en:'Team C1', he:'קבוצה ג1' }, team_c2: { en:'Team C2', he:'קבוצה ג2' },
+    team_c3: { en:'Team C3', he:'קבוצה ג3' }, team_c4: { en:'Team C4', he:'קבוצה ג4' },
+    team_d1: { en:'Team D1', he:'קבוצה ד1' }, team_d2: { en:'Team D2', he:'קבוצה ד2' },
+    team_d3: { en:'Team D3', he:'קבוצה ד3' }, team_d4: { en:'Team D4', he:'קבוצה ד4' },
     // ...one entry per team in the tournament, id -> {en, he}
   },
 
@@ -262,8 +248,6 @@ const CONFIG = {
     B: ['team_b1', 'team_b2', 'team_b3', 'team_b4'],
     C: ['team_c1', 'team_c2', 'team_c3', 'team_c4'],
     D: ['team_d1', 'team_d2', 'team_d3', 'team_d4'],
-    E: ['team_e1', 'team_e2', 'team_e3', 'team_e4'],
-    F: ['team_f1', 'team_f2', 'team_f3', 'team_f4'],
   },
 
   // --- Rosters: teamId -> [{id, en, he, pos}], pos in GK/DF/CM/ST.
@@ -290,6 +274,7 @@ const CONFIG = {
     player: {
       ownGoal: -5,
       redCard: -3,
+      missedPenalty: -3,
       cleanSheetGK: 3,
       goal:   { GK: 5, DF: 3, CM: 1, ST: 0.5 },
       assist: { GK: 5, DF: 3, CM: 1, ST: 0.5 },
@@ -307,9 +292,10 @@ const I18N = {
     tab_stats:'Stats', tab_hof:'Hall of Fame', rank:'Rank', player:'Player', points:'Points', form:'Form',
     leaderLabel:'Leader', signIn:'Sign in', signOut:'Sign out',
     rulesTitle:'How scoring works', rulesGameTitle:'Match score bets', rulesPlayerTitle:'Top player of the game',
-    ruleExact:'Exact score', rulePts:(n)=>`${n} pts`, ruleDiff:'Correct goal difference', ruleOutcome:'Correct win / draw / loss',
-    ruleOwnGoal:'Own goal', ruleRedCard:'Red card', ruleCleanSheet:'GK clean sheet',
+    ruleExact:'Exact score', ruleDiff:'Correct goal difference', ruleOutcome:'Correct win / draw / loss',
+    ruleOwnGoal:'Own goal', ruleRedCard:'Red card', ruleCleanSheet:'GK clean sheet', ruleMissedPenalty:'Missed penalty',
     ruleGoal:'Goal scored', ruleAssist:'Assist', ruleStackNote:'Tiers stack — an exact score also earns the goal-difference and outcome points.',
+    positionsLegend:'Positions', posGK:'Goalkeepers', posDF:'Defenders', posCM:'Midfielders', posST:'Strikers / Forwards',
     generalTitle:'General predictions', generalSub:'Predict the podium, top scorer, top assister, and the finishing order of every group. Locks automatically at the deadline below.',
     deadline:'Closes', locked:'Predictions are locked', podium:'Final four', rank1:'Champion',rank2:'Runner-up',rank3:'3rd place',rank4:'4th place',
     topScorer:'Top goal scorer', topAssist:'Top assister', groupsTitle:'Group finishing order', dragHint:'Drag to reorder',
@@ -327,9 +313,10 @@ const I18N = {
     tab_stats:'סטטיסטיקות', tab_hof:'היכל התהילה', rank:'דירוג', player:'שם', points:'נקודות', form:'פורמה',
     leaderLabel:'מוביל', signIn:'התחברות', signOut:'התנתקות',
     rulesTitle:'איך מחשבים ניקוד', rulesGameTitle:'ניחושי תוצאות משחק', rulesPlayerTitle:'שחקן המשחק',
-    ruleExact:'תוצאה מדויקת', rulePts:(n)=>`${n} נק'`, ruleDiff:'הפרש שערים נכון', ruleOutcome:'ניצחון / תיקו / הפסד נכון',
-    ruleOwnGoal:'שער עצמי', ruleRedCard:'כרטיס אדום', ruleCleanSheet:'שער נקי לשוער',
+    ruleExact:'תוצאה מדויקת', ruleDiff:'הפרש שערים נכון', ruleOutcome:'ניצחון / תיקו / הפסד נכון',
+    ruleOwnGoal:'שער עצמי', ruleRedCard:'כרטיס אדום', ruleCleanSheet:'שער נקי', ruleMissedPenalty:'החטאת בעיטת עונשין',
     ruleGoal:'שער', ruleAssist:'בישול', ruleStackNote:'הניקוד מצטבר — תוצאה מדויקת מזכה גם בנקודות ההפרש והתוצאה.',
+    positionsLegend:'תפקידים', posGK:'שוערים', posDF:'הגנה', posCM:'קישור', posST:'התקפה',
     generalTitle:'ניחושים כלליים', generalSub:'נחשו את הפודיום, מלך השערים, מלך הבישולים, וסדר הסיום בכל בית. הטופס ננעל אוטומטית במועד שלמטה.',
     deadline:'נסגר בתאריך', locked:'הטופס נעול', podium:'הרביעייה הסופית', rank1:'אלופה',rank2:'מקום שני',rank3:'מקום שלישי',rank4:'מקום רביעי',
     topScorer:'מלך שערים', topAssist:'מלך בישולים', groupsTitle:'סדר סיום הבתים', dragHint:'גררו כדי לשנות סדר',
@@ -462,6 +449,7 @@ let currentTab = 'home';
 function renderShell(){
   document.documentElement.lang = LANG;
   document.documentElement.dir = LANG==='he' ? 'rtl' : 'ltr';
+  document.getElementById('langToggle').textContent = LANG==='he' ? 'עב' : 'EN';
   document.getElementById('tabNav').innerHTML = TABS.map(id =>
     `<button class="tab-btn ${id===currentTab?'active':''}" data-tab="${id}">${t('tab_'+id)}</button>`
   ).join('');
@@ -538,27 +526,39 @@ function animateFlaps(){ document.querySelectorAll('.flap-char').forEach((el,i) 
 /* ---- RULES ---- */
 function renderRules(){
   const s = CONFIG.SCORING;
+  const val = n => `<span class="rule-value ${n<0?'negative':''}">${n}</span>`;
+  const posLabels = { GK:t('posGK'), DF:t('posDF'), CM:t('posCM'), ST:t('posST') };
   return `
   <div class="section-title">${t('rulesTitle')}</div>
   <div class="rules-grid">
     <div class="card">
       <div class="card-title">${t('rulesGameTitle')}</div>
       <table class="rule-table">
-        <tr><td>${t('ruleExact')}</td><td>${t('rulePts', s.game.exact)}</td></tr>
-        <tr><td>${t('ruleDiff')}</td><td>${t('rulePts', s.game.diff)}</td></tr>
-        <tr><td>${t('ruleOutcome')}</td><td>${t('rulePts', s.game.outcome)}</td></tr>
+        <tr><td>${t('ruleExact')}</td><td>${val(s.game.exact)}</td></tr>
+        <tr><td>${t('ruleDiff')}</td><td>${val(s.game.diff)}</td></tr>
+        <tr><td>${t('ruleOutcome')}</td><td>${val(s.game.outcome)}</td></tr>
       </table>
       <div class="section-sub" style="margin-top:12px; margin-bottom:0;">${t('ruleStackNote')}</div>
     </div>
     <div class="card">
       <div class="card-title">${t('rulesPlayerTitle')}</div>
       <table class="rule-table">
-        ${['GK','DF','CM','ST'].map(pos => `<tr><td><span class="pos-tag badge-pos-${pos}">${pos}</span>${t('ruleGoal')}</td><td>${s.player.goal[pos]}</td></tr>`).join('')}
-        ${['GK','DF','CM','ST'].map(pos => `<tr><td><span class="pos-tag badge-pos-${pos}">${pos}</span>${t('ruleAssist')}</td><td>${s.player.assist[pos]}</td></tr>`).join('')}
-        <tr><td><span class="pos-tag badge-pos-GK">GK</span>${t('ruleCleanSheet')}</td><td>${s.player.cleanSheetGK}</td></tr>
-        <tr><td>${t('ruleOwnGoal')}</td><td>${s.player.ownGoal}</td></tr>
-        <tr><td>${t('ruleRedCard')}</td><td>${s.player.redCard}</td></tr>
+        ${['GK','DF','CM','ST'].map(pos => `<tr><td><span class="pos-tag badge-pos-${pos}">${pos}</span>${t('ruleGoal')}</td><td>${val(s.player.goal[pos])}</td></tr>`).join('')}
+        ${['GK','DF','CM','ST'].map(pos => `<tr><td><span class="pos-tag badge-pos-${pos}">${pos}</span>${t('ruleAssist')}</td><td>${val(s.player.assist[pos])}</td></tr>`).join('')}
+        <tr><td><span class="pos-tag badge-pos-GK">GK</span>${t('ruleCleanSheet')}</td><td>${val(s.player.cleanSheetGK)}</td></tr>
+        <tr><td>${t('ruleOwnGoal')}</td><td>${val(s.player.ownGoal)}</td></tr>
+        <tr><td>${t('ruleRedCard')}</td><td>${val(s.player.redCard)}</td></tr>
+        <tr><td>${t('ruleMissedPenalty')}</td><td>${val(s.player.missedPenalty)}</td></tr>
       </table>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">${t('positionsLegend')}</div>
+    <div class="rules-grid">
+      ${['GK','DF','CM','ST'].map(pos => `
+        <div style="display:flex; align-items:center; gap:8px; padding:4px 0;">
+          <span class="pos-tag badge-pos-${pos}">${pos}</span><span style="font-size:13.5px;">${posLabels[pos]}</span>
+        </div>`).join('')}
     </div>
   </div>`;
 }
@@ -829,7 +829,7 @@ function signOut(){ STATE.user = null; localStorage.removeItem('md_user'); rende
 function renderAuthArea(){
   const wrap = document.getElementById('gsi-btn-wrap');
   if(STATE.user){
-    wrap.innerHTML = `<div class="user-chip"><img src="${STATE.user.picture||''}" onerror="this.style.display='none'"><span class="name">${STATE.user.name}</span><span class="signout" id="signOutBtn">${t('signOut')}</span></div>`;
+    wrap.innerHTML = `<div class="user-chip"><img src="${STATE.user.picture||''}" onerror="this.style.display='none'"><span class="name">${STATE.user.name}</span><span class="signout" id="signOutBtn" title="${t('signOut')}">⏻</span></div>`;
     document.getElementById('signOutBtn').onclick = signOut;
   } else {
     wrap.innerHTML = '';
