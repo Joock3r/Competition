@@ -232,23 +232,41 @@ const CONFIG = {
   //     The Sheet, all bets, and all matching logic use the ID only — never the
   //     display text — so switching language never breaks a saved prediction. ---
   TEAMS: {
-    team_a1: { en:'Team A1', he:'קבוצה א1' }, team_a2: { en:'Team A2', he:'קבוצה א2' },
-    team_a3: { en:'Team A3', he:'קבוצה א3' }, team_a4: { en:'Team A4', he:'קבוצה א4' },
-    team_b1: { en:'Team B1', he:'קבוצה ב1' }, team_b2: { en:'Team B2', he:'קבוצה ב2' },
-    team_b3: { en:'Team B3', he:'קבוצה ב3' }, team_b4: { en:'Team B4', he:'קבוצה ב4' },
-    team_c1: { en:'Team C1', he:'קבוצה ג1' }, team_c2: { en:'Team C2', he:'קבוצה ג2' },
-    team_c3: { en:'Team C3', he:'קבוצה ג3' }, team_c4: { en:'Team C4', he:'קבוצה ג4' },
-    team_d1: { en:'Team D1', he:'קבוצה ד1' }, team_d2: { en:'Team D2', he:'קבוצה ד2' },
-    team_d3: { en:'Team D3', he:'קבוצה ד3' }, team_d4: { en:'Team D4', he:'קבוצה ד4' },
-    // ...one entry per team in the tournament, id -> {en, he}
+      germany: { en: 'Germany', he: 'גרמניה' },
+	   france: { en: 'France', he: 'צרפת' },
+	   england: { en: 'England', he: 'אנגליה' },
+	   spain: { en: 'Spain', he: 'ספרד' },
+	   italy: { en: 'Italy', he: 'איטליה' },
+	   portugal: { en: 'Portugal', he: 'פורטוגל' },
+	   netherlands: { en: 'Netherlands', he: 'הולנד' },
+   	belgium: { en: 'Belgium', he: 'בלגיה' },
+   	croatia: { en: 'Croatia', he: 'קרואטיה' },
+	   switzerland: { en: 'Switzerland', he: 'שוויץ' },
+   	denmark: { en: 'Denmark', he: 'דנמרק' },
+   	austria: { en: 'Austria', he: 'אוסטריה' },
+   	turkey: { en: 'Turkey', he: 'טורקיה' },
+   	ukraine: { en: 'Ukraine', he: 'אוקראינה' },
+   	scotland: { en: 'Scotland', he: 'סקוטלנד' },
+   	hungary: { en: 'Hungary', he: 'הונגריה' },
+   	serbia: { en: 'Serbia', he: 'סרביה' },
+   	poland: { en: 'Poland', he: 'פולין' },
+   	czech: { en: 'Czech', he: "צ'כיה" },
+   	romania: { en: 'Romania', he: 'רומניה' },
+   	slovakia: { en: 'Slovakia', he: 'סלובקיה' },
+   	slovenia: { en: 'Slovenia', he: 'סלובניה' },
+   	georgia: { en: 'Georgia', he: 'גאורגיה' },
+   	albania: { en: 'Albania', he: 'אלבניה' }
+      // ...one entry per team in the tournament, id -> {en, he}
   },
 
   // --- Groups & teams (inserted once per tournament) — lists of TEAM IDs ---
   GROUPS: {
-    A: ['team_a1', 'team_a2', 'team_a3', 'team_a4'],
-    B: ['team_b1', 'team_b2', 'team_b3', 'team_b4'],
-    C: ['team_c1', 'team_c2', 'team_c3', 'team_c4'],
-    D: ['team_d1', 'team_d2', 'team_d3', 'team_d4'],
+    A: ['germany', 'france', 'england', 'spain'],
+    B: ['italy', 'croatia', 'albania', 'turkey'],
+    C: ['portugal', 'switzerland', 'scotland', 'czech'],
+    D: ['netherlands', 'denmark', 'hungary', 'romania'],
+	 E: ['georgia', 'austria', 'serbia', 'slovakia'],
+    F: ['belgium', 'turkey', 'poland', 'slovenia'],
   },
 
   // --- Rosters: teamId -> [{id, en, he, pos}], pos in GK/DF/CM/ST.
