@@ -232,191 +232,184 @@ const CONFIG = {
   //     The Sheet, all bets, and all matching logic use the ID only — never the
   //     display text — so switching language never breaks a saved prediction. ---
   TEAMS: {
-      germany: { en: 'Germany', he: 'גרמניה' },
-	   france: { en: 'France', he: 'צרפת' },
-	   england: { en: 'England', he: 'אנגליה' },
-	   spain: { en: 'Spain', he: 'ספרד' },
-	   italy: { en: 'Italy', he: 'איטליה' },
-	   portugal: { en: 'Portugal', he: 'פורטוגל' },
-	   netherlands: { en: 'Netherlands', he: 'הולנד' },
-   	belgium: { en: 'Belgium', he: 'בלגיה' },
-   	croatia: { en: 'Croatia', he: 'קרואטיה' },
-	   switzerland: { en: 'Switzerland', he: 'שוויץ' },
-   	denmark: { en: 'Denmark', he: 'דנמרק' },
-   	austria: { en: 'Austria', he: 'אוסטריה' },
-   	turkey: { en: 'Turkey', he: 'טורקיה' },
-   	ukraine: { en: 'Ukraine', he: 'אוקראינה' },
-   	scotland: { en: 'Scotland', he: 'סקוטלנד' },
-   	hungary: { en: 'Hungary', he: 'הונגריה' },
-   	serbia: { en: 'Serbia', he: 'סרביה' },
-   	poland: { en: 'Poland', he: 'פולין' },
-   	czech: { en: 'Czech', he: "צ'כיה" },
-   	romania: { en: 'Romania', he: 'רומניה' },
-   	slovakia: { en: 'Slovakia', he: 'סלובקיה' },
-   	slovenia: { en: 'Slovenia', he: 'סלובניה' },
-   	georgia: { en: 'Georgia', he: 'גאורגיה' },
-   	albania: { en: 'Albania', he: 'אלבניה' }
-      // ...one entry per team in the tournament, id -> {en, he}
+    germany: { en:'Germany', he:'גרמניה' }, france: { en:'France', he:'צרפת' },
+    england: { en:'England', he:'אנגליה' }, spain: { en:'Spain', he:'ספרד' },
+    italy: { en:'Italy', he:'איטליה' }, portugal: { en:'Portugal', he:'פורטוגל' },
+    netherlands: { en:'Netherlands', he:'הולנד' }, belgium: { en:'Belgium', he:'בלגיה' },
+    croatia: { en:'Croatia', he:'קרואטיה' }, switzerland: { en:'Switzerland', he:'שוויץ' },
+    denmark: { en:'Denmark', he:'דנמרק' }, austria: { en:'Austria', he:'אוסטריה' },
+    turkey: { en:'Turkey', he:'טורקיה' }, ukraine: { en:'Ukraine', he:'אוקראינה' },
+    scotland: { en:'Scotland', he:'סקוטלנד' }, hungary: { en:'Hungary', he:'הונגריה' },
+    serbia: { en:'Serbia', he:'סרביה' }, poland: { en:'Poland', he:'פולין' },
+    czech: { en:'Czech', he:"צ'כיה" }, romania: { en:'Romania', he:'רומניה' },
+    slovakia: { en:'Slovakia', he:'סלובקיה' }, slovenia: { en:'Slovenia', he:'סלובניה' },
+    georgia: { en:'Georgia', he:'גאורגיה' }, albania: { en:'Albania', he:'אלבניה' },
   },
 
   // --- Groups & teams (inserted once per tournament) — lists of TEAM IDs ---
+  // NOTE: "turkey" currently appears in BOTH group B and group F below, and
+  // "ukraine" doesn't appear in any group — that's almost certainly a mix-up
+  // (a team can't play in two groups). Double-check this against your real
+  // draw before opening bets; I left the values exactly as you sent them.
   GROUPS: {
     A: ['germany', 'france', 'england', 'spain'],
     B: ['italy', 'croatia', 'albania', 'turkey'],
     C: ['portugal', 'switzerland', 'scotland', 'czech'],
     D: ['netherlands', 'denmark', 'hungary', 'romania'],
-	 E: ['georgia', 'austria', 'serbia', 'slovakia'],
-    F: ['belgium', 'turkey', 'poland', 'slovenia'],
+    E: ['georgia', 'austria', 'serbia', 'slovakia'],
+    F: ['belgium', 'ukraine', 'poland', 'slovenia'],
   },
 
   // --- Rosters: teamId -> [{id, en, he, pos}], pos in GK/DF/CM/ST.
-  //     `id` must be unique across the whole tournament (used in GameEvents / bets). ---
+  //     `id` must be unique across the whole tournament (used in GameEvents / bets).
+  //     Placeholder player names below — replace en/he with your real squads;
+  //     the ids (e.g. "germany_gk1") are already unique per team, keep them
+  //     as-is (or rename consistently) so bets and events keep matching. ---
   ROSTERS: {
     germany: [
-	  {id:'a1_gk1', en:'Player One',   he:'שחקן אחת',   pos:'GK'},
-      {id:'a1_df1', en:'Player Two',   he:'שחקן שתיים', pos:'DF'},
-      {id:'a1_cm1', en:'Player Three', he:'שחקן שלוש',  pos:'CM'},
-      {id:'a1_st1', en:'Player Four',  he:'שחקן ארבע',  pos:'ST'},
-	],
-	france: [
-	  {id:'a1_gk1', en:'Player One',   he:'שחקן אחת',   pos:'GK'},
-      {id:'a1_df1', en:'Player Two',   he:'שחקן שתיים', pos:'DF'},
-      {id:'a1_cm1', en:'Player Three', he:'שחקן שלוש',  pos:'CM'},
-      {id:'a1_st1', en:'Player Four',  he:'שחקן ארבע',  pos:'ST'},
-	],
-	england: [
-	  {id:'a1_gk1', en:'Player One',   he:'שחקן אחת',   pos:'GK'},
-      {id:'a1_df1', en:'Player Two',   he:'שחקן שתיים', pos:'DF'},
-      {id:'a1_cm1', en:'Player Three', he:'שחקן שלוש',  pos:'CM'},
-      {id:'a1_st1', en:'Player Four',  he:'שחקן ארבע',  pos:'ST'},
-	],
-	spain: [
-	  {id:'a1_gk1', en:'Player One',   he:'שחקן אחת',   pos:'GK'},
-      {id:'a1_df1', en:'Player Two',   he:'שחקן שתיים', pos:'DF'},
-      {id:'a1_cm1', en:'Player Three', he:'שחקן שלוש',  pos:'CM'},
-      {id:'a1_st1', en:'Player Four',  he:'שחקן ארבע',  pos:'ST'},
-	],
-	italy: [
-	  {id:'a1_gk1', en:'Player One',   he:'שחקן אחת',   pos:'GK'},
-      {id:'a1_df1', en:'Player Two',   he:'שחקן שתיים', pos:'DF'},
-      {id:'a1_cm1', en:'Player Three', he:'שחקן שלוש',  pos:'CM'},
-      {id:'a1_st1', en:'Player Four',  he:'שחקן ארבע',  pos:'ST'},
-	],
-	portugal: [
-	  {id:'a1_gk1', en:'Player One',   he:'שחקן אחת',   pos:'GK'},
-      {id:'a1_df1', en:'Player Two',   he:'שחקן שתיים', pos:'DF'},
-      {id:'a1_cm1', en:'Player Three', he:'שחקן שלוש',  pos:'CM'},
-      {id:'a1_st1', en:'Player Four',  he:'שחקן ארבע',  pos:'ST'},
-	],
-	netherlands: [
-	  {id:'a1_gk1', en:'Player One',   he:'שחקן אחת',   pos:'GK'},
-      {id:'a1_df1', en:'Player Two',   he:'שחקן שתיים', pos:'DF'},
-      {id:'a1_cm1', en:'Player Three', he:'שחקן שלוש',  pos:'CM'},
-      {id:'a1_st1', en:'Player Four',  he:'שחקן ארבע',  pos:'ST'},
-	],
-	belgium: [
-	  {id:'a1_gk1', en:'Player One',   he:'שחקן אחת',   pos:'GK'},
-      {id:'a1_df1', en:'Player Two',   he:'שחקן שתיים', pos:'DF'},
-      {id:'a1_cm1', en:'Player Three', he:'שחקן שלוש',  pos:'CM'},
-      {id:'a1_st1', en:'Player Four',  he:'שחקן ארבע',  pos:'ST'},
-	],
-	croatia: [
-	  {id:'a1_gk1', en:'Player One',   he:'שחקן אחת',   pos:'GK'},
-      {id:'a1_df1', en:'Player Two',   he:'שחקן שתיים', pos:'DF'},
-      {id:'a1_cm1', en:'Player Three', he:'שחקן שלוש',  pos:'CM'},
-      {id:'a1_st1', en:'Player Four',  he:'שחקן ארבע',  pos:'ST'},
-	],
-	switzerland: [
-	  {id:'a1_gk1', en:'Player One',   he:'שחקן אחת',   pos:'GK'},
-      {id:'a1_df1', en:'Player Two',   he:'שחקן שתיים', pos:'DF'},
-      {id:'a1_cm1', en:'Player Three', he:'שחקן שלוש',  pos:'CM'},
-      {id:'a1_st1', en:'Player Four',  he:'שחקן ארבע',  pos:'ST'},
-	],
-	denmark: [
-	  {id:'a1_gk1', en:'Player One',   he:'שחקן אחת',   pos:'GK'},
-      {id:'a1_df1', en:'Player Two',   he:'שחקן שתיים', pos:'DF'},
-      {id:'a1_cm1', en:'Player Three', he:'שחקן שלוש',  pos:'CM'},
-      {id:'a1_st1', en:'Player Four',  he:'שחקן ארבע',  pos:'ST'},
-	],
-	austria: [
-	  {id:'a1_gk1', en:'Player One',   he:'שחקן אחת',   pos:'GK'},
-      {id:'a1_df1', en:'Player Two',   he:'שחקן שתיים', pos:'DF'},
-      {id:'a1_cm1', en:'Player Three', he:'שחקן שלוש',  pos:'CM'},
-      {id:'a1_st1', en:'Player Four',  he:'שחקן ארבע',  pos:'ST'},
-	],
-	turkey: [
-	  {id:'a1_gk1', en:'Player One',   he:'שחקן אחת',   pos:'GK'},
-      {id:'a1_df1', en:'Player Two',   he:'שחקן שתיים', pos:'DF'},
-      {id:'a1_cm1', en:'Player Three', he:'שחקן שלוש',  pos:'CM'},
-      {id:'a1_st1', en:'Player Four',  he:'שחקן ארבע',  pos:'ST'},
-	],
-	ukraine: [
-	  {id:'a1_gk1', en:'Player One',   he:'שחקן אחת',   pos:'GK'},
-      {id:'a1_df1', en:'Player Two',   he:'שחקן שתיים', pos:'DF'},
-      {id:'a1_cm1', en:'Player Three', he:'שחקן שלוש',  pos:'CM'},
-      {id:'a1_st1', en:'Player Four',  he:'שחקן ארבע',  pos:'ST'},
-	],
-	scotland: [
-	  {id:'a1_gk1', en:'Player One',   he:'שחקן אחת',   pos:'GK'},
-      {id:'a1_df1', en:'Player Two',   he:'שחקן שתיים', pos:'DF'},
-      {id:'a1_cm1', en:'Player Three', he:'שחקן שלוש',  pos:'CM'},
-      {id:'a1_st1', en:'Player Four',  he:'שחקן ארבע',  pos:'ST'},
-	],
-	hungary: [
-	  {id:'a1_gk1', en:'Player One',   he:'שחקן אחת',   pos:'GK'},
-      {id:'a1_df1', en:'Player Two',   he:'שחקן שתיים', pos:'DF'},
-      {id:'a1_cm1', en:'Player Three', he:'שחקן שלוש',  pos:'CM'},
-      {id:'a1_st1', en:'Player Four',  he:'שחקן ארבע',  pos:'ST'},
-	],
-	serbia: [
-	  {id:'a1_gk1', en:'Player One',   he:'שחקן אחת',   pos:'GK'},
-      {id:'a1_df1', en:'Player Two',   he:'שחקן שתיים', pos:'DF'},
-      {id:'a1_cm1', en:'Player Three', he:'שחקן שלוש',  pos:'CM'},
-      {id:'a1_st1', en:'Player Four',  he:'שחקן ארבע',  pos:'ST'},
-	],
-	poland: [
-	  {id:'a1_gk1', en:'Player One',   he:'שחקן אחת',   pos:'GK'},
-      {id:'a1_df1', en:'Player Two',   he:'שחקן שתיים', pos:'DF'},
-      {id:'a1_cm1', en:'Player Three', he:'שחקן שלוש',  pos:'CM'},
-      {id:'a1_st1', en:'Player Four',  he:'שחקן ארבע',  pos:'ST'},
-	],
-	czech: [
-	  {id:'a1_gk1', en:'Player One',   he:'שחקן אחת',   pos:'GK'},
-      {id:'a1_df1', en:'Player Two',   he:'שחקן שתיים', pos:'DF'},
-      {id:'a1_cm1', en:'Player Three', he:'שחקן שלוש',  pos:'CM'},
-      {id:'a1_st1', en:'Player Four',  he:'שחקן ארבע',  pos:'ST'},
-	],
-	romania: [
-	  {id:'a1_gk1', en:'Player One',   he:'שחקן אחת',   pos:'GK'},
-      {id:'a1_df1', en:'Player Two',   he:'שחקן שתיים', pos:'DF'},
-      {id:'a1_cm1', en:'Player Three', he:'שחקן שלוש',  pos:'CM'},
-      {id:'a1_st1', en:'Player Four',  he:'שחקן ארבע',  pos:'ST'},
-	],
-	slovakia: [
-	  {id:'a1_gk1', en:'Player One',   he:'שחקן אחת',   pos:'GK'},
-      {id:'a1_df1', en:'Player Two',   he:'שחקן שתיים', pos:'DF'},
-      {id:'a1_cm1', en:'Player Three', he:'שחקן שלוש',  pos:'CM'},
-      {id:'a1_st1', en:'Player Four',  he:'שחקן ארבע',  pos:'ST'},
-	],
-	slovenia: [
-	  {id:'a1_gk1', en:'Player One',   he:'שחקן אחת',   pos:'GK'},
-      {id:'a1_df1', en:'Player Two',   he:'שחקן שתיים', pos:'DF'},
-      {id:'a1_cm1', en:'Player Three', he:'שחקן שלוש',  pos:'CM'},
-      {id:'a1_st1', en:'Player Four',  he:'שחקן ארבע',  pos:'ST'},
-	],
-	georgia: [
-	  {id:'a1_gk1', en:'Player One',   he:'שחקן אחת',   pos:'GK'},
-      {id:'a1_df1', en:'Player Two',   he:'שחקן שתיים', pos:'DF'},
-      {id:'a1_cm1', en:'Player Three', he:'שחקן שלוש',  pos:'CM'},
-      {id:'a1_st1', en:'Player Four',  he:'שחקן ארבע',  pos:'ST'},
-	],
-	albania: [
-	  {id:'a1_gk1', en:'Player One',   he:'שחקן אחת',   pos:'GK'},
-      {id:'a1_df1', en:'Player Two',   he:'שחקן שתיים', pos:'DF'},
-      {id:'a1_cm1', en:'Player Three', he:'שחקן שלוש',  pos:'CM'},
-      {id:'a1_st1', en:'Player Four',  he:'שחקן ארבע',  pos:'ST'},
-	],
-    // ...add every team's squad here (GK/DF/CM/ST only — no exact positions needed)
+      {id:'germany_gk1', en:'Goalkeeper (fill in real name)', he:'שוער (למלא שם אמיתי)', pos:'GK'},
+      {id:'germany_df1', en:'Defender (fill in real name)', he:'מגן (למלא שם אמיתי)', pos:'DF'},
+      {id:'germany_cm1', en:'Midfielder (fill in real name)', he:'קשר (למלא שם אמיתי)', pos:'CM'},
+      {id:'germany_st1', en:'Striker (fill in real name)', he:'חלוץ (למלא שם אמיתי)', pos:'ST'},
+    ],
+    france: [
+      {id:'france_gk1', en:'Goalkeeper (fill in real name)', he:'שוער (למלא שם אמיתי)', pos:'GK'},
+      {id:'france_df1', en:'Defender (fill in real name)', he:'מגן (למלא שם אמיתי)', pos:'DF'},
+      {id:'france_cm1', en:'Midfielder (fill in real name)', he:'קשר (למלא שם אמיתי)', pos:'CM'},
+      {id:'france_st1', en:'Striker (fill in real name)', he:'חלוץ (למלא שם אמיתי)', pos:'ST'},
+    ],
+    england: [
+      {id:'england_gk1', en:'Goalkeeper (fill in real name)', he:'שוער (למלא שם אמיתי)', pos:'GK'},
+      {id:'england_df1', en:'Defender (fill in real name)', he:'מגן (למלא שם אמיתי)', pos:'DF'},
+      {id:'england_cm1', en:'Midfielder (fill in real name)', he:'קשר (למלא שם אמיתי)', pos:'CM'},
+      {id:'england_st1', en:'Striker (fill in real name)', he:'חלוץ (למלא שם אמיתי)', pos:'ST'},
+    ],
+    spain: [
+      {id:'spain_gk1', en:'Goalkeeper (fill in real name)', he:'שוער (למלא שם אמיתי)', pos:'GK'},
+      {id:'spain_df1', en:'Defender (fill in real name)', he:'מגן (למלא שם אמיתי)', pos:'DF'},
+      {id:'spain_cm1', en:'Midfielder (fill in real name)', he:'קשר (למלא שם אמיתי)', pos:'CM'},
+      {id:'spain_st1', en:'Striker (fill in real name)', he:'חלוץ (למלא שם אמיתי)', pos:'ST'},
+    ],
+    italy: [
+      {id:'italy_gk1', en:'Goalkeeper (fill in real name)', he:'שוער (למלא שם אמיתי)', pos:'GK'},
+      {id:'italy_df1', en:'Defender (fill in real name)', he:'מגן (למלא שם אמיתי)', pos:'DF'},
+      {id:'italy_cm1', en:'Midfielder (fill in real name)', he:'קשר (למלא שם אמיתי)', pos:'CM'},
+      {id:'italy_st1', en:'Striker (fill in real name)', he:'חלוץ (למלא שם אמיתי)', pos:'ST'},
+    ],
+    portugal: [
+      {id:'portugal_gk1', en:'Goalkeeper (fill in real name)', he:'שוער (למלא שם אמיתי)', pos:'GK'},
+      {id:'portugal_df1', en:'Defender (fill in real name)', he:'מגן (למלא שם אמיתי)', pos:'DF'},
+      {id:'portugal_cm1', en:'Midfielder (fill in real name)', he:'קשר (למלא שם אמיתי)', pos:'CM'},
+      {id:'portugal_st1', en:'Striker (fill in real name)', he:'חלוץ (למלא שם אמיתי)', pos:'ST'},
+    ],
+    netherlands: [
+      {id:'netherlands_gk1', en:'Goalkeeper (fill in real name)', he:'שוער (למלא שם אמיתי)', pos:'GK'},
+      {id:'netherlands_df1', en:'Defender (fill in real name)', he:'מגן (למלא שם אמיתי)', pos:'DF'},
+      {id:'netherlands_cm1', en:'Midfielder (fill in real name)', he:'קשר (למלא שם אמיתי)', pos:'CM'},
+      {id:'netherlands_st1', en:'Striker (fill in real name)', he:'חלוץ (למלא שם אמיתי)', pos:'ST'},
+    ],
+    belgium: [
+      {id:'belgium_gk1', en:'Goalkeeper (fill in real name)', he:'שוער (למלא שם אמיתי)', pos:'GK'},
+      {id:'belgium_df1', en:'Defender (fill in real name)', he:'מגן (למלא שם אמיתי)', pos:'DF'},
+      {id:'belgium_cm1', en:'Midfielder (fill in real name)', he:'קשר (למלא שם אמיתי)', pos:'CM'},
+      {id:'belgium_st1', en:'Striker (fill in real name)', he:'חלוץ (למלא שם אמיתי)', pos:'ST'},
+    ],
+    croatia: [
+      {id:'croatia_gk1', en:'Goalkeeper (fill in real name)', he:'שוער (למלא שם אמיתי)', pos:'GK'},
+      {id:'croatia_df1', en:'Defender (fill in real name)', he:'מגן (למלא שם אמיתי)', pos:'DF'},
+      {id:'croatia_cm1', en:'Midfielder (fill in real name)', he:'קשר (למלא שם אמיתי)', pos:'CM'},
+      {id:'croatia_st1', en:'Striker (fill in real name)', he:'חלוץ (למלא שם אמיתי)', pos:'ST'},
+    ],
+    switzerland: [
+      {id:'switzerland_gk1', en:'Goalkeeper (fill in real name)', he:'שוער (למלא שם אמיתי)', pos:'GK'},
+      {id:'switzerland_df1', en:'Defender (fill in real name)', he:'מגן (למלא שם אמיתי)', pos:'DF'},
+      {id:'switzerland_cm1', en:'Midfielder (fill in real name)', he:'קשר (למלא שם אמיתי)', pos:'CM'},
+      {id:'switzerland_st1', en:'Striker (fill in real name)', he:'חלוץ (למלא שם אמיתי)', pos:'ST'},
+    ],
+    denmark: [
+      {id:'denmark_gk1', en:'Goalkeeper (fill in real name)', he:'שוער (למלא שם אמיתי)', pos:'GK'},
+      {id:'denmark_df1', en:'Defender (fill in real name)', he:'מגן (למלא שם אמיתי)', pos:'DF'},
+      {id:'denmark_cm1', en:'Midfielder (fill in real name)', he:'קשר (למלא שם אמיתי)', pos:'CM'},
+      {id:'denmark_st1', en:'Striker (fill in real name)', he:'חלוץ (למלא שם אמיתי)', pos:'ST'},
+    ],
+    austria: [
+      {id:'austria_gk1', en:'Goalkeeper (fill in real name)', he:'שוער (למלא שם אמיתי)', pos:'GK'},
+      {id:'austria_df1', en:'Defender (fill in real name)', he:'מגן (למלא שם אמיתי)', pos:'DF'},
+      {id:'austria_cm1', en:'Midfielder (fill in real name)', he:'קשר (למלא שם אמיתי)', pos:'CM'},
+      {id:'austria_st1', en:'Striker (fill in real name)', he:'חלוץ (למלא שם אמיתי)', pos:'ST'},
+    ],
+    turkey: [
+      {id:'turkey_gk1', en:'Goalkeeper (fill in real name)', he:'שוער (למלא שם אמיתי)', pos:'GK'},
+      {id:'turkey_df1', en:'Defender (fill in real name)', he:'מגן (למלא שם אמיתי)', pos:'DF'},
+      {id:'turkey_cm1', en:'Midfielder (fill in real name)', he:'קשר (למלא שם אמיתי)', pos:'CM'},
+      {id:'turkey_st1', en:'Striker (fill in real name)', he:'חלוץ (למלא שם אמיתי)', pos:'ST'},
+    ],
+    ukraine: [
+      {id:'ukraine_gk1', en:'Goalkeeper (fill in real name)', he:'שוער (למלא שם אמיתי)', pos:'GK'},
+      {id:'ukraine_df1', en:'Defender (fill in real name)', he:'מגן (למלא שם אמיתי)', pos:'DF'},
+      {id:'ukraine_cm1', en:'Midfielder (fill in real name)', he:'קשר (למלא שם אמיתי)', pos:'CM'},
+      {id:'ukraine_st1', en:'Striker (fill in real name)', he:'חלוץ (למלא שם אמיתי)', pos:'ST'},
+    ],
+    scotland: [
+      {id:'scotland_gk1', en:'Goalkeeper (fill in real name)', he:'שוער (למלא שם אמיתי)', pos:'GK'},
+      {id:'scotland_df1', en:'Defender (fill in real name)', he:'מגן (למלא שם אמיתי)', pos:'DF'},
+      {id:'scotland_cm1', en:'Midfielder (fill in real name)', he:'קשר (למלא שם אמיתי)', pos:'CM'},
+      {id:'scotland_st1', en:'Striker (fill in real name)', he:'חלוץ (למלא שם אמיתי)', pos:'ST'},
+    ],
+    hungary: [
+      {id:'hungary_gk1', en:'Goalkeeper (fill in real name)', he:'שוער (למלא שם אמיתי)', pos:'GK'},
+      {id:'hungary_df1', en:'Defender (fill in real name)', he:'מגן (למלא שם אמיתי)', pos:'DF'},
+      {id:'hungary_cm1', en:'Midfielder (fill in real name)', he:'קשר (למלא שם אמיתי)', pos:'CM'},
+      {id:'hungary_st1', en:'Striker (fill in real name)', he:'חלוץ (למלא שם אמיתי)', pos:'ST'},
+    ],
+    serbia: [
+      {id:'serbia_gk1', en:'Goalkeeper (fill in real name)', he:'שוער (למלא שם אמיתי)', pos:'GK'},
+      {id:'serbia_df1', en:'Defender (fill in real name)', he:'מגן (למלא שם אמיתי)', pos:'DF'},
+      {id:'serbia_cm1', en:'Midfielder (fill in real name)', he:'קשר (למלא שם אמיתי)', pos:'CM'},
+      {id:'serbia_st1', en:'Striker (fill in real name)', he:'חלוץ (למלא שם אמיתי)', pos:'ST'},
+    ],
+    poland: [
+      {id:'poland_gk1', en:'Goalkeeper (fill in real name)', he:'שוער (למלא שם אמיתי)', pos:'GK'},
+      {id:'poland_df1', en:'Defender (fill in real name)', he:'מגן (למלא שם אמיתי)', pos:'DF'},
+      {id:'poland_cm1', en:'Midfielder (fill in real name)', he:'קשר (למלא שם אמיתי)', pos:'CM'},
+      {id:'poland_st1', en:'Striker (fill in real name)', he:'חלוץ (למלא שם אמיתי)', pos:'ST'},
+    ],
+    czech: [
+      {id:'czech_gk1', en:'Goalkeeper (fill in real name)', he:'שוער (למלא שם אמיתי)', pos:'GK'},
+      {id:'czech_df1', en:'Defender (fill in real name)', he:'מגן (למלא שם אמיתי)', pos:'DF'},
+      {id:'czech_cm1', en:'Midfielder (fill in real name)', he:'קשר (למלא שם אמיתי)', pos:'CM'},
+      {id:'czech_st1', en:'Striker (fill in real name)', he:'חלוץ (למלא שם אמיתי)', pos:'ST'},
+    ],
+    romania: [
+      {id:'romania_gk1', en:'Goalkeeper (fill in real name)', he:'שוער (למלא שם אמיתי)', pos:'GK'},
+      {id:'romania_df1', en:'Defender (fill in real name)', he:'מגן (למלא שם אמיתי)', pos:'DF'},
+      {id:'romania_cm1', en:'Midfielder (fill in real name)', he:'קשר (למלא שם אמיתי)', pos:'CM'},
+      {id:'romania_st1', en:'Striker (fill in real name)', he:'חלוץ (למלא שם אמיתי)', pos:'ST'},
+    ],
+    slovakia: [
+      {id:'slovakia_gk1', en:'Goalkeeper (fill in real name)', he:'שוער (למלא שם אמיתי)', pos:'GK'},
+      {id:'slovakia_df1', en:'Defender (fill in real name)', he:'מגן (למלא שם אמיתי)', pos:'DF'},
+      {id:'slovakia_cm1', en:'Midfielder (fill in real name)', he:'קשר (למלא שם אמיתי)', pos:'CM'},
+      {id:'slovakia_st1', en:'Striker (fill in real name)', he:'חלוץ (למלא שם אמיתי)', pos:'ST'},
+    ],
+    slovenia: [
+      {id:'slovenia_gk1', en:'Goalkeeper (fill in real name)', he:'שוער (למלא שם אמיתי)', pos:'GK'},
+      {id:'slovenia_df1', en:'Defender (fill in real name)', he:'מגן (למלא שם אמיתי)', pos:'DF'},
+      {id:'slovenia_cm1', en:'Midfielder (fill in real name)', he:'קשר (למלא שם אמיתי)', pos:'CM'},
+      {id:'slovenia_st1', en:'Striker (fill in real name)', he:'חלוץ (למלא שם אמיתי)', pos:'ST'},
+    ],
+    georgia: [
+      {id:'georgia_gk1', en:'Goalkeeper (fill in real name)', he:'שוער (למלא שם אמיתי)', pos:'GK'},
+      {id:'georgia_df1', en:'Defender (fill in real name)', he:'מגן (למלא שם אמיתי)', pos:'DF'},
+      {id:'georgia_cm1', en:'Midfielder (fill in real name)', he:'קשר (למלא שם אמיתי)', pos:'CM'},
+      {id:'georgia_st1', en:'Striker (fill in real name)', he:'חלוץ (למלא שם אמיתי)', pos:'ST'},
+    ],
+    albania: [
+      {id:'albania_gk1', en:'Goalkeeper (fill in real name)', he:'שוער (למלא שם אמיתי)', pos:'GK'},
+      {id:'albania_df1', en:'Defender (fill in real name)', he:'מגן (למלא שם אמיתי)', pos:'DF'},
+      {id:'albania_cm1', en:'Midfielder (fill in real name)', he:'קשר (למלא שם אמיתי)', pos:'CM'},
+      {id:'albania_st1', en:'Striker (fill in real name)', he:'חלוץ (למלא שם אמיתי)', pos:'ST'},
+    ],
   },
 
   // --- Scoring rules ---
