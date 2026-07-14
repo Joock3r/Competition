@@ -253,11 +253,11 @@ const CONFIG = {
   // draw before opening bets; I left the values exactly as you sent them.
   GROUPS: {
     A: ['germany', 'france', 'england', 'spain'],
-    B: ['italy', 'croatia', 'albania', 'turkey'],
+    B: ['italy', 'croatia', 'albania', 'ukraine'],
     C: ['portugal', 'switzerland', 'scotland', 'czech'],
     D: ['netherlands', 'denmark', 'hungary', 'romania'],
     E: ['georgia', 'austria', 'serbia', 'slovakia'],
-    F: ['belgium', 'ukraine', 'poland', 'slovenia'],
+    F: ['belgium', 'turkey', 'poland', 'slovenia'],
   },
 
   // --- Rosters: teamId -> [{id, en, he, pos}], pos in GK/DF/CM/ST.
@@ -445,6 +445,7 @@ const I18N = {
     revealSub:"Predictions are locked — here's what everyone picked.", noneYet:'No predictions were submitted.',
     topScorer:'Top goal scorer', topAssist:'Top assister', groupsTitle:'Group finishing order', dragHint:'Drag to reorder',
     save:'Save predictions', saved:'Saved — you can edit until the deadline.', choose:'Choose…',
+    saving:'Saving…', saveFailed:'Save failed — check the Apps Script deployment (see SETUP.md troubleshooting).',
     gamesTitle:'Games', gamesSub:'Predict the score and pick your top player before kickoff.',
     yourScore:'Your score', topPlayerOfGame:'Top player', kickoff:'Kickoff', group:'Group',
     statusScheduled:'Open', statusLocked:'Locked', statusFinal:'Final', earned:'earned',
@@ -467,6 +468,7 @@ const I18N = {
     revealSub:'הניחושים ננעלו — הנה מה שכולם בחרו.', noneYet:'לא הוגשו ניחושים.',
     topScorer:'מלך שערים', topAssist:'מלך בישולים', groupsTitle:'סדר סיום הבתים', dragHint:'גררו כדי לשנות סדר',
     save:'שמירת ניחושים', saved:'נשמר — ניתן לערוך עד למועד הסגירה.', choose:'בחירה…',
+    saving:'שומר…', saveFailed:'השמירה נכשלה — בדוק את פריסת ה-Apps Script (ראה פתרון בעיות ב-SETUP.md).',
     gamesTitle:'משחקים', gamesSub:'נחשו את התוצאה ובחרו את שחקן המשחק לפני הבעיטה הראשונה.',
     yourScore:'הניחוש שלך', topPlayerOfGame:'שחקן המשחק', kickoff:'שעת התחלה', group:'בית',
     statusScheduled:'פתוח', statusLocked:'נעול', statusFinal:'הסתיים', earned:'נצברו',
@@ -865,12 +867,23 @@ function wireGeneralForm(){
       topScorer: fd.get('topScorer'), topAssist: fd.get('topAssist'),
       groupsJSON: JSON.stringify(groupsJSON), timestamp: new Date().toISOString(),
     };
+    const msg = document.getElementById('generalMsg');
+    const saveBtn = e.target.querySelector('button[type="submit"]');
+    msg.style.color = 'var(--green)'; msg.textContent = t('saving'); saveBtn.disabled = true;
     await postBet(payload);
-    document.getElementById('generalMsg').textContent = t('saved');
+    await new Promise(r => setTimeout(r, 1200)); // give Apps Script a moment to write
+    await loadAllData();
+    const landed = STATE.generalBets.find(b => normEmail(b.email)===normEmail(STATE.user.email) && b.rank1===payload.rank1 && b.topScorer===payload.topScorer);
+    saveBtn.disabled = false;
+    if(landed){ renderAll(); }
+    else{ msg.style.color = 'var(--red)'; msg.textContent = t('saveFailed'); }
   });
 }
 function renumberGroup(list){ list.querySelectorAll('.drag-item').forEach((li,i) => li.querySelector('.drag-pos').textContent = i+1); }
-function fmtDate(iso){ return new Date(iso).toLocaleString(LANG==='he'?'he-IL':'en-GB', {dateStyle:'medium', timeStyle:'short'}); }
+function fmtDate(iso){
+  const s = new Date(iso).toLocaleString(LANG==='he'?'he-IL':'en-GB', {dateStyle:'medium', timeStyle:'short'});
+  return `<span style="unicode-bidi:isolate; direction:${LANG==='he'?'rtl':'ltr'};">${s}</span>`;
+}
 
 /* ---- GAMES ---- */
 function betFor(gameId){ return STATE.user ? STATE.gameBets.find(b => normEmail(b.email)===normEmail(STATE.user.email) && b.gameId===gameId) : null; }
@@ -889,7 +902,10 @@ function renderGameCard(g){
   const locked = new Date() > kickoff || g.status !== 'scheduled';
   const isFinal = g.status === 'final';
   const bet = betFor(g.id);
-  const roster = [...(CONFIG.ROSTERS[g.teamA]||[]), ...(CONFIG.ROSTERS[g.teamB]||[])];
+  const roster = [
+    ...(CONFIG.ROSTERS[g.teamA]||[]).map(p => ({...p, teamId:g.teamA})),
+    ...(CONFIG.ROSTERS[g.teamB]||[]).map(p => ({...p, teamId:g.teamB})),
+  ];
   const earned = isFinal && bet ? computeGameScore(bet.betA, bet.betB, g.scoreA, g.scoreB) : null;
   return `
   <div class="game-card">
@@ -910,7 +926,7 @@ function renderGameCard(g){
       <label>${t('topPlayerOfGame')}</label>
       <select data-role="topPlayer" ${locked?'disabled':''}>
         <option value="">${t('choose')}</option>
-        ${roster.map(p => `<option value="${p.id}" ${bet && bet.betTopPlayer===p.id?'selected':''}>${playerName(p)} (${p.pos})</option>`).join('')}
+        ${roster.map(p => `<option value="${p.id}" ${bet && bet.betTopPlayer===p.id?'selected':''}>${playerName(p)} (${p.pos}) — ${teamName(p.teamId)}</option>`).join('')}
       </select>
     </div>
     <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
@@ -931,8 +947,15 @@ function wireGamesForm(){
         betTopPlayer: card.querySelector('[data-role="topPlayer"]').value,
         timestamp: new Date().toISOString(),
       };
+      const originalText = btn.textContent;
+      btn.textContent = '…'; btn.disabled = true;
       await postBet(payload);
-      btn.textContent = '✓';
+      await new Promise(r => setTimeout(r, 1200)); // give Apps Script a moment to write
+      await loadAllData();
+      const landed = STATE.gameBets.find(b => normEmail(b.email)===normEmail(STATE.user.email) && b.gameId===payload.gameId
+        && String(b.betA)===String(payload.betA) && String(b.betB)===String(payload.betB));
+      if(landed){ renderAll(); }
+      else{ btn.textContent = '⚠ ' + t('saveFailed'); btn.disabled = false; }
     });
   });
 }
