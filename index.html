@@ -35,6 +35,7 @@ html[data-theme="light"]{
 body{background:var(--bg); color:var(--text); font-family:var(--font-en); transition:background .25s,color .25s;}
 html[dir="rtl"] body{font-family:var(--font-he);}
 .mono{font-family:var(--font-mono);}
+.iso-num{unicode-bidi:isolate; direction:ltr; display:inline-block;}
 a{color:inherit;}
 button{font-family:inherit; cursor:pointer;}
 input,select{font-family:inherit;}
@@ -109,13 +110,12 @@ main{max-width:1080px; margin:0 auto; padding:24px 16px 80px;}
 html[dir="rtl"] .leaderboard th{text-align:right;}
 .leaderboard td{padding:12px 10px; border-bottom:1px solid var(--border); font-size:14px; vertical-align:middle;}
 .leaderboard tr:hover td{background:var(--surface-2);}
-.rank-cell{font-family:var(--font-mono); font-weight:700; width:36px; color:var(--text-dim); direction:ltr;}
+.rank-cell{font-family:var(--font-mono); font-weight:700; width:36px; color:var(--text-dim);}
 .rank-cell.top1{color:var(--amber);} .rank-cell.top2{color:#c9c9c9;} .rank-cell.top3{color:#c88a4d;}
-.points-cell{font-family:var(--font-mono); font-weight:700; font-size:16px; color:var(--amber); text-align:right; direction:ltr;}
-html[dir="rtl"] .points-cell{text-align:left;}
+.points-cell{font-family:var(--font-mono); font-weight:700; font-size:16px; color:var(--amber); text-align:right;}
 .form-dots{display:flex; gap:4px;}
 .form-dot{width:9px; height:9px; border-radius:50%;}
-.form-dot.W{background:var(--green);} .form-dot.D{background:var(--text-faint);} .form-dot.L{background:var(--red);}
+.form-dot.green{background:var(--green);} .form-dot.yellow{background:var(--amber);} .form-dot.red{background:var(--red);}
 .player-name-cell{display:flex; align-items:center; gap:10px; font-weight:600;}
 .avatar{width:28px; height:28px; border-radius:50%; background:var(--surface-3); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; color:var(--text-dim);}
 
@@ -124,9 +124,8 @@ html[dir="rtl"] .points-cell{text-align:left;}
 @media(max-width:720px){.rules-grid{grid-template-columns:1fr;}}
 .rule-table{width:100%; border-collapse:collapse; font-size:13.5px;}
 .rule-table td{padding:7px 4px; border-bottom:1px solid var(--border);}
-.rule-table td:last-child{text-align:right; direction:ltr;}
-html[dir="rtl"] .rule-table td:last-child{text-align:left;}
-.rule-value{display:inline-block; min-width:30px; text-align:center; background:var(--surface-3); color:var(--amber); font-weight:700; font-family:var(--font-mono); font-size:13px; padding:3px 9px; border-radius:6px;}
+.rule-table td:last-child{text-align:right;}
+.rule-value{display:inline-block; min-width:30px; text-align:center; background:var(--surface-3); color:var(--amber); font-weight:700; font-family:var(--font-mono); font-size:13px; padding:3px 9px; border-radius:6px; unicode-bidi:isolate; direction:ltr;}
 .rule-value.negative{color:var(--red);}
 .rule-table .pos-tag{display:inline-block; font-size:10px; font-weight:800; padding:2px 6px; border-radius:4px; background:var(--surface-3); margin-inline-end:6px;}
 .badge-pos-GK{color:var(--blue);} .badge-pos-DF{color:var(--green);} .badge-pos-CM{color:var(--amber);} .badge-pos-ST{color:var(--red);}
@@ -150,7 +149,7 @@ html[dir="rtl"] .rule-table td:last-child{text-align:left;}
 }
 .drag-item.dragging{opacity:.4;}
 .drag-handle{color:var(--text-faint); font-size:14px;}
-.drag-pos{font-family:var(--font-mono); font-weight:700; color:var(--amber); width:16px; direction:ltr;}
+.drag-pos{font-family:var(--font-mono); font-weight:700; color:var(--amber); width:16px;}
 .btn{
   background:var(--amber); color:#1a1408; border:none; padding:11px 22px; border-radius:8px; font-weight:800;
   font-size:14px; letter-spacing:.3px;
@@ -183,7 +182,7 @@ canvas{width:100%; height:280px; display:block;}
 
 /* ---------- Hall of fame ---------- */
 .hof-item{display:flex; align-items:center; gap:16px; padding:14px 0; border-bottom:1px solid var(--border);}
-.hof-year{font-family:var(--font-mono); font-weight:700; font-size:20px; color:var(--amber); width:64px; direction:ltr;}
+.hof-year{font-family:var(--font-mono); font-weight:700; font-size:20px; color:var(--amber); width:64px;}
 .hof-trophy{font-size:22px;}
 .hof-name{font-weight:800; font-size:15px;}
 .hof-sub{font-size:12.5px; color:var(--text-dim);}
@@ -205,6 +204,11 @@ canvas{width:100%; height:280px; display:block;}
 .player-pts-red{background:var(--red-dim); color:var(--red);}
 .player-pts-yellow{background:var(--amber-dim); color:var(--amber);}
 .player-pts-green{background:var(--green-dim); color:var(--green);}
+.subtab-row{display:flex; gap:8px; margin-bottom:16px;}
+.subtab-btn{background:var(--surface); border:1px solid var(--border); color:var(--text-dim); font-weight:700; font-size:13px; padding:8px 14px; border-radius:20px;}
+.subtab-btn.active{background:var(--amber); color:#1a1408; border-color:var(--amber);}
+.whatsapp-btn{background:#25D366; color:#07321a; border-color:#25D366;}
+.whatsapp-btn:hover{filter:brightness(1.05);}
 </style>
 </head>
 <body>
@@ -260,10 +264,6 @@ const CONFIG = {
   },
 
   // --- Groups & teams (inserted once per tournament) — lists of TEAM IDs ---
-  // NOTE: "turkey" currently appears in BOTH group B and group F below, and
-  // "ukraine" doesn't appear in any group — that's almost certainly a mix-up
-  // (a team can't play in two groups). Double-check this against your real
-  // draw before opening bets; I left the values exactly as you sent them.
   GROUPS: {
     A: ['germany', 'france', 'england', 'spain'],
     B: ['italy', 'croatia', 'albania', 'ukraine'],
@@ -430,6 +430,13 @@ const CONFIG = {
     game: { exact: 2, diff: 1, outcome: 2 }, // stack: exact score also satisfies diff+outcome => up to 5
     groupPosition: 2,    // per team placed in its exact final group position (max 4 teams × 2 = 8 per group)
     advancingCorrect: 1, // knockout stage: correctly picking which team advances / wins
+    // Podium (final four) predictions — two components that STACK:
+    // 1) per-position exact match, indexed [pos1, pos2, pos3, pos4]
+    podiumPosition: [14, 9, 6, 6],
+    // 2) bonus based on how many of the 4 picks are anywhere in the real final four
+    //    (position doesn't matter for this part), keyed by correct-count 1-4
+    podiumOverlapBonus: { 1: 6, 2: 13, 3: 25, 4: 37 },
+    topPickBonus: 18, // correct top scorer OR top assist pick (each independently)
     player: {
       ownGoal: -5,
       redCard: -3,
@@ -453,6 +460,9 @@ const I18N = {
     rulesTitle:'How scoring works', rulesGameTitle:'Match score bets', rulesPlayerTitle:'Top player of the game',
     rulesStageTitle:'Group stage & knockout', ruleGroupPosition:'Exact team position at end of group stage (per team)',
     ruleGroupPositionNote:'Up to 4 teams × 2 pts = 8 pts per group.', ruleAdvancing:'Correct pick in the knockout stage',
+    rulesPodiumTitle:'Podium (final four)', exact:'exact', ruleOverlapNote:'Plus, regardless of position — how many of your 4 picks made the real final four:',
+    ruleOverlapCount:(n)=>`${n} of 4 correct`, rulePodiumStackNote:'Both parts stack — an exact position also counts toward the overlap bonus.',
+    rulesTopPickTitle:'Top scorer & top assister',
     ruleExact:'Exact score', ruleDiff:'Correct goal difference', ruleOutcome:'Correct win / draw / loss',
     ruleOwnGoal:'Own goal', ruleRedCard:'Red card', ruleCleanSheet:'GK clean sheet', ruleMissedPenalty:'Missed penalty',
     ruleGoal:'Goal scored', ruleAssist:'Assist', ruleStackNote:'Tiers stack — an exact score also earns the goal-difference and outcome points.',
@@ -467,6 +477,7 @@ const I18N = {
     yourScore:'Your score', topPlayerOfGame:'Top player', kickoff:'Kickoff', group:'Group',
     statusScheduled:'Open', statusLocked:'Locked', statusFinal:'Final', earned:'earned',
     noOpenGames:'No open games right now.', playedGamesTitle:'Played games', playedGamesSub:"Results, everyone's bets, and match events.",
+    tabOpenGames:'Open', tabPlayedGames:'Played', whatsappFallback:'Image downloaded — attach it to WhatsApp manually.',
     everyoneBets:"Everyone's bets", matchEventsTitle:'Match events', noEventsYet:'No events recorded for this game yet.',
     advancingShort:'Advancing', advancingLabel:'Team advancing to the next stage',
     advancingWinnerLabel:'Match winner (including extra time / penalties)',
@@ -483,6 +494,9 @@ const I18N = {
     rulesTitle:'איך מחשבים ניקוד', rulesGameTitle:'ניחושי תוצאות משחק', rulesPlayerTitle:'שחקן המשחק',
     rulesStageTitle:'שלב הבתים ופלייאוף', ruleGroupPosition:'מיקום מדויק של נבחרת בסיום שלב הבתים (לכל נבחרת)',
     ruleGroupPositionNote:"עד 4 נבחרות × 2 נק' = 8 נק' לכל בית.", ruleAdvancing:'ניחוש נכון בשלב הפלייאוף',
+    rulesPodiumTitle:'פודיום (הרביעייה הסופית)', exact:'מדויק', ruleOverlapNote:'בנוסף, ללא תלות במיקום — כמה מ-4 הבחירות שלכם באמת הגיעו לחצי גמר:',
+    ruleOverlapCount:(n)=>`${n} מתוך 4 נכונות`, rulePodiumStackNote:'שני החלקים מצטברים — מיקום מדויק גם נספר לטובת בונוס ההתאמה.',
+    rulesTopPickTitle:'מלך שערים ומלך בישולים',
     ruleExact:'תוצאה מדויקת', ruleDiff:'הפרש שערים נכון', ruleOutcome:'ניצחון / תיקו / הפסד נכון',
     ruleOwnGoal:'שער עצמי', ruleRedCard:'כרטיס אדום', ruleCleanSheet:'שער נקי', ruleMissedPenalty:'החטאת בעיטת עונשין',
     ruleGoal:'שער', ruleAssist:'בישול', ruleStackNote:'הניקוד מצטבר — תוצאה מדויקת מזכה גם בנקודות ההפרש והתוצאה.',
@@ -497,6 +511,7 @@ const I18N = {
     yourScore:'הניחוש שלך', topPlayerOfGame:'שחקן המשחק', kickoff:'שעת התחלה', group:'בית',
     statusScheduled:'פתוח', statusLocked:'נעול', statusFinal:'הסתיים', earned:'נצברו',
     noOpenGames:'אין משחקים פתוחים כרגע.', playedGamesTitle:'משחקים ששוחקו', playedGamesSub:'תוצאות, ההימורים של כולם, ואירועי המשחק.',
+    tabOpenGames:'פתוחים', tabPlayedGames:'ששוחקו', whatsappFallback:'התמונה הורדה — צרפו אותה ידנית לוואטסאפ.',
     everyoneBets:'ההימורים של כולם', matchEventsTitle:'אירועי המשחק', noEventsYet:'לא הוזנו אירועים למשחק זה עדיין.',
     advancingShort:'העפלה', advancingLabel:'הנבחרת שמעפילה לשלב הבא',
     advancingWinnerLabel:'הנבחרת המנצחת במשחק (כולל הארכה / פנדלים)',
@@ -584,7 +599,7 @@ function demoData(){
   ];
   const participants = people.map((n,i) => ({
     email:`${n.en.split(' ')[0].toLowerCase()}@example.com`, name_en:n.en, name_he:n.he,
-    totalPoints: 34 - i*4 + (i%2), form: JSON.stringify(['W','W','D','L','W'].slice(0, 5-i%3)),
+    totalPoints: 34 - i*4 + (i%2), form: JSON.stringify([7, 5, 3, 0, -2].slice(0, 5-i%3)),
   }));
   const games = [
     {id:'G1', kickoffISO:'2026-06-11T21:00:00+03:00', group:'A', stage:'group', teamA:'team_a1', teamB:'team_a2', status:'final', scoreA:2, scoreB:1, advancingTeam:''},
@@ -684,7 +699,11 @@ function renderAll(){
   const main = document.getElementById('main');
   const renderers = { home:renderHome, rules:renderRules, general:renderGeneral, games:renderGames, stats:renderStats, hof:renderHof };
   main.innerHTML = renderers[currentTab]();
-  if(currentTab==='home'){ animateFlaps(); const eb = document.getElementById('exportImgBtn'); if(eb) eb.onclick = exportLeaderboardImage; }
+  if(currentTab==='home'){
+    animateFlaps();
+    const eb = document.getElementById('exportImgBtn'); if(eb) eb.onclick = exportLeaderboardImage;
+    const wb = document.getElementById('whatsappImgBtn'); if(wb) wb.onclick = () => shareToWhatsApp('exportCapture', 'matchday-leaderboard.png', wb);
+  }
   if(currentTab==='general') wireGeneralForm();
   if(currentTab==='games') wireGamesForm();
   if(currentTab==='stats') drawStatsChart();
@@ -728,17 +747,20 @@ function renderHome(){
   <div class="card" id="exportCapture">
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; gap:10px; flex-wrap:wrap;">
       <div class="mono" style="font-size:11px; color:var(--text-faint); letter-spacing:1px;">🏆 ${t('brandName')} · ${new Date().toLocaleDateString(LANG==='he'?'he-IL':'en-GB',{day:'numeric',month:'short',year:'numeric'})}</div>
-      <button class="icon-btn" id="exportImgBtn" data-export-exclude style="display:flex; align-items:center; gap:5px;">📤 ${t('exportImage')}</button>
+      <div data-export-exclude style="display:flex; gap:6px; flex-wrap:wrap;">
+        <button class="icon-btn" id="exportImgBtn" style="display:flex; align-items:center; gap:5px;">📤 ${t('exportImage')}</button>
+        <button class="icon-btn whatsapp-btn" id="whatsappImgBtn" style="display:flex; align-items:center; gap:5px;">📲 WhatsApp</button>
+      </div>
     </div>
     <table class="leaderboard">
       <thead><tr><th>${t('rank')}</th><th>${t('player')}</th><th>${t('form')}</th><th style="text-align:right">${t('points')}</th></tr></thead>
       <tbody>
         ${ranked.map(p => `
           <tr>
-            <td class="rank-cell ${p.rank<=3?'top'+p.rank:''}">${medal(p.rank)}${p.rank}</td>
+            <td class="rank-cell ${p.rank<=3?'top'+p.rank:''}">${medal(p.rank)}<span class="iso-num">${p.rank}</span></td>
             <td><div class="player-name-cell"><div class="avatar">${initials(p.displayName)}</div>${p.displayName}</div></td>
             <td><div class="form-dots">${formDots(p.form)}</div></td>
-            <td class="points-cell">${p.totalPoints}</td>
+            <td class="points-cell"><span class="iso-num">${p.totalPoints}</span></td>
           </tr>`).join('')}
       </tbody>
     </table>
@@ -773,9 +795,14 @@ async function exportElementImage(targetId, filename, btn){
 async function exportLeaderboardImage(){
   await exportElementImage('exportCapture', 'matchday-leaderboard.png', document.getElementById('exportImgBtn'));
 }
+async function shareToWhatsApp(targetId, filename, btn){
+  const canUseShareSheet = !!(navigator.canShare);
+  await exportElementImage(targetId, filename, btn);
+  if(!canUseShareSheet) showToast('📥 ' + t('whatsappFallback'));
+}
 function medal(rank){ return rank===1?'🥇 ':rank===2?'🥈 ':rank===3?'🥉 ':''; }
 function initials(name){ return (name||'?').split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase(); }
-function formDots(form){ return (form||[]).map(r => `<span class="form-dot ${r}"></span>`).join(''); }
+function formDots(form){ return (form||[]).map(pts => `<span class="form-dot ${playerPtsColor(+pts)}" title="${pts}"></span>`).join(''); }
 function animateFlaps(){ document.querySelectorAll('.flap-char').forEach((el,i) => setTimeout(()=>el.classList.add('flip'), i*90)); }
 
 /* ---- RULES ---- */
@@ -802,6 +829,29 @@ function renderRules(){
         <tr><td>${t('ruleAdvancing')}</td><td>${val(s.advancingCorrect)}</td></tr>
       </table>
       <div class="section-sub" style="margin-top:12px; margin-bottom:0;">${t('ruleGroupPositionNote')}</div>
+    </div>
+  </div>
+  <div class="rules-grid">
+    <div class="card">
+      <div class="card-title">${t('rulesPodiumTitle')}</div>
+      <table class="rule-table">
+        <tr><td>${t('rank1')} (${t('exact')})</td><td>${val(s.podiumPosition[0])}</td></tr>
+        <tr><td>${t('rank2')} (${t('exact')})</td><td>${val(s.podiumPosition[1])}</td></tr>
+        <tr><td>${t('rank3')} (${t('exact')})</td><td>${val(s.podiumPosition[2])}</td></tr>
+        <tr><td>${t('rank4')} (${t('exact')})</td><td>${val(s.podiumPosition[3])}</td></tr>
+      </table>
+      <div class="section-sub" style="margin:10px 0 4px;">${t('ruleOverlapNote')}</div>
+      <table class="rule-table">
+        ${[1,2,3,4].map(n => `<tr><td>${t('ruleOverlapCount', n)}</td><td>${val(s.podiumOverlapBonus[n])}</td></tr>`).join('')}
+      </table>
+      <div class="section-sub" style="margin-top:12px; margin-bottom:0;">${t('rulePodiumStackNote')}</div>
+    </div>
+    <div class="card">
+      <div class="card-title">${t('rulesTopPickTitle')}</div>
+      <table class="rule-table">
+        <tr><td>${t('topScorer')} (${t('exact')})</td><td>${val(s.topPickBonus)}</td></tr>
+        <tr><td>${t('topAssist')} (${t('exact')})</td><td>${val(s.topPickBonus)}</td></tr>
+      </table>
     </div>
   </div>
   <div class="rules-grid">
@@ -891,7 +941,7 @@ function renderGeneral(){
         return `<div class="group-editor" data-group="${g}">
           <h4>${t('group')} ${g}</h4>
           <ul class="drag-list" data-group="${g}">
-            ${order.map((teamId,i) => `<li class="drag-item" draggable="true" data-team="${teamId}"><span class="drag-pos">${i+1}</span><span class="drag-handle">⠿</span>${teamName(teamId)}</li>`).join('')}
+            ${order.map((teamId,i) => `<li class="drag-item" draggable="true" data-team="${teamId}"><span class="drag-pos iso-num">${i+1}</span><span class="drag-handle">⠿</span>${teamName(teamId)}</li>`).join('')}
           </ul>
         </div>`;
       }).join('')}
@@ -981,6 +1031,7 @@ function gameBetsFor(gameId){ return STATE.gameBets.filter(b => String(b.gameId)
 function isKnockout(g){ return g.stage && g.stage !== 'group' && g.stage !== ''; }
 function advancingFieldLabel(g){ return (g.stage==='final' || g.stage==='3rd') ? t('advancingWinnerLabel') : t('advancingLabel'); }
 
+let gamesSubTab = 'open';
 function renderGames(){
   if(!STATE.games.length){
     return `<div class="section-title">${t('gamesTitle')}</div><div class="card"><div class="empty-state">${STATE.loaded?'':'<div class="spinner"></div><br>'}${t('noGames')}</div></div>`;
@@ -988,16 +1039,18 @@ function renderGames(){
   const now = new Date();
   const isOpen = g => g.status === 'scheduled' && now <= new Date(g.kickoffISO);
   const openGames = STATE.games.filter(isOpen).sort((a,b) => new Date(a.kickoffISO) - new Date(b.kickoffISO));
-  const playedGames = STATE.games.filter(g => !isOpen(g)).sort((a,b) => new Date(b.kickoffISO) - new Date(a.kickoffISO));
+  const playedGames = STATE.games.filter(g => !isOpen(g)).sort((a,b) => new Date(b.kickoffISO) - new Date(a.kickoffISO)); // most recently played first
   return `
   <div class="section-title">${t('gamesTitle')}</div>
   <div class="section-sub">${t('gamesSub')}</div>
-  ${openGames.length ? openGames.map(g => renderGameCard(g)).join('') : `<div class="card"><div class="empty-state">${t('noOpenGames')}</div></div>`}
-  ${playedGames.length ? `
-    <div style="margin:28px 0 4px; font-size:18px; font-weight:800;">🗂️ ${t('playedGamesTitle')}</div>
-    <div class="section-sub">${t('playedGamesSub')}</div>
-    ${playedGames.map(g => renderPlayedGameCard(g)).join('')}
-  ` : ''}
+  <div class="subtab-row">
+    <button class="subtab-btn ${gamesSubTab==='open'?'active':''}" data-subtab="open">${t('tabOpenGames')} (${openGames.length})</button>
+    <button class="subtab-btn ${gamesSubTab==='played'?'active':''}" data-subtab="played">${t('tabPlayedGames')} (${playedGames.length})</button>
+  </div>
+  ${gamesSubTab==='open'
+    ? (openGames.length ? openGames.map(g => renderGameCard(g)).join('') : `<div class="card"><div class="empty-state">${t('noOpenGames')}</div></div>`)
+    : (playedGames.length ? playedGames.map(g => renderPlayedGameCard(g)).join('') : `<div class="card"><div class="empty-state">${t('noneYet')}</div></div>`)
+  }
   ${demoBanner()}`;
 }
 
@@ -1090,47 +1143,49 @@ function renderPlayedGameCard(g){
   const matchEvents = playedGameMatchEvents(g.id);
   const exportId = 'export-game-' + g.id;
   return `
-  <div class="game-card">
+  <div class="game-card" id="${exportId}">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; gap:8px; flex-wrap:wrap;">
+      <div class="mono" style="font-size:10.5px; color:var(--text-faint); letter-spacing:1px;">🏆 ${t('brandName')}</div>
+      <div data-export-exclude style="display:flex; gap:6px; flex-wrap:wrap;">
+        <button class="icon-btn" data-role="exportGameBets" data-target="${exportId}" data-file="matchday-${g.id}.png" style="font-size:11px; padding:5px 8px; display:flex; align-items:center; gap:4px;">📤 ${t('exportImage')}</button>
+        <button class="icon-btn whatsapp-btn" data-role="whatsappGameBets" data-target="${exportId}" data-file="matchday-${g.id}.png" style="font-size:11px; padding:5px 8px; display:flex; align-items:center; gap:4px;">📲 WhatsApp</button>
+      </div>
+    </div>
     <div class="game-meta">
       <span>${t('group')} ${g.group||'—'} · ${fmtDate(g.kickoffISO)}</span>
       <span class="status-pill status-${isFinal?'final':'locked'}">${isFinal?t('statusFinal'):t('statusLocked')}</span>
     </div>
     <div class="game-teams" style="margin-bottom:${isKnockout(g)&&g.advancingTeam?'2px':'10px'};">
       <div class="team-name">${teamName(g.teamA)}</div>
-      <div class="mono" style="font-size:22px; font-weight:700; direction:ltr;">${isFinal ? `${g.scoreA} : ${g.scoreB}` : '– : –'}</div>
+      <div class="mono" style="font-size:22px; font-weight:700;"><span class="iso-num">${isFinal ? `${g.scoreA} : ${g.scoreB}` : '– : –'}</span></div>
       <div class="team-name">${teamName(g.teamB)}</div>
     </div>
     ${isKnockout(g) && g.advancingTeam ? `<div class="section-sub" style="text-align:center; margin-bottom:10px;">🏆 ${teamName(g.advancingTeam)}</div>` : ''}
 
-    <div id="${exportId}">
-      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; gap:8px; flex-wrap:wrap;">
-        <div class="card-title" style="margin-bottom:0;">${t('everyoneBets')}</div>
-        <button class="icon-btn" data-export-exclude data-role="exportGameBets" data-target="${exportId}" data-file="matchday-${g.id}.png" style="font-size:11px; padding:5px 8px; display:flex; align-items:center; gap:4px;">📤 ${t('exportImage')}</button>
-      </div>
-      ${bets.length ? `
-      <table class="leaderboard">
-        <thead><tr>
-          <th>${t('player')}</th><th>${t('yourScore')}</th><th>${t('topPlayerOfGame')}</th>
-          ${isKnockout(g) ? `<th>${t('advancingShort')}</th>` : ''}
-          <th style="text-align:${LANG==='he'?'left':'right'}">${t('points')}</th>
-        </tr></thead>
-        <tbody>
-          ${bets.map(b => {
-            const participant = STATE.participants.find(pp => normEmail(pp.email)===normEmail(b.email));
-            const name = participant ? participantName(participant) : (b.name || b.email);
-            const pts = (b.pointsEarned!==undefined && b.pointsEarned!=='') ? b.pointsEarned : null;
-            const tp = findPlayer(b.betTopPlayer);
-            return `<tr>
-              <td>${name}</td>
-              <td class="mono" style="direction:ltr;">${b.betA ?? '—'}:${b.betB ?? '—'}</td>
-              <td>${tp ? playerName(tp) : (b.betTopPlayer || '—')}</td>
-              ${isKnockout(g) ? `<td>${b.betAdvancing ? teamName(b.betAdvancing) : '—'}</td>` : ''}
-              <td class="points-cell">${pts!==null ? pts : '—'}</td>
-            </tr>`;
-          }).join('')}
-        </tbody>
-      </table>` : `<div class="empty-state" style="padding:20px;">${t('noneYet')}</div>`}
-    </div>
+    <div class="card-title" style="margin-bottom:8px;">${t('everyoneBets')}</div>
+    ${bets.length ? `
+    <table class="leaderboard">
+      <thead><tr>
+        <th>${t('player')}</th><th>${t('yourScore')}</th><th>${t('topPlayerOfGame')}</th>
+        ${isKnockout(g) ? `<th>${t('advancingShort')}</th>` : ''}
+        <th style="text-align:${LANG==='he'?'left':'right'}">${t('points')}</th>
+      </tr></thead>
+      <tbody>
+        ${bets.map(b => {
+          const participant = STATE.participants.find(pp => normEmail(pp.email)===normEmail(b.email));
+          const name = participant ? participantName(participant) : (b.name || b.email);
+          const pts = (b.pointsEarned!==undefined && b.pointsEarned!=='') ? b.pointsEarned : null;
+          const tp = findPlayer(b.betTopPlayer);
+          return `<tr>
+            <td>${name}</td>
+            <td class="mono"><span class="iso-num">${b.betA ?? '—'}:${b.betB ?? '—'}</span></td>
+            <td>${tp ? playerName(tp) : (b.betTopPlayer || '—')}</td>
+            ${isKnockout(g) ? `<td>${b.betAdvancing ? teamName(b.betAdvancing) : '—'}</td>` : ''}
+            <td class="points-cell"><span class="iso-num">${pts!==null ? pts : '—'}</span></td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>` : `<div class="empty-state" style="padding:20px;">${t('noneYet')}</div>`}
 
     <div class="card-title" style="margin-top:16px;">${t('matchEventsTitle')}</div>
     ${matchEvents.length ? matchEvents.map(p => {
@@ -1147,6 +1202,9 @@ function renderPlayedGameCard(g){
 }
 
 function wireGamesForm(){
+  document.querySelectorAll('[data-subtab]').forEach(btn => {
+    btn.addEventListener('click', () => { gamesSubTab = btn.dataset.subtab; renderAll(); });
+  });
   document.querySelectorAll('[data-role="saveGame"]').forEach(btn => {
     btn.addEventListener('click', async () => {
       if(!STATE.user){ alert(t('emailFirst')); return; }
@@ -1173,6 +1231,9 @@ function wireGamesForm(){
   });
   document.querySelectorAll('[data-role="exportGameBets"]').forEach(btn => {
     btn.addEventListener('click', () => exportElementImage(btn.dataset.target, btn.dataset.file, btn));
+  });
+  document.querySelectorAll('[data-role="whatsappGameBets"]').forEach(btn => {
+    btn.addEventListener('click', () => shareToWhatsApp(btn.dataset.target, btn.dataset.file, btn));
   });
 }
 
@@ -1202,9 +1263,9 @@ function drawStatsChart(){
   ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--border');
   ctx.beginPath(); ctx.moveTo(padL, padT); ctx.lineTo(padL, H-padB); ctx.lineTo(W, H-padB); ctx.stroke();
   ranked.forEach((p,pi) => {
-    const form = p.form||[];
-    let running = p.totalPoints - form.length*2; // rough back-projection for a demo trend line
-    const pts = [running, ...form.map(r => running += (r==='W'?2:r==='D'?1:0))];
+    const form = (p.form||[]).map(v => +v || 0);
+    let running = p.totalPoints - form.reduce((a,b) => a+b, 0); // points before the tracked recent games
+    const pts = [running, ...form.map(v => running += v)];
     ctx.strokeStyle = palette[pi % palette.length]; ctx.lineWidth = 2; ctx.beginPath();
     pts.forEach((val,i) => {
       const x = padL + (i/(pts.length-1||1)) * (W-padL-6);
@@ -1236,7 +1297,7 @@ function renderHof(){
       const typeLabel = h.tournamentType === 'euro' ? t('euro') : t('worldcup');
       return `
       <div class="hof-item">
-        <div class="hof-year">${h.year}</div>
+        <div class="hof-year iso-num">${h.year}</div>
         <div class="hof-trophy">🏆</div>
         <div>
           <div class="hof-name">${winner}</div>
