@@ -202,6 +202,9 @@ canvas{width:100%; height:280px; display:block;}
 }
 .md-toast.error{background:var(--red); color:#2a0d0b;}
 .md-toast.show{transform:translate(-50%,0); opacity:1;}
+.player-pts-red{background:var(--red-dim); color:var(--red);}
+.player-pts-yellow{background:var(--amber-dim); color:var(--amber);}
+.player-pts-green{background:var(--green-dim); color:var(--green);}
 </style>
 </head>
 <body>
@@ -425,6 +428,8 @@ const CONFIG = {
   // --- Scoring rules ---
   SCORING: {
     game: { exact: 2, diff: 1, outcome: 2 }, // stack: exact score also satisfies diff+outcome => up to 5
+    groupPosition: 2,    // per team placed in its exact final group position (max 4 teams × 2 = 8 per group)
+    advancingCorrect: 1, // knockout stage: correctly picking which team advances / wins
     player: {
       ownGoal: -5,
       redCard: -3,
@@ -446,6 +451,8 @@ const I18N = {
     tab_stats:'Stats', tab_hof:'Hall of Fame', rank:'Rank', player:'Player', points:'Points', form:'Form',
     leaderLabel:'Leader', signIn:'Sign in', signOut:'Sign out', exportImage:'Export image',
     rulesTitle:'How scoring works', rulesGameTitle:'Match score bets', rulesPlayerTitle:'Top player of the game',
+    rulesStageTitle:'Group stage & knockout', ruleGroupPosition:'Exact team position at end of group stage (per team)',
+    ruleGroupPositionNote:'Up to 4 teams × 2 pts = 8 pts per group.', ruleAdvancing:'Correct pick in the knockout stage',
     ruleExact:'Exact score', ruleDiff:'Correct goal difference', ruleOutcome:'Correct win / draw / loss',
     ruleOwnGoal:'Own goal', ruleRedCard:'Red card', ruleCleanSheet:'GK clean sheet', ruleMissedPenalty:'Missed penalty',
     ruleGoal:'Goal scored', ruleAssist:'Assist', ruleStackNote:'Tiers stack — an exact score also earns the goal-difference and outcome points.',
@@ -459,6 +466,11 @@ const I18N = {
     gamesTitle:'Games', gamesSub:'Predict the score and pick your top player before kickoff.',
     yourScore:'Your score', topPlayerOfGame:'Top player', kickoff:'Kickoff', group:'Group',
     statusScheduled:'Open', statusLocked:'Locked', statusFinal:'Final', earned:'earned',
+    noOpenGames:'No open games right now.', playedGamesTitle:'Played games', playedGamesSub:"Results, everyone's bets, and match events.",
+    everyoneBets:"Everyone's bets", matchEventsTitle:'Match events', noEventsYet:'No events recorded for this game yet.',
+    advancingShort:'Advancing', advancingLabel:'Team advancing to the next stage',
+    advancingWinnerLabel:'Match winner (including extra time / penalties)',
+    evGoal:'Goal', evAssist:'Assist', evOwnGoal:'Own goal', evRedCard:'Red card', evMissedPenalty:'Missed penalty', evCleanSheet:'Clean sheet',
     statsTitle:'Stats', statsSub:'Points over time and recent form for every participant.', pointsOverTime:'Points over time',
     hofTitle:'Hall of Fame', hofSub:'Champions of tournaments past.',
     worldcup:'World Cup', euro:'Euro', hofChampionTeam:'Champion', runnerUpLabel:'Runner-up',
@@ -469,6 +481,8 @@ const I18N = {
     tab_stats:'סטטיסטיקות', tab_hof:'היכל התהילה', rank:'דירוג', player:'שם', points:'נקודות', form:'פורמה',
     leaderLabel:'מוביל', signIn:'התחברות', signOut:'התנתקות', exportImage:'ייצוא תמונה',
     rulesTitle:'איך מחשבים ניקוד', rulesGameTitle:'ניחושי תוצאות משחק', rulesPlayerTitle:'שחקן המשחק',
+    rulesStageTitle:'שלב הבתים ופלייאוף', ruleGroupPosition:'מיקום מדויק של נבחרת בסיום שלב הבתים (לכל נבחרת)',
+    ruleGroupPositionNote:"עד 4 נבחרות × 2 נק' = 8 נק' לכל בית.", ruleAdvancing:'ניחוש נכון בשלב הפלייאוף',
     ruleExact:'תוצאה מדויקת', ruleDiff:'הפרש שערים נכון', ruleOutcome:'ניצחון / תיקו / הפסד נכון',
     ruleOwnGoal:'שער עצמי', ruleRedCard:'כרטיס אדום', ruleCleanSheet:'שער נקי', ruleMissedPenalty:'החטאת בעיטת עונשין',
     ruleGoal:'שער', ruleAssist:'בישול', ruleStackNote:'הניקוד מצטבר — תוצאה מדויקת מזכה גם בנקודות ההפרש והתוצאה.',
@@ -482,6 +496,11 @@ const I18N = {
     gamesTitle:'משחקים', gamesSub:'נחשו את התוצאה ובחרו את שחקן המשחק לפני הבעיטה הראשונה.',
     yourScore:'הניחוש שלך', topPlayerOfGame:'שחקן המשחק', kickoff:'שעת התחלה', group:'בית',
     statusScheduled:'פתוח', statusLocked:'נעול', statusFinal:'הסתיים', earned:'נצברו',
+    noOpenGames:'אין משחקים פתוחים כרגע.', playedGamesTitle:'משחקים ששוחקו', playedGamesSub:'תוצאות, ההימורים של כולם, ואירועי המשחק.',
+    everyoneBets:'ההימורים של כולם', matchEventsTitle:'אירועי המשחק', noEventsYet:'לא הוזנו אירועים למשחק זה עדיין.',
+    advancingShort:'העפלה', advancingLabel:'הנבחרת שמעפילה לשלב הבא',
+    advancingWinnerLabel:'הנבחרת המנצחת במשחק (כולל הארכה / פנדלים)',
+    evGoal:'שער', evAssist:'בישול', evOwnGoal:'שער עצמי', evRedCard:'כרטיס אדום', evMissedPenalty:'החטאת פנדל', evCleanSheet:'שער נקי',
     statsTitle:'סטטיסטיקות', statsSub:'נקודות לאורך זמן ופורמה אחרונה לכל משתתף.', pointsOverTime:'נקודות לאורך זמן',
     hofTitle:'היכל התהילה', hofSub:'אלופי הטורנירים הקודמים.',
     worldcup:'מונדיאל', euro:'יורו', hofChampionTeam:'אלופת הטורניר', runnerUpLabel:'מקום שני',
@@ -522,7 +541,7 @@ function participantName(p){
 /* =========================================================
    ============  3. State  ===================================
    ========================================================= */
-const STATE = { user:null, participants:[], games:[], gameBets:[], generalBets:[], hof:[], demo:false, loaded:false };
+const STATE = { user:null, participants:[], games:[], gameBets:[], generalBets:[], hof:[], gameEvents:[], groupResults:[], demo:false, loaded:false };
 
 /* =========================================================
    ============  4. Data layer (Google Sheets)  ==============
@@ -544,11 +563,12 @@ async function postBet(payload){
 
 async function loadAllData(){
   try{
-    const [participants, games, gameBets, generalBets, hof] = await Promise.all([
+    const [participants, games, gameBets, generalBets, hof, gameEvents, groupResults] = await Promise.all([
       fetchTab('Participants'), fetchTab('Games'), fetchTab('GameBets'), fetchTab('GeneralBets'), fetchTab('HallOfFame'),
+      fetchTab('GameEvents'), fetchTab('GroupResults'),
     ]);
     if(!Array.isArray(participants) || (!participants.length && !games.length)) throw new Error('empty sheet / not configured');
-    Object.assign(STATE, { participants, games, gameBets, generalBets, hof, demo:false });
+    Object.assign(STATE, { participants, games, gameBets, generalBets, hof, gameEvents, groupResults, demo:false });
   }catch(e){
     if(!CONFIG.DEMO_MODE_FALLBACK) throw e;
     Object.assign(STATE, demoData());
@@ -567,9 +587,19 @@ function demoData(){
     totalPoints: 34 - i*4 + (i%2), form: JSON.stringify(['W','W','D','L','W'].slice(0, 5-i%3)),
   }));
   const games = [
-    {id:'G1', kickoffISO:'2026-06-11T21:00:00+03:00', group:'A', teamA:'team_a1', teamB:'team_a2', status:'final', scoreA:2, scoreB:1, topPlayerActual:'a1_st1'},
-    {id:'G2', kickoffISO:'2026-06-12T18:00:00+03:00', group:'A', teamA:'team_a3', teamB:'team_a4', status:'scheduled', scoreA:'', scoreB:''},
-    {id:'G3', kickoffISO:'2026-06-13T21:00:00+03:00', group:'B', teamA:'team_b1', teamB:'team_b2', status:'scheduled', scoreA:'', scoreB:''},
+    {id:'G1', kickoffISO:'2026-06-11T21:00:00+03:00', group:'A', stage:'group', teamA:'team_a1', teamB:'team_a2', status:'final', scoreA:2, scoreB:1, advancingTeam:''},
+    {id:'G2', kickoffISO:'2026-06-12T18:00:00+03:00', group:'A', stage:'group', teamA:'team_a3', teamB:'team_a4', status:'scheduled', scoreA:'', scoreB:''},
+    {id:'G3', kickoffISO:'2026-06-13T21:00:00+03:00', group:'B', stage:'group', teamA:'team_b1', teamB:'team_b2', status:'scheduled', scoreA:'', scoreB:''},
+    {id:'G4', kickoffISO:'2026-07-10T21:00:00+03:00', group:'', stage:'final', teamA:'team_a1', teamB:'team_b1', status:'final', scoreA:1, scoreB:1, advancingTeam:'team_a1'},
+  ];
+  const gameEvents = [
+    {gameId:'G1', team:'team_a1', player:'a1_st1', position:'ST', eventType:'goal', count:1},
+    {gameId:'G1', team:'team_a1', player:'a1_cm1', position:'CM', eventType:'assist', count:1},
+    {gameId:'G1', team:'team_a1', player:'a1_gk1', position:'GK', eventType:'cleanSheet', count:1},
+    {gameId:'G1', team:'team_a2', player:'a2_st1', position:'ST', eventType:'goal', count:1},
+  ];
+  const groupResults = [
+    {group:'A', pos1:'team_a1', pos2:'team_a2', pos3:'team_a3', pos4:'team_a4'},
   ];
   const hof = [
     {year:2022, tournamentType:'worldcup', location_en:'Qatar', location_he:'קטאר',
@@ -579,7 +609,7 @@ function demoData(){
      championTeam_en:'Italy', championTeam_he:'איטליה',
      winnerName_en:'Roni Shani', winnerName_he:'רוני שני', runnerUp_en:'Itay Ben', runnerUp_he:'איתי בן'},
   ];
-  return { participants, games, gameBets:[], generalBets:[], hof };
+  return { participants, games, gameBets:[], generalBets:[], hof, gameEvents, groupResults };
 }
 
 /* =========================================================
@@ -619,14 +649,17 @@ function showToast(message, isError){
   clearTimeout(showToast._t);
   showToast._t = setTimeout(() => { toast.classList.remove('show'); }, isError ? 4500 : 2600);
 }
-/** Re-fetches from the Sheet a few times, spaced out, since Apps Script can
- *  take a few seconds (cold start) to actually commit a write. Returns true
- *  as soon as checkFn() finds the just-saved data, false if it never shows
- *  up within the allotted attempts. */
-async function pollUntilSaved(checkFn, attempts=5, delayMs=1500){
+/** Re-fetches ONE tab a few times, spaced out, since Apps Script can take a
+ *  few seconds (cold start) to actually commit a write. Merges the fresh
+ *  rows into STATE[stateKey] each time. Returns true as soon as checkFn()
+ *  finds the just-saved data, false if it never shows up in time. */
+async function pollUntilSaved(tabName, stateKey, checkFn, attempts=5, delayMs=1500){
   for(let i=0; i<attempts; i++){
     await new Promise(r => setTimeout(r, delayMs));
-    await loadAllData();
+    try{
+      const rows = await fetchTab(tabName);
+      if(Array.isArray(rows)) STATE[stateKey] = rows;
+    }catch(e){ /* transient network hiccup — just try again next loop */ }
     if(checkFn()) return true;
   }
   return false;
@@ -712,11 +745,13 @@ function renderHome(){
     <div data-export-exclude>${demoBanner()}</div>
   </div>`;
 }
-async function exportLeaderboardImage(){
-  const btn = document.getElementById('exportImgBtn');
-  const target = document.getElementById('exportCapture');
+/** Captures `targetId`'s DOM exactly as rendered and shares/downloads it as
+ *  a PNG. Elements marked data-export-exclude (buttons etc.) are omitted. */
+async function exportElementImage(targetId, filename, btn){
+  const target = document.getElementById(targetId);
   if(!target || !window.html2canvas) return;
-  const originalText = btn.textContent; btn.textContent = '…'; btn.disabled = true;
+  const originalText = btn ? btn.textContent : null;
+  if(btn){ btn.textContent = '…'; btn.disabled = true; }
   try{
     const canvas = await html2canvas(target, {
       backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--surface').trim(),
@@ -724,16 +759,19 @@ async function exportLeaderboardImage(){
       ignoreElements: el => el.hasAttribute && el.hasAttribute('data-export-exclude'),
     });
     canvas.toBlob(async blob => {
-      const file = new File([blob], 'matchday-leaderboard.png', { type:'image/png' });
+      const file = new File([blob], filename, { type:'image/png' });
       if(navigator.canShare && navigator.canShare({ files:[file] })){
-        try{ await navigator.share({ files:[file], title:'Matchday' }); btn.textContent = originalText; btn.disabled = false; return; }catch(e){ /* user cancelled or unsupported, fall through to download */ }
+        try{ await navigator.share({ files:[file], title:'Matchday' }); if(btn){ btn.textContent = originalText; btn.disabled = false; } return; }catch(e){ /* cancelled/unsupported, fall through to download */ }
       }
       const url = URL.createObjectURL(blob);
-      const a = document.createElement('a'); a.href = url; a.download = 'matchday-leaderboard.png'; a.click();
+      const a = document.createElement('a'); a.href = url; a.download = filename; a.click();
       URL.revokeObjectURL(url);
-      btn.textContent = originalText; btn.disabled = false;
+      if(btn){ btn.textContent = originalText; btn.disabled = false; }
     });
-  }catch(e){ btn.textContent = originalText; btn.disabled = false; }
+  }catch(e){ if(btn){ btn.textContent = originalText; btn.disabled = false; } }
+}
+async function exportLeaderboardImage(){
+  await exportElementImage('exportCapture', 'matchday-leaderboard.png', document.getElementById('exportImgBtn'));
 }
 function medal(rank){ return rank===1?'🥇 ':rank===2?'🥈 ':rank===3?'🥉 ':''; }
 function initials(name){ return (name||'?').split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase(); }
@@ -757,6 +795,16 @@ function renderRules(){
       </table>
       <div class="section-sub" style="margin-top:12px; margin-bottom:0;">${t('ruleStackNote')}</div>
     </div>
+    <div class="card">
+      <div class="card-title">${t('rulesStageTitle')}</div>
+      <table class="rule-table">
+        <tr><td>${t('ruleGroupPosition')}</td><td>${val(s.groupPosition)}</td></tr>
+        <tr><td>${t('ruleAdvancing')}</td><td>${val(s.advancingCorrect)}</td></tr>
+      </table>
+      <div class="section-sub" style="margin-top:12px; margin-bottom:0;">${t('ruleGroupPositionNote')}</div>
+    </div>
+  </div>
+  <div class="rules-grid">
     <div class="card">
       <div class="card-title">${t('rulesPlayerTitle')}</div>
       <table class="rule-table">
@@ -913,7 +961,7 @@ function wireGeneralForm(){
     const saveBtn = e.target.querySelector('button[type="submit"]');
     msg.style.color = 'var(--text-dim)'; msg.textContent = t('saving'); saveBtn.disabled = true;
     await postBet(payload);
-    const landed = await pollUntilSaved(() =>
+    const landed = await pollUntilSaved('GeneralBets', 'generalBets', () =>
       STATE.generalBets.find(b => normEmail(b.email)===normEmail(STATE.user.email) && b.rank1===payload.rank1 && b.topScorer===payload.topScorer)
     );
     saveBtn.disabled = false;
@@ -928,77 +976,203 @@ function fmtDate(iso){
 }
 
 /* ---- GAMES ---- */
-function betFor(gameId){ return STATE.user ? STATE.gameBets.find(b => normEmail(b.email)===normEmail(STATE.user.email) && b.gameId===gameId) : null; }
+function betFor(gameId){ return STATE.user ? STATE.gameBets.find(b => normEmail(b.email)===normEmail(STATE.user.email) && String(b.gameId)===String(gameId)) : null; }
+function gameBetsFor(gameId){ return STATE.gameBets.filter(b => String(b.gameId)===String(gameId) && b.betA!==undefined); }
+function isKnockout(g){ return g.stage && g.stage !== 'group' && g.stage !== ''; }
+function advancingFieldLabel(g){ return (g.stage==='final' || g.stage==='3rd') ? t('advancingWinnerLabel') : t('advancingLabel'); }
+
 function renderGames(){
   if(!STATE.games.length){
     return `<div class="section-title">${t('gamesTitle')}</div><div class="card"><div class="empty-state">${STATE.loaded?'':'<div class="spinner"></div><br>'}${t('noGames')}</div></div>`;
   }
+  const now = new Date();
+  const isOpen = g => g.status === 'scheduled' && now <= new Date(g.kickoffISO);
+  const openGames = STATE.games.filter(isOpen).sort((a,b) => new Date(a.kickoffISO) - new Date(b.kickoffISO));
+  const playedGames = STATE.games.filter(g => !isOpen(g)).sort((a,b) => new Date(b.kickoffISO) - new Date(a.kickoffISO));
   return `
   <div class="section-title">${t('gamesTitle')}</div>
   <div class="section-sub">${t('gamesSub')}</div>
-  ${STATE.games.map(g => renderGameCard(g)).join('')}
+  ${openGames.length ? openGames.map(g => renderGameCard(g)).join('') : `<div class="card"><div class="empty-state">${t('noOpenGames')}</div></div>`}
+  ${playedGames.length ? `
+    <div style="margin:28px 0 4px; font-size:18px; font-weight:800;">🗂️ ${t('playedGamesTitle')}</div>
+    <div class="section-sub">${t('playedGamesSub')}</div>
+    ${playedGames.map(g => renderPlayedGameCard(g)).join('')}
+  ` : ''}
   ${demoBanner()}`;
 }
+
 function renderGameCard(g){
-  const kickoff = new Date(g.kickoffISO);
-  const locked = new Date() > kickoff || g.status !== 'scheduled';
-  const isFinal = g.status === 'final';
   const bet = betFor(g.id);
   const roster = [
     ...(CONFIG.ROSTERS[g.teamA]||[]).map(p => ({...p, teamId:g.teamA})),
     ...(CONFIG.ROSTERS[g.teamB]||[]).map(p => ({...p, teamId:g.teamB})),
   ];
-  const earned = isFinal && bet ? computeGameScore(bet.betA, bet.betB, g.scoreA, g.scoreB) : null;
   return `
   <div class="game-card">
     <div class="game-meta">
-      <span>${t('group')} ${g.group} · ${fmtDate(g.kickoffISO)}</span>
-      <span class="status-pill status-${isFinal?'final':locked?'locked':'scheduled'}">${isFinal?t('statusFinal'):locked?t('statusLocked'):t('statusScheduled')}</span>
+      <span>${t('group')} ${g.group||'—'} · ${fmtDate(g.kickoffISO)}</span>
+      <span class="status-pill status-scheduled">${t('statusScheduled')}</span>
     </div>
     <div class="game-teams">
       <div class="team-name">${teamName(g.teamA)}</div>
       <div class="score-inputs">
-        <input type="number" min="0" max="20" data-role="scoreA" value="${bet?bet.betA:(isFinal?g.scoreA:'')}" ${locked?'disabled':''}>
+        <input type="number" min="0" max="20" data-role="scoreA" value="${bet?bet.betA:''}">
         <span class="score-sep">:</span>
-        <input type="number" min="0" max="20" data-role="scoreB" value="${bet?bet.betB:(isFinal?g.scoreB:'')}" ${locked?'disabled':''}>
+        <input type="number" min="0" max="20" data-role="scoreB" value="${bet?bet.betB:''}">
       </div>
       <div class="team-name">${teamName(g.teamB)}</div>
     </div>
     <div class="field" style="margin-bottom:8px;">
       <label>${t('topPlayerOfGame')}</label>
-      <select data-role="topPlayer" ${locked?'disabled':''}>
+      <select data-role="topPlayer">
         <option value="">${t('choose')}</option>
         ${roster.map(p => `<option value="${p.id}" ${bet && bet.betTopPlayer===p.id?'selected':''}>${playerName(p)} (${p.pos}) — ${teamName(p.teamId)}</option>`).join('')}
       </select>
     </div>
-    <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
-      ${!locked ? `<button class="btn btn-ghost" data-role="saveGame" data-id="${g.id}">${t('save')}</button>` : `<span></span>`}
-      ${earned!==null ? `<span class="points-pill">+${earned} ${t('earned')}</span>` : ''}
-    </div>
+    ${isKnockout(g) ? `
+    <div class="field" style="margin-bottom:8px;">
+      <label>${advancingFieldLabel(g)}</label>
+      <select data-role="advancing">
+        <option value="">${t('choose')}</option>
+        <option value="${g.teamA}" ${bet && bet.betAdvancing===g.teamA?'selected':''}>${teamName(g.teamA)}</option>
+        <option value="${g.teamB}" ${bet && bet.betAdvancing===g.teamB?'selected':''}>${teamName(g.teamB)}</option>
+      </select>
+    </div>` : ''}
+    <button class="btn btn-ghost" data-role="saveGame" data-id="${g.id}">${t('save')}</button>
   </div>`;
 }
+
+/** Aggregates GameEvents by player for one game — only players who actually
+ *  have events recorded (not the full rosters), points summed if a player
+ *  appears in more than one event row. */
+function playedGameMatchEvents(gameId){
+  const events = STATE.gameEvents.filter(ev => String(ev.gameId) === String(gameId));
+  const byPlayer = {};
+  events.forEach(ev => {
+    const key = ev.player;
+    if(!byPlayer[key]) byPlayer[key] = { player: ev.player, team: ev.team, position: ev.position, events: [] };
+    byPlayer[key].events.push(ev);
+  });
+  return Object.values(byPlayer)
+    .map(p => ({ ...p, points: computePlayerGamePoints(p.events) }))
+    .sort((a,b) => b.points - a.points);
+}
+function computePlayerGamePoints(events){
+  const sp = CONFIG.SCORING.player;
+  let pts = 0;
+  events.forEach(ev => {
+    const n = +ev.count || 1, pos = ev.position;
+    if(ev.eventType === 'goal') pts += (sp.goal[pos]||0) * n;
+    else if(ev.eventType === 'assist') pts += (sp.assist[pos]||0) * n;
+    else if(ev.eventType === 'ownGoal') pts += sp.ownGoal * n;
+    else if(ev.eventType === 'redCard') pts += sp.redCard * n;
+    else if(ev.eventType === 'missedPenalty') pts += sp.missedPenalty * n;
+    else if(ev.eventType === 'cleanSheet' && pos === 'GK') pts += sp.cleanSheetGK * n;
+  });
+  return pts;
+}
+function playerPtsColor(pts){ return pts<=0 ? 'red' : pts<5 ? 'yellow' : 'green'; }
+function resolveEventPlayerDisplay(ev){
+  const p = findPlayer(ev.player);
+  if(p) return { name: playerName(p), team: teamName(p.teamId) };
+  return { name: ev.player, team: ev.team ? teamName(ev.team) : '' };
+}
+function eventBreakdownText(events){
+  const labels = { goal:t('evGoal'), assist:t('evAssist'), ownGoal:t('evOwnGoal'), redCard:t('evRedCard'), missedPenalty:t('evMissedPenalty'), cleanSheet:t('evCleanSheet') };
+  const counts = {};
+  events.forEach(ev => { counts[ev.eventType] = (counts[ev.eventType]||0) + (+ev.count || 1); });
+  return Object.entries(counts).map(([k,n]) => `${n>1 ? n+'× ' : ''}${labels[k]||k}`).join(' · ');
+}
+
+function renderPlayedGameCard(g){
+  const isFinal = g.status === 'final' && g.scoreA!=='' && g.scoreA!=null && g.scoreB!=='' && g.scoreB!=null;
+  const bets = gameBetsFor(g.id);
+  const matchEvents = playedGameMatchEvents(g.id);
+  const exportId = 'export-game-' + g.id;
+  return `
+  <div class="game-card">
+    <div class="game-meta">
+      <span>${t('group')} ${g.group||'—'} · ${fmtDate(g.kickoffISO)}</span>
+      <span class="status-pill status-${isFinal?'final':'locked'}">${isFinal?t('statusFinal'):t('statusLocked')}</span>
+    </div>
+    <div class="game-teams" style="margin-bottom:${isKnockout(g)&&g.advancingTeam?'2px':'10px'};">
+      <div class="team-name">${teamName(g.teamA)}</div>
+      <div class="mono" style="font-size:22px; font-weight:700; direction:ltr;">${isFinal ? `${g.scoreA} : ${g.scoreB}` : '– : –'}</div>
+      <div class="team-name">${teamName(g.teamB)}</div>
+    </div>
+    ${isKnockout(g) && g.advancingTeam ? `<div class="section-sub" style="text-align:center; margin-bottom:10px;">🏆 ${teamName(g.advancingTeam)}</div>` : ''}
+
+    <div id="${exportId}">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; gap:8px; flex-wrap:wrap;">
+        <div class="card-title" style="margin-bottom:0;">${t('everyoneBets')}</div>
+        <button class="icon-btn" data-export-exclude data-role="exportGameBets" data-target="${exportId}" data-file="matchday-${g.id}.png" style="font-size:11px; padding:5px 8px; display:flex; align-items:center; gap:4px;">📤 ${t('exportImage')}</button>
+      </div>
+      ${bets.length ? `
+      <table class="leaderboard">
+        <thead><tr>
+          <th>${t('player')}</th><th>${t('yourScore')}</th><th>${t('topPlayerOfGame')}</th>
+          ${isKnockout(g) ? `<th>${t('advancingShort')}</th>` : ''}
+          <th style="text-align:${LANG==='he'?'left':'right'}">${t('points')}</th>
+        </tr></thead>
+        <tbody>
+          ${bets.map(b => {
+            const participant = STATE.participants.find(pp => normEmail(pp.email)===normEmail(b.email));
+            const name = participant ? participantName(participant) : (b.name || b.email);
+            const pts = (b.pointsEarned!==undefined && b.pointsEarned!=='') ? b.pointsEarned : null;
+            const tp = findPlayer(b.betTopPlayer);
+            return `<tr>
+              <td>${name}</td>
+              <td class="mono" style="direction:ltr;">${b.betA ?? '—'}:${b.betB ?? '—'}</td>
+              <td>${tp ? playerName(tp) : (b.betTopPlayer || '—')}</td>
+              ${isKnockout(g) ? `<td>${b.betAdvancing ? teamName(b.betAdvancing) : '—'}</td>` : ''}
+              <td class="points-cell">${pts!==null ? pts : '—'}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>` : `<div class="empty-state" style="padding:20px;">${t('noneYet')}</div>`}
+    </div>
+
+    <div class="card-title" style="margin-top:16px;">${t('matchEventsTitle')}</div>
+    ${matchEvents.length ? matchEvents.map(p => {
+      const disp = resolveEventPlayerDisplay(p);
+      return `<div style="display:flex; align-items:center; justify-content:space-between; gap:10px; padding:7px 0; border-bottom:1px solid var(--border);">
+        <div>
+          <div style="font-weight:700; font-size:13.5px;">${disp.name}<span style="color:var(--text-faint); font-weight:500;"> — ${disp.team}</span></div>
+          <div style="font-size:11.5px; color:var(--text-dim);">${eventBreakdownText(p.events)}</div>
+        </div>
+        <span class="rule-value player-pts-${playerPtsColor(p.points)}">${p.points}</span>
+      </div>`;
+    }).join('') : `<div class="empty-state" style="padding:14px;">${t('noEventsYet')}</div>`}
+  </div>`;
+}
+
 function wireGamesForm(){
   document.querySelectorAll('[data-role="saveGame"]').forEach(btn => {
     btn.addEventListener('click', async () => {
       if(!STATE.user){ alert(t('emailFirst')); return; }
       const card = btn.closest('.game-card');
+      const advSelect = card.querySelector('[data-role="advancing"]');
       const payload = {
         type:'gameBet', email: STATE.user.email, name: STATE.user.name, gameId: btn.dataset.id,
         betA: card.querySelector('[data-role="scoreA"]').value,
         betB: card.querySelector('[data-role="scoreB"]').value,
         betTopPlayer: card.querySelector('[data-role="topPlayer"]').value,
+        betAdvancing: advSelect ? advSelect.value : '',
         timestamp: new Date().toISOString(),
       };
       const originalText = btn.textContent;
       btn.textContent = '…'; btn.disabled = true;
       await postBet(payload);
-      const landed = await pollUntilSaved(() =>
-        STATE.gameBets.find(b => normEmail(b.email)===normEmail(STATE.user.email) && b.gameId===payload.gameId
+      const landed = await pollUntilSaved('GameBets', 'gameBets', () =>
+        STATE.gameBets.find(b => normEmail(b.email)===normEmail(STATE.user.email) && String(b.gameId)===String(payload.gameId)
           && String(b.betA)===String(payload.betA) && String(b.betB)===String(payload.betB))
       );
       if(landed){ showToast('✅ ' + t('saved')); renderAll(); }
       else{ showToast('⚠️ ' + t('saveFailed'), true); btn.textContent = originalText; btn.disabled = false; }
     });
+  });
+  document.querySelectorAll('[data-role="exportGameBets"]').forEach(btn => {
+    btn.addEventListener('click', () => exportElementImage(btn.dataset.target, btn.dataset.file, btn));
   });
 }
 
