@@ -213,8 +213,6 @@ canvas{width:100%; height:280px; display:block;}
 .filter-row{display:flex; gap:6px; margin-bottom:14px; flex-wrap:wrap;}
 .filter-chip{background:transparent; border:1px solid var(--border); color:var(--text-dim); font-weight:600; font-size:12px; padding:6px 12px; border-radius:20px;}
 .filter-chip.active{background:var(--surface-3); color:var(--text); border-color:var(--border-strong);}
-.whatsapp-btn{background:#25D366; color:#07321a; border-color:#25D366;}
-.whatsapp-btn:hover{filter:brightness(1.05);}
 </style>
 </head>
 <body>
@@ -463,7 +461,7 @@ const CONFIG = {
 const I18N = {
   en:{ brandName:'MATCHDAY', tab_home:'Home', tab_rules:'Rules', tab_general:'General', tab_games:'Games',
     tab_stats:'Stats', tab_hof:'Hall of Fame', rank:'Rank', player:'Player', points:'Points', form:'Form',
-    leaderLabel:'Leader', signIn:'Sign in', signOut:'Sign out', exportImage:'Export image',
+    leaderLabel:'Leader', signIn:'Sign in', signOut:'Sign out', exportImage:'Share',
     rulesTitle:'How scoring works', rulesGameTitle:'Match score bets', rulesPlayerTitle:'Top player of the game',
     rulesStageTitle:'Group stage & knockout', ruleGroupPosition:'Exact team position at end of group stage (per team)',
     ruleGroupPositionNote:'Up to 4 teams × 2 pts = 8 pts per group.', ruleAdvancing:'Correct pick in the knockout stage',
@@ -485,7 +483,7 @@ const I18N = {
     statusScheduled:'Open', statusLocked:'Locked', statusFinal:'Final', earned:'earned',
     noOpenGames:'No open games right now.', playedGamesTitle:'Played games', playedGamesSub:"Results, everyone's bets, and match events.",
     timerLabel:'Closes in:', timerDaysShort:'d', timerClosedShort:'Closed', timerDaysWord:'days', timerHoursWord:'hours',
-    tabOpenGames:'Open', tabPlayedGames:'Played', whatsappFallback:'Image downloaded — attach it to WhatsApp manually.',
+    tabOpenGames:'Open', tabPlayedGames:'Played',
     filterAllGames:'All', filterUnfilled:'Not predicted yet', allFilled:"You've predicted every open game 🎉",
     everyoneBets:"Everyone's bets", matchEventsTitle:'Match events', noEventsYet:'No events recorded for this game yet.',
     advancingShort:'Advancing', advancingLabel:'Team advancing to the next stage',
@@ -499,7 +497,7 @@ const I18N = {
   },
   he:{ brandName:'מאצדיי', tab_home:'ראשי', tab_rules:'חוקים', tab_general:'טופס כללי', tab_games:'משחקים',
     tab_stats:'סטטיסטיקות', tab_hof:'היכל התהילה', rank:'דירוג', player:'שם', points:'נקודות', form:'פורמה',
-    leaderLabel:'מוביל', signIn:'התחברות', signOut:'התנתקות', exportImage:'ייצוא תמונה',
+    leaderLabel:'מוביל', signIn:'התחברות', signOut:'התנתקות', exportImage:'שיתוף',
     rulesTitle:'איך מחשבים ניקוד', rulesGameTitle:'ניחושי תוצאות משחק', rulesPlayerTitle:'שחקן המשחק',
     rulesStageTitle:'שלב הבתים ופלייאוף', ruleGroupPosition:'מיקום מדויק של נבחרת בסיום שלב הבתים (לכל נבחרת)',
     ruleGroupPositionNote:"עד 4 נבחרות × 2 נק' = 8 נק' לכל בית.", ruleAdvancing:'ניחוש נכון בשלב הפלייאוף',
@@ -521,7 +519,7 @@ const I18N = {
     statusScheduled:'פתוח', statusLocked:'נעול', statusFinal:'הסתיים', earned:'נצברו',
     noOpenGames:'אין משחקים פתוחים כרגע.', playedGamesTitle:'משחקים ששוחקו', playedGamesSub:'תוצאות, ההימורים של כולם, ואירועי המשחק.',
     timerLabel:'נסגר בעוד:', timerDaysShort:'י׳', timerClosedShort:'נסגר', timerDaysWord:'ימים', timerHoursWord:'שעות',
-    tabOpenGames:'פתוחים', tabPlayedGames:'ששוחקו', whatsappFallback:'התמונה הורדה — צרפו אותה ידנית לוואטסאפ.',
+    tabOpenGames:'פתוחים', tabPlayedGames:'ששוחקו',
     filterAllGames:'הכל', filterUnfilled:'טרם מולא', allFilled:'מילאת ניחוש לכל המשחקים הפתוחים 🎉',
     everyoneBets:'ההימורים של כולם', matchEventsTitle:'אירועי המשחק', noEventsYet:'לא הוזנו אירועים למשחק זה עדיין.',
     advancingShort:'העפלה', advancingLabel:'הנבחרת שמעפילה לשלב הבא',
@@ -736,7 +734,6 @@ function renderAll(){
   if(currentTab==='home'){
     animateFlaps();
     const eb = document.getElementById('exportImgBtn'); if(eb) eb.onclick = exportLeaderboardImage;
-    const wb = document.getElementById('whatsappImgBtn'); if(wb) wb.onclick = () => shareToWhatsApp('exportCapture', 'matchday-leaderboard.png', wb);
   }
   if(currentTab==='general') wireGeneralForm();
   if(currentTab==='games') wireGamesForm();
@@ -783,7 +780,6 @@ function renderHome(){
       <div class="mono" style="font-size:11px; color:var(--text-faint); letter-spacing:1px;">🏆 ${t('brandName')} · ${new Date().toLocaleDateString(LANG==='he'?'he-IL':'en-GB',{day:'numeric',month:'short',year:'numeric'})}</div>
       <div data-export-exclude style="display:flex; gap:6px; flex-wrap:wrap;">
         <button class="icon-btn" id="exportImgBtn" style="display:flex; align-items:center; gap:5px;">📤 ${t('exportImage')}</button>
-        <button class="icon-btn whatsapp-btn" id="whatsappImgBtn" style="display:flex; align-items:center; gap:5px;">📲 WhatsApp</button>
       </div>
     </div>
     <table class="leaderboard">
@@ -828,11 +824,6 @@ async function exportElementImage(targetId, filename, btn){
 }
 async function exportLeaderboardImage(){
   await exportElementImage('exportCapture', 'matchday-leaderboard.png', document.getElementById('exportImgBtn'));
-}
-async function shareToWhatsApp(targetId, filename, btn){
-  const canUseShareSheet = !!(navigator.canShare);
-  await exportElementImage(targetId, filename, btn);
-  if(!canUseShareSheet) showToast('📥 ' + t('whatsappFallback'));
 }
 function medal(rank){ return rank===1?'🥇 ':rank===2?'🥈 ':rank===3?'🥉 ':''; }
 function initials(name){ return (name||'?').split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase(); }
@@ -1210,7 +1201,6 @@ function renderPlayedGameCard(g){
       <div class="mono" style="font-size:10.5px; color:var(--text-faint); letter-spacing:1px;">🏆 ${t('brandName')}</div>
       <div data-export-exclude style="display:flex; gap:6px; flex-wrap:wrap;">
         <button class="icon-btn" data-role="exportGameBets" data-target="${exportId}" data-file="matchday-${g.id}.png" style="font-size:11px; padding:5px 8px; display:flex; align-items:center; gap:4px;">📤 ${t('exportImage')}</button>
-        <button class="icon-btn whatsapp-btn" data-role="whatsappGameBets" data-target="${exportId}" data-file="matchday-${g.id}.png" style="font-size:11px; padding:5px 8px; display:flex; align-items:center; gap:4px;">📲 WhatsApp</button>
       </div>
     </div>
     <div class="game-meta">
@@ -1304,9 +1294,6 @@ function wireGamesForm(){
   });
   document.querySelectorAll('[data-role="exportGameBets"]').forEach(btn => {
     btn.addEventListener('click', () => exportElementImage(btn.dataset.target, btn.dataset.file, btn));
-  });
-  document.querySelectorAll('[data-role="whatsappGameBets"]').forEach(btn => {
-    btn.addEventListener('click', () => shareToWhatsApp(btn.dataset.target, btn.dataset.file, btn));
   });
 }
 
