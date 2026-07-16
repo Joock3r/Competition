@@ -908,7 +908,7 @@ function renderGeneral(){
       <div class="section-title" style="margin-bottom:4px;">${t('generalTitle')}</div>
       <div class="section-sub" style="margin-bottom:0;">${t('generalSub')}</div>
     </div>
-    <button class="btn" type="submit" form="generalForm">${t('save')}</button>
+    <button class="btn" type="submit" form="generalForm" id="generalSaveBtn">${t('save')}</button>
   </div>
   <div id="generalMsg" style="margin:8px 0 6px; font-size:13px; color:var(--green);"></div>
   <div class="saved-banner">${t('deadline')}: ${fmtDate(CONFIG.GENERAL_DEADLINE)}</div>
@@ -1017,7 +1017,7 @@ function wireGeneralForm(){
       groupsJSON: JSON.stringify(groupsJSON), timestamp: new Date().toISOString(),
     };
     const msg = document.getElementById('generalMsg');
-    const saveBtn = e.target.querySelector('button[type="submit"]');
+    const saveBtn = document.getElementById('generalSaveBtn');
     msg.style.color = 'var(--text-dim)'; msg.textContent = t('saving'); saveBtn.disabled = true;
     await postBet(payload);
     // Optimistic: assume the write succeeded (it almost always does) and update
