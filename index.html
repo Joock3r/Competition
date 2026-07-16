@@ -1016,12 +1016,21 @@ function wireGeneralForm(){
     const saveBtn = e.target.querySelector('button[type="submit"]');
     msg.style.color = 'var(--text-dim)'; msg.textContent = t('saving'); saveBtn.disabled = true;
     await postBet(payload);
-    const landed = await pollUntilSaved('GeneralBets', 'generalBets', () =>
-      STATE.generalBets.find(b => normEmail(b.email)===normEmail(STATE.user.email) && b.rank1===payload.rank1 && b.topScorer===payload.topScorer)
-    );
-    saveBtn.disabled = false;
-    if(landed){ showToast('✅ ' + t('saved')); renderAll(); }
-    else{ msg.style.color = 'var(--red)'; msg.textContent = t('saveFailed'); showToast('⚠️ ' + t('saveFailed'), true); renderAll(); }
+    // Optimistic: assume the write succeeded (it almost always does) and update
+    // the UI immediately instead of waiting on a verification round-trip.
+    const idx = STATE.generalBets.findIndex(b => normEmail(b.email)===normEmail(STATE.user.email));
+    const optimisticRow = { email: STATE.user.email, name: STATE.user.name, ...payload };
+    if(idx>=0) STATE.generalBets[idx] = {...STATE.generalBets[idx], ...optimisticRow};
+    else STATE.generalBets.push(optimisticRow);
+    showToast('✅ ' + t('saved'));
+    renderAll();
+    // Quietly confirm in the background; only surface anything if it actually failed.
+    pollUntilSaved('GeneralBets', 'generalBets', () =>
+      STATE.generalBets.find(b => normEmail(b.email)===normEmail(STATE.user.email) && b.rank1===payload.rank1 && b.topScorer===payload.topScorer),
+      4, 1200
+    ).then(landed => {
+      if(!landed){ showToast('⚠️ ' + t('saveFailed'), true); loadAllData().then(renderAll); }
+    });
   });
 }
 function renumberGroup(list){ list.querySelectorAll('.drag-item').forEach((li,i) => li.querySelector('.drag-pos').textContent = i+1); }
@@ -1238,15 +1247,23 @@ function wireGamesForm(){
         betAdvancing: advSelect ? advSelect.value : '',
         timestamp: new Date().toISOString(),
       };
-      const originalText = btn.textContent;
       btn.textContent = '…'; btn.disabled = true;
       await postBet(payload);
-      const landed = await pollUntilSaved('GameBets', 'gameBets', () =>
+      // Optimistic: assume the write succeeded and update the UI immediately.
+      const idx = STATE.gameBets.findIndex(b => normEmail(b.email)===normEmail(STATE.user.email) && String(b.gameId)===String(payload.gameId));
+      const optimisticRow = { email: STATE.user.email, name: STATE.user.name, ...payload };
+      if(idx>=0) STATE.gameBets[idx] = {...STATE.gameBets[idx], ...optimisticRow};
+      else STATE.gameBets.push(optimisticRow);
+      showToast('✅ ' + t('saved'));
+      renderAll();
+      // Quietly confirm in the background; only surface anything if it actually failed.
+      pollUntilSaved('GameBets', 'gameBets', () =>
         STATE.gameBets.find(b => normEmail(b.email)===normEmail(STATE.user.email) && String(b.gameId)===String(payload.gameId)
-          && String(b.betA)===String(payload.betA) && String(b.betB)===String(payload.betB))
-      );
-      if(landed){ showToast('✅ ' + t('saved')); renderAll(); }
-      else{ showToast('⚠️ ' + t('saveFailed'), true); btn.textContent = originalText; btn.disabled = false; }
+          && String(b.betA)===String(payload.betA) && String(b.betB)===String(payload.betB)),
+        4, 1200
+      ).then(landed => {
+        if(!landed){ showToast('⚠️ ' + t('saveFailed'), true); loadAllData().then(renderAll); }
+      });
     });
   });
   document.querySelectorAll('[data-role="exportGameBets"]').forEach(btn => {
