@@ -207,6 +207,9 @@ canvas{width:100%; height:280px; display:block;}
 .subtab-row{display:flex; gap:8px; margin-bottom:16px;}
 .subtab-btn{background:var(--surface); border:1px solid var(--border); color:var(--text-dim); font-weight:700; font-size:13px; padding:8px 14px; border-radius:20px;}
 .subtab-btn.active{background:var(--amber); color:#1a1408; border-color:var(--amber);}
+.filter-row{display:flex; gap:6px; margin-bottom:14px; flex-wrap:wrap;}
+.filter-chip{background:transparent; border:1px solid var(--border); color:var(--text-dim); font-weight:600; font-size:12px; padding:6px 12px; border-radius:20px;}
+.filter-chip.active{background:var(--surface-3); color:var(--text); border-color:var(--border-strong);}
 .whatsapp-btn{background:#25D366; color:#07321a; border-color:#25D366;}
 .whatsapp-btn:hover{filter:brightness(1.05);}
 </style>
@@ -478,6 +481,7 @@ const I18N = {
     statusScheduled:'Open', statusLocked:'Locked', statusFinal:'Final', earned:'earned',
     noOpenGames:'No open games right now.', playedGamesTitle:'Played games', playedGamesSub:"Results, everyone's bets, and match events.",
     tabOpenGames:'Open', tabPlayedGames:'Played', whatsappFallback:'Image downloaded — attach it to WhatsApp manually.',
+    filterAllGames:'All', filterUnfilled:'Not predicted yet', allFilled:"You've predicted every open game 🎉",
     everyoneBets:"Everyone's bets", matchEventsTitle:'Match events', noEventsYet:'No events recorded for this game yet.',
     advancingShort:'Advancing', advancingLabel:'Team advancing to the next stage',
     advancingWinnerLabel:'Match winner (including extra time / penalties)',
@@ -512,6 +516,7 @@ const I18N = {
     statusScheduled:'פתוח', statusLocked:'נעול', statusFinal:'הסתיים', earned:'נצברו',
     noOpenGames:'אין משחקים פתוחים כרגע.', playedGamesTitle:'משחקים ששוחקו', playedGamesSub:'תוצאות, ההימורים של כולם, ואירועי המשחק.',
     tabOpenGames:'פתוחים', tabPlayedGames:'ששוחקו', whatsappFallback:'התמונה הורדה — צרפו אותה ידנית לוואטסאפ.',
+    filterAllGames:'הכל', filterUnfilled:'טרם מולא', allFilled:'מילאת ניחוש לכל המשחקים הפתוחים 🎉',
     everyoneBets:'ההימורים של כולם', matchEventsTitle:'אירועי המשחק', noEventsYet:'לא הוזנו אירועים למשחק זה עדיין.',
     advancingShort:'העפלה', advancingLabel:'הנבחרת שמעפילה לשלב הבא',
     advancingWinnerLabel:'הנבחרת המנצחת במשחק (כולל הארכה / פנדלים)',
@@ -1032,6 +1037,11 @@ function isKnockout(g){ return g.stage && g.stage !== 'group' && g.stage !== '';
 function advancingFieldLabel(g){ return (g.stage==='final' || g.stage==='3rd') ? t('advancingWinnerLabel') : t('advancingLabel'); }
 
 let gamesSubTab = 'open';
+let openGamesFilter = 'all';
+function hasFilledBet(g){
+  const b = betFor(g.id);
+  return !!(b && b.betA!==undefined && b.betA!==null && b.betA!=='' && b.betB!==undefined && b.betB!==null && b.betB!=='');
+}
 function renderGames(){
   if(!STATE.games.length){
     return `<div class="section-title">${t('gamesTitle')}</div><div class="card"><div class="empty-state">${STATE.loaded?'':'<div class="spinner"></div><br>'}${t('noGames')}</div></div>`;
@@ -1040,6 +1050,8 @@ function renderGames(){
   const isOpen = g => g.status === 'scheduled' && now <= new Date(g.kickoffISO);
   const openGames = STATE.games.filter(isOpen).sort((a,b) => new Date(a.kickoffISO) - new Date(b.kickoffISO));
   const playedGames = STATE.games.filter(g => !isOpen(g)).sort((a,b) => new Date(b.kickoffISO) - new Date(a.kickoffISO)); // most recently played first
+  const unfilledCount = openGames.filter(g => !hasFilledBet(g)).length;
+  const visibleOpenGames = openGamesFilter==='unfilled' ? openGames.filter(g => !hasFilledBet(g)) : openGames;
   return `
   <div class="section-title">${t('gamesTitle')}</div>
   <div class="section-sub">${t('gamesSub')}</div>
@@ -1047,8 +1059,13 @@ function renderGames(){
     <button class="subtab-btn ${gamesSubTab==='open'?'active':''}" data-subtab="open">${t('tabOpenGames')} (${openGames.length})</button>
     <button class="subtab-btn ${gamesSubTab==='played'?'active':''}" data-subtab="played">${t('tabPlayedGames')} (${playedGames.length})</button>
   </div>
+  ${gamesSubTab==='open' ? `
+  <div class="filter-row">
+    <button class="filter-chip ${openGamesFilter==='all'?'active':''}" data-filter="all">${t('filterAllGames')} (${openGames.length})</button>
+    <button class="filter-chip ${openGamesFilter==='unfilled'?'active':''}" data-filter="unfilled">${t('filterUnfilled')} (${unfilledCount})</button>
+  </div>` : ''}
   ${gamesSubTab==='open'
-    ? (openGames.length ? openGames.map(g => renderGameCard(g)).join('') : `<div class="card"><div class="empty-state">${t('noOpenGames')}</div></div>`)
+    ? (visibleOpenGames.length ? visibleOpenGames.map(g => renderGameCard(g)).join('') : `<div class="card"><div class="empty-state">${openGamesFilter==='unfilled' ? t('allFilled') : t('noOpenGames')}</div></div>`)
     : (playedGames.length ? playedGames.map(g => renderPlayedGameCard(g)).join('') : `<div class="card"><div class="empty-state">${t('noneYet')}</div></div>`)
   }
   ${demoBanner()}`;
@@ -1204,6 +1221,9 @@ function renderPlayedGameCard(g){
 function wireGamesForm(){
   document.querySelectorAll('[data-subtab]').forEach(btn => {
     btn.addEventListener('click', () => { gamesSubTab = btn.dataset.subtab; renderAll(); });
+  });
+  document.querySelectorAll('[data-filter]').forEach(btn => {
+    btn.addEventListener('click', () => { openGamesFilter = btn.dataset.filter; renderAll(); });
   });
   document.querySelectorAll('[data-role="saveGame"]').forEach(btn => {
     btn.addEventListener('click', async () => {
