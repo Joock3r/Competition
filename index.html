@@ -254,18 +254,18 @@ const CONFIG = {
   //     The Sheet, all bets, and all matching logic use the ID only — never the
   //     display text — so switching language never breaks a saved prediction. ---
   TEAMS: {
-    germany: { en:'Germany', he:'גרמניה' }, france: { en:'France', he:'צרפת' },
-    england: { en:'England', he:'אנגליה' }, spain: { en:'Spain', he:'ספרד' },
-    italy: { en:'Italy', he:'איטליה' }, portugal: { en:'Portugal', he:'פורטוגל' },
-    netherlands: { en:'Netherlands', he:'הולנד' }, belgium: { en:'Belgium', he:'בלגיה' },
-    croatia: { en:'Croatia', he:'קרואטיה' }, switzerland: { en:'Switzerland', he:'שוויץ' },
-    denmark: { en:'Denmark', he:'דנמרק' }, austria: { en:'Austria', he:'אוסטריה' },
-    turkey: { en:'Turkey', he:'טורקיה' }, ukraine: { en:'Ukraine', he:'אוקראינה' },
-    scotland: { en:'Scotland', he:'סקוטלנד' }, hungary: { en:'Hungary', he:'הונגריה' },
-    serbia: { en:'Serbia', he:'סרביה' }, poland: { en:'Poland', he:'פולין' },
-    czech: { en:'Czech', he:"צ'כיה" }, romania: { en:'Romania', he:'רומניה' },
-    slovakia: { en:'Slovakia', he:'סלובקיה' }, slovenia: { en:'Slovenia', he:'סלובניה' },
-    georgia: { en:'Georgia', he:'גאורגיה' }, albania: { en:'Albania', he:'אלבניה' },
+    germany: { en:'Germany', he:'גרמניה', flag:'🇩🇪' }, france: { en:'France', he:'צרפת', flag:'🇫🇷' },
+    england: { en:'England', he:'אנגליה', flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿' }, spain: { en:'Spain', he:'ספרד', flag:'🇪🇸' },
+    italy: { en:'Italy', he:'איטליה', flag:'🇮🇹' }, portugal: { en:'Portugal', he:'פורטוגל', flag:'🇵🇹' },
+    netherlands: { en:'Netherlands', he:'הולנד', flag:'🇳🇱' }, belgium: { en:'Belgium', he:'בלגיה', flag:'🇧🇪' },
+    croatia: { en:'Croatia', he:'קרואטיה', flag:'🇭🇷' }, switzerland: { en:'Switzerland', he:'שוויץ', flag:'🇨🇭' },
+    denmark: { en:'Denmark', he:'דנמרק', flag:'🇩🇰' }, austria: { en:'Austria', he:'אוסטריה', flag:'🇦🇹' },
+    turkey: { en:'Turkey', he:'טורקיה', flag:'🇹🇷' }, ukraine: { en:'Ukraine', he:'אוקראינה', flag:'🇺🇦' },
+    scotland: { en:'Scotland', he:'סקוטלנד', flag:'🏴󠁧󠁢󠁳󠁣󠁴󠁿' }, hungary: { en:'Hungary', he:'הונגריה', flag:'🇭🇺' },
+    serbia: { en:'Serbia', he:'סרביה', flag:'🇷🇸' }, poland: { en:'Poland', he:'פולין', flag:'🇵🇱' },
+    czech: { en:'Czech', he:"צ'כיה", flag:'🇨🇿' }, romania: { en:'Romania', he:'רומניה', flag:'🇷🇴' },
+    slovakia: { en:'Slovakia', he:'סלובקיה', flag:'🇸🇰' }, slovenia: { en:'Slovenia', he:'סלובניה', flag:'🇸🇮' },
+    georgia: { en:'Georgia', he:'גאורגיה', flag:'🇬🇪' }, albania: { en:'Albania', he:'אלבניה', flag:'🇦🇱' },
   },
 
   // --- Groups & teams (inserted once per tournament) — lists of TEAM IDs ---
@@ -567,7 +567,9 @@ function t(key,...args){ const v = I18N[LANG][key]; return typeof v==='function'
    ========================================================= */
 function teamName(teamId){
   const t = CONFIG.TEAMS[teamId];
-  return t ? (t[LANG] || t.en || teamId) : teamId;
+  if(!t) return teamId;
+  const label = t[LANG] || t.en || teamId;
+  return t.flag ? `${t.flag} ${label}` : label;
 }
 function allPlayersFlat(){
   return Object.entries(CONFIG.ROSTERS).flatMap(([teamId, squad]) => squad.map(p => ({...p, teamId})));
