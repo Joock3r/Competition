@@ -55,7 +55,7 @@ input,select{font-family:inherit;}
 }
 .icon-btn:hover{border-color:var(--border-strong);}
 .icon-btn.active{background:var(--amber); color:#1a1408; border-color:var(--amber);}
-.countdown-timer{font-family:var(--font-mono); font-size:12px; font-weight:700; color:var(--text-dim); unicode-bidi:isolate; direction:ltr; display:inline-block;}
+.countdown-timer{font-family:var(--font-mono); font-size:12px; font-weight:700; color:var(--text-dim);}
 .countdown-timer.urgent{color:var(--red);}
 #gsi-btn-wrap{display:flex; align-items:center; min-width:0;}
 .user-chip{display:flex; align-items:center; gap:6px; background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:4px 10px 4px 4px; min-width:0;}
@@ -484,7 +484,7 @@ const I18N = {
     yourScore:'Your score', topPlayerOfGame:'Top player', kickoff:'Kickoff', group:'Group',
     statusScheduled:'Open', statusLocked:'Locked', statusFinal:'Final', earned:'earned',
     noOpenGames:'No open games right now.', playedGamesTitle:'Played games', playedGamesSub:"Results, everyone's bets, and match events.",
-    timerLabel:'Closes in:', timerDaysShort:'d', timerClosedShort:'Closed',
+    timerLabel:'Closes in:', timerDaysShort:'d', timerClosedShort:'Closed', timerDaysWord:'days', timerHoursWord:'hours',
     tabOpenGames:'Open', tabPlayedGames:'Played', whatsappFallback:'Image downloaded — attach it to WhatsApp manually.',
     filterAllGames:'All', filterUnfilled:'Not predicted yet', allFilled:"You've predicted every open game 🎉",
     everyoneBets:"Everyone's bets", matchEventsTitle:'Match events', noEventsYet:'No events recorded for this game yet.',
@@ -520,7 +520,7 @@ const I18N = {
     yourScore:'הניחוש שלך', topPlayerOfGame:'שחקן המשחק', kickoff:'שעת התחלה', group:'בית',
     statusScheduled:'פתוח', statusLocked:'נעול', statusFinal:'הסתיים', earned:'נצברו',
     noOpenGames:'אין משחקים פתוחים כרגע.', playedGamesTitle:'משחקים ששוחקו', playedGamesSub:'תוצאות, ההימורים של כולם, ואירועי המשחק.',
-    timerLabel:'נסגר בעוד:', timerDaysShort:'י׳', timerClosedShort:'נסגר',
+    timerLabel:'נסגר בעוד:', timerDaysShort:'י׳', timerClosedShort:'נסגר', timerDaysWord:'ימים', timerHoursWord:'שעות',
     tabOpenGames:'פתוחים', tabPlayedGames:'ששוחקו', whatsappFallback:'התמונה הורדה — צרפו אותה ידנית לוואטסאפ.',
     filterAllGames:'הכל', filterUnfilled:'טרם מולא', allFilled:'מילאת ניחוש לכל המשחקים הפתוחים 🎉',
     everyoneBets:'ההימורים של כולם', matchEventsTitle:'אירועי המשחק', noEventsYet:'לא הוזנו אירועים למשחק זה עדיין.',
@@ -544,12 +544,16 @@ function formatCountdown(ms){
   const mins = Math.floor((totalSec%3600)/60);
   const secs = totalSec%60;
   const pad = n => String(n).padStart(2,'0');
-  return (days>0 ? `${days}${t('timerDaysShort')} ` : '') + `${pad(hours)}:${pad(mins)}:${pad(secs)}`;
+  const clock = `<span class="iso-num">${pad(hours)}:${pad(mins)}:${pad(secs)}</span>`;
+  if(days<=0) return clock;
+  return LANG==='he'
+    ? `${days} ${t('timerDaysWord')} ו-${clock} ${t('timerHoursWord')}`
+    : `${days}${t('timerDaysShort')} ${clock}`;
 }
 function tickCountdowns(){
   document.querySelectorAll('.countdown-timer').forEach(el => {
     const diff = new Date(el.dataset.until) - new Date();
-    el.textContent = formatCountdown(diff);
+    el.innerHTML = formatCountdown(diff);
     el.classList.toggle('urgent', diff>0 && diff < 3600000);
   });
 }
