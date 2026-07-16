@@ -903,8 +903,14 @@ function renderGeneral(){
   }
   if(locked) return renderGeneralReveal();
   return `
-  <div class="section-title">${t('generalTitle')}</div>
-  <div class="section-sub">${t('generalSub')}</div>
+  <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+    <div>
+      <div class="section-title" style="margin-bottom:4px;">${t('generalTitle')}</div>
+      <div class="section-sub" style="margin-bottom:0;">${t('generalSub')}</div>
+    </div>
+    <button class="btn" type="submit" form="generalForm">${t('save')}</button>
+  </div>
+  <div id="generalMsg" style="margin:8px 0 6px; font-size:13px; color:var(--green);"></div>
   <div class="saved-banner">${t('deadline')}: ${fmtDate(CONFIG.GENERAL_DEADLINE)}</div>
   <form id="generalForm">
     <div class="card">
@@ -951,8 +957,6 @@ function renderGeneral(){
         </div>`;
       }).join('')}
     </div>
-    <button class="btn" type="submit">${t('save')}</button>
-    <div id="generalMsg" style="margin-top:10px; font-size:13px; color:var(--green);"></div>
   </form>`;
 }
 
@@ -1103,10 +1107,13 @@ function renderGameCard(g){
     </div>
     <div class="field" style="margin-bottom:8px;">
       <label>${t('topPlayerOfGame')}</label>
-      <select data-role="topPlayer">
-        <option value="">${t('choose')}</option>
-        ${roster.map(p => `<option value="${p.id}" ${bet && bet.betTopPlayer===p.id?'selected':''}>${playerName(p)} (${p.pos}) — ${teamName(p.teamId)}</option>`).join('')}
-      </select>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <select data-role="topPlayer" style="flex:1;">
+          <option value="">${t('choose')}</option>
+          ${roster.map(p => `<option value="${p.id}" ${bet && bet.betTopPlayer===p.id?'selected':''}>${playerName(p)} (${p.pos}) — ${teamName(p.teamId)}</option>`).join('')}
+        </select>
+        <button class="icon-btn" data-role="saveGame" data-id="${g.id}" title="${t('save')}" style="flex-shrink:0; font-size:18px; padding:8px 13px; line-height:1;">💾</button>
+      </div>
     </div>
     ${isKnockout(g) ? `
     <div class="field" style="margin-bottom:8px;">
@@ -1117,7 +1124,6 @@ function renderGameCard(g){
         <option value="${g.teamB}" ${bet && bet.betAdvancing===g.teamB?'selected':''}>${teamName(g.teamB)}</option>
       </select>
     </div>` : ''}
-    <button class="btn btn-ghost" data-role="saveGame" data-id="${g.id}">${t('save')}</button>
   </div>`;
 }
 
@@ -1247,7 +1253,7 @@ function wireGamesForm(){
         betAdvancing: advSelect ? advSelect.value : '',
         timestamp: new Date().toISOString(),
       };
-      btn.textContent = '…'; btn.disabled = true;
+      btn.textContent = '⏳'; btn.disabled = true;
       await postBet(payload);
       // Optimistic: assume the write succeeded and update the UI immediately.
       const idx = STATE.gameBets.findIndex(b => normEmail(b.email)===normEmail(STATE.user.email) && String(b.gameId)===String(payload.gameId));
