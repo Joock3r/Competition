@@ -976,7 +976,7 @@ function renderGeneralReveal(){
   <div class="lock-banner">🔒 ${t('locked')} — ${t('deadline')} ${fmtDate(CONFIG.GENERAL_DEADLINE)}</div>
   ${!revealed.length ? `<div class="card"><div class="empty-state">${STATE.loaded?t('noneYet'):t('loading')}</div></div>` : revealed.map(b => {
     const participant = STATE.participants.find(pp => normEmail(pp.email) === normEmail(b.email));
-    const name = participant ? participantName(participant) : (b.name || b.email);
+    const name = participant ? participantName(participant) : b.email;
     const groups = safeParse(b.groupsJSON, null);
     return `
     <div class="card">
@@ -1011,7 +1011,7 @@ function wireGeneralForm(){
       groupsJSON[list.dataset.group] = [...list.querySelectorAll('.drag-item')].map(li => li.dataset.team);
     });
     const payload = {
-      type:'generalBet', email: STATE.user.email, name: STATE.user.name,
+      type:'generalBet', email: STATE.user.email,
       rank1: fd.get('rank1'), rank2: fd.get('rank2'), rank3: fd.get('rank3'), rank4: fd.get('rank4'),
       topScorer: fd.get('topScorer'), topAssist: fd.get('topAssist'),
       groupsJSON: JSON.stringify(groupsJSON), timestamp: new Date().toISOString(),
@@ -1023,7 +1023,7 @@ function wireGeneralForm(){
     // Optimistic: assume the write succeeded (it almost always does) and update
     // the UI immediately instead of waiting on a verification round-trip.
     const idx = STATE.generalBets.findIndex(b => normEmail(b.email)===normEmail(STATE.user.email));
-    const optimisticRow = { email: STATE.user.email, name: STATE.user.name, ...payload };
+    const optimisticRow = { email: STATE.user.email, ...payload };
     if(idx>=0) STATE.generalBets[idx] = {...STATE.generalBets[idx], ...optimisticRow};
     else STATE.generalBets.push(optimisticRow);
     showToast('✅ ' + t('saved'));
@@ -1205,7 +1205,7 @@ function renderPlayedGameCard(g){
       <tbody>
         ${bets.map(b => {
           const participant = STATE.participants.find(pp => normEmail(pp.email)===normEmail(b.email));
-          const name = participant ? participantName(participant) : (b.name || b.email);
+          const name = participant ? participantName(participant) : b.email;
           const pts = (b.pointsEarned!==undefined && b.pointsEarned!=='') ? b.pointsEarned : null;
           const tp = findPlayer(b.betTopPlayer);
           return `<tr>
@@ -1246,7 +1246,7 @@ function wireGamesForm(){
       const card = btn.closest('.game-card');
       const advSelect = card.querySelector('[data-role="advancing"]');
       const payload = {
-        type:'gameBet', email: STATE.user.email, name: STATE.user.name, gameId: btn.dataset.id,
+        type:'gameBet', email: STATE.user.email, gameId: btn.dataset.id,
         betA: card.querySelector('[data-role="scoreA"]').value,
         betB: card.querySelector('[data-role="scoreB"]').value,
         betTopPlayer: card.querySelector('[data-role="topPlayer"]').value,
@@ -1257,7 +1257,7 @@ function wireGamesForm(){
       await postBet(payload);
       // Optimistic: assume the write succeeded and update the UI immediately.
       const idx = STATE.gameBets.findIndex(b => normEmail(b.email)===normEmail(STATE.user.email) && String(b.gameId)===String(payload.gameId));
-      const optimisticRow = { email: STATE.user.email, name: STATE.user.name, ...payload };
+      const optimisticRow = { email: STATE.user.email, ...payload };
       if(idx>=0) STATE.gameBets[idx] = {...STATE.gameBets[idx], ...optimisticRow};
       else STATE.gameBets.push(optimisticRow);
       showToast('✅ ' + t('saved'));
