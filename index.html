@@ -248,7 +248,7 @@ const CONFIG = {
   APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbzg9u__7JX1Tw-oodrqohyXP_h5jjFueewGKixkwZnz9rtAIP6rugOP376VuPYiunDb/exec',
 
   // --- General predictions form closes automatically at this time ---
-  GENERAL_DEADLINE: '2028-06-09T00:00:00+03:00',
+  GENERAL_DEADLINE: '2026-06-09T00:00:00+03:00',
 
   // --- Teams: a stable ID (used everywhere in the Sheet) + display name per language.
   //     The Sheet, all bets, and all matching logic use the ID only — never the
@@ -477,6 +477,7 @@ const I18N = {
     generalTitle:'General predictions', generalSub:'Predict the podium, top scorer, top assister, and the finishing order of every group. Locks automatically at the deadline below.',
     deadline:'Closes', locked:'Predictions are locked', podium:'Final four', rank1:'Champion',rank2:'Runner-up',rank3:'3rd place',rank4:'4th place',
     revealSub:"Predictions are locked — here's what everyone picked.", noneYet:'No predictions were submitted.',
+    revealPodiumTitle:'Podium & top picks', revealGroupsTitle:'Group finishing order predictions',
     topScorer:'Top goal scorer', topAssist:'Top assister', groupsTitle:'Group finishing order', dragHint:'Drag to reorder',
     save:'Save predictions', saved:'Saved — you can edit until the deadline.', choose:'Choose…',
     saving:'Saving…', saveFailed:'Save failed — check the Apps Script deployment (see SETUP.md troubleshooting).',
@@ -516,6 +517,7 @@ const I18N = {
     generalTitle:'ניחושים כלליים', generalSub:'נחשו את הפודיום, מלך השערים, מלך הבישולים, וסדר הסיום בכל בית. הטופס ננעל אוטומטית במועד שלמטה.',
     deadline:'נסגר בתאריך', locked:'הטופס נעול', podium:'הרביעייה הסופית', rank1:'אלופה',rank2:'מקום שני',rank3:'מקום שלישי',rank4:'מקום רביעי',
     revealSub:'הניחושים ננעלו — הנה מה שכולם בחרו.', noneYet:'לא הוגשו ניחושים.',
+    revealPodiumTitle:'פודיום ובחירות מובילות', revealGroupsTitle:'ניחושי סדר סיום הבתים',
     topScorer:'מלך שערים', topAssist:'מלך בישולים', groupsTitle:'סדר סיום הבתים', dragHint:'גררו כדי לשנות סדר',
     save:'שמירת ניחושים', saved:'נשמר — ניתן לערוך עד למועד הסגירה.', choose:'בחירה…',
     saving:'שומר…', saveFailed:'השמירה נכשלה — בדוק את פריסת ה-Apps Script (ראה פתרון בעיות ב-SETUP.md).',
@@ -744,7 +746,7 @@ function renderAll(){
     animateFlaps();
     const eb = document.getElementById('exportImgBtn'); if(eb) eb.onclick = exportLeaderboardImage;
   }
-  if(currentTab==='general') wireGeneralForm();
+  if(currentTab==='general'){ wireGeneralForm(); wireGeneralReveal(); }
   if(currentTab==='games') wireGamesForm();
   if(currentTab==='stats') drawStatsChart();
 }
@@ -999,25 +1001,85 @@ function renderGeneral(){
  * HTML file with an edited/past deadline can't force an early reveal:
  * the API simply keeps sending back redacted rows until the real moment.
  */
+let generalRevealGroupTab = null;
 function renderGeneralReveal(){
   const revealed = STATE.generalBets.filter(b => b.rank1);
+  const stickyBase = `position:sticky; ${LANG==='he'?'right':'left'}:0; background:var(--surface); z-index:1;`;
+  if(!revealed.length){
+    return `
+    <div class="section-title">${t('generalTitle')}</div>
+    <div class="section-sub">${t('revealSub')}</div>
+    <div class="lock-banner">🔒 ${t('locked')} — ${t('deadline')} ${fmtDate(CONFIG.GENERAL_DEADLINE)}</div>
+    <div class="card"><div class="empty-state">${STATE.loaded?t('noneYet'):t('loading')}</div></div>`;
+  }
+  const rows = revealed.map(b => {
+    const participant = STATE.participants.find(pp => normEmail(pp.email) === normEmail(b.email));
+    return { name: participant ? participantName(participant) : b.email, b };
+  });
+  const groupKeys = Object.keys(CONFIG.GROUPS);
+  if(!generalRevealGroupTab || !groupKeys.includes(generalRevealGroupTab)) generalRevealGroupTab = groupKeys[0];
+
   return `
   <div class="section-title">${t('generalTitle')}</div>
   <div class="section-sub">${t('revealSub')}</div>
   <div class="lock-banner">🔒 ${t('locked')} — ${t('deadline')} ${fmtDate(CONFIG.GENERAL_DEADLINE)}</div>
-  ${!revealed.length ? `<div class="card"><div class="empty-state">${STATE.loaded?t('noneYet'):t('loading')}</div></div>` : revealed.map(b => {
-    const participant = STATE.participants.find(pp => normEmail(pp.email) === normEmail(b.email));
-    const name = participant ? participantName(participant) : b.email;
-    const groups = safeParse(b.groupsJSON, null);
-    return `
-    <div class="card">
-      <div class="hof-name" style="margin-bottom:8px;">${name}</div>
-      <div class="section-sub" style="margin-bottom:4px;">🏆 ${t('rank1')}: ${teamName(b.rank1)} · ${t('rank2')}: ${teamName(b.rank2)} · ${t('rank3')}: ${teamName(b.rank3)} · ${t('rank4')}: ${teamName(b.rank4)}</div>
-      <div class="section-sub" style="margin-bottom:${groups?'4px':'0'};">⚽ ${t('topScorer')}: ${playerName(b.topScorer)} · 🎯 ${t('topAssist')}: ${playerName(b.topAssist)}</div>
-      ${groups ? `<div class="section-sub" style="font-size:11.5px;">${Object.entries(groups).map(([g,order]) => `${t('group')} ${g}: ${order.map(teamName).join(' › ')}`).join(' &nbsp;·&nbsp; ')}</div>` : ''}
-    </div>`;
-  }).join('')}
+
+  <div class="card-title">${t('revealPodiumTitle')}</div>
+  <div class="card">
+    <div style="overflow-x:auto;">
+      <table class="leaderboard" style="min-width:620px;">
+        <thead><tr>
+          <th style="${stickyBase}">${t('player')}</th>
+          <th>${t('rank1')}</th><th>${t('rank2')}</th><th>${t('rank3')}</th><th>${t('rank4')}</th>
+          <th>${t('topScorer')}</th><th>${t('topAssist')}</th>
+        </tr></thead>
+        <tbody>
+          ${rows.map(({name,b}) => {
+            const scorer = findPlayer(b.topScorer), assister = findPlayer(b.topAssist);
+            return `<tr>
+              <td style="${stickyBase} font-weight:700;">${name}</td>
+              <td>${b.rank1?teamName(b.rank1):'—'}</td>
+              <td>${b.rank2?teamName(b.rank2):'—'}</td>
+              <td>${b.rank3?teamName(b.rank3):'—'}</td>
+              <td>${b.rank4?teamName(b.rank4):'—'}</td>
+              <td>${scorer?playerName(scorer):'—'}</td>
+              <td>${assister?playerName(assister):'—'}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card-title" style="margin-top:20px;">${t('revealGroupsTitle')}</div>
+  <div class="subtab-row" style="flex-wrap:wrap;">
+    ${groupKeys.map(g => `<button class="filter-chip ${generalRevealGroupTab===g?'active':''}" data-reveal-group="${g}">${t('group')} ${g}</button>`).join('')}
+  </div>
+  <div class="card">
+    <div style="overflow-x:auto;">
+      <table class="leaderboard">
+        <thead><tr>
+          <th style="${stickyBase}">${t('player')}</th><th>${t('rank1')}</th><th>${t('rank2')}</th><th>${t('rank3')}</th><th>${t('rank4')}</th>
+        </tr></thead>
+        <tbody>
+          ${rows.map(({name,b}) => {
+            const groups = safeParse(b.groupsJSON, null);
+            const order = groups && groups[generalRevealGroupTab] ? groups[generalRevealGroupTab] : null;
+            return `<tr>
+              <td style="${stickyBase} font-weight:700;">${name}</td>
+              ${[0,1,2,3].map(i => `<td>${order && order[i] ? teamName(order[i]) : '—'}</td>`).join('')}
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+  </div>
   ${demoBanner()}`;
+}
+function wireGeneralReveal(){
+  document.querySelectorAll('[data-reveal-group]').forEach(btn => {
+    btn.addEventListener('click', () => { generalRevealGroupTab = btn.dataset.revealGroup; renderAll(); });
+  });
 }
 
 function wireGeneralForm(){
