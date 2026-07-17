@@ -248,7 +248,7 @@ const CONFIG = {
   APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbzg9u__7JX1Tw-oodrqohyXP_h5jjFueewGKixkwZnz9rtAIP6rugOP376VuPYiunDb/exec',
 
   // --- General predictions form closes automatically at this time ---
-  GENERAL_DEADLINE: '2026-06-09T00:00:00+03:00',
+  GENERAL_DEADLINE: '2028-06-09T00:00:00+03:00',
 
   // --- Teams: a stable ID (used everywhere in the Sheet) + display name per language.
   //     The Sheet, all bets, and all matching logic use the ID only — never the
@@ -472,6 +472,7 @@ const I18N = {
     ruleExact:'Exact score', ruleDiff:'Correct goal difference', ruleOutcome:'Correct win / draw / loss',
     ruleOwnGoal:'Own goal', ruleRedCard:'Red card', ruleCleanSheet:'GK clean sheet', ruleMissedPenalty:'Missed penalty', rulePenaltySave:'Penalty save (or shooter misses)',
     ruleGoal:'Goal scored', ruleAssist:'Assist', ruleStackNote:'Tiers stack — an exact score also earns the goal-difference and outcome points.',
+    ruleFootnoteMinutes:'Regardless of how many minutes the player was on the pitch.', ruleFootnotePlayed:'Only if the player actually played in the match.',
     positionsLegend:'Positions', posGK:'Goalkeepers', posDF:'Defenders', posCM:'Midfielders', posST:'Strikers / Forwards',
     generalTitle:'General predictions', generalSub:'Predict the podium, top scorer, top assister, and the finishing order of every group. Locks automatically at the deadline below.',
     deadline:'Closes', locked:'Predictions are locked', podium:'Final four', rank1:'Champion',rank2:'Runner-up',rank3:'3rd place',rank4:'4th place',
@@ -510,6 +511,7 @@ const I18N = {
     ruleExact:'תוצאה מדויקת', ruleDiff:'הפרש שערים נכון', ruleOutcome:'ניצחון / תיקו / הפסד נכון',
     ruleOwnGoal:'שער עצמי', ruleRedCard:'כרטיס אדום', ruleCleanSheet:'שער נקי', ruleMissedPenalty:'החטאת בעיטת עונשין', rulePenaltySave:'עצירת פנדל (או שהיריב מחטיא)',
     ruleGoal:'שער', ruleAssist:'בישול', ruleStackNote:'הניקוד מצטבר — תוצאה מדויקת מזכה גם בנקודות ההפרש והתוצאה.',
+    ruleFootnoteMinutes:'ללא תלות בכמות הדקות ששחקן שיחק', ruleFootnotePlayed:'רק אם השחקן שיחק במשחק',
     positionsLegend:'תפקידים', posGK:'שוערים', posDF:'הגנה', posCM:'קישור', posST:'התקפה',
     generalTitle:'ניחושים כלליים', generalSub:'נחשו את הפודיום, מלך השערים, מלך הבישולים, וסדר הסיום בכל בית. הטופס ננעל אוטומטית במועד שלמטה.',
     deadline:'נסגר בתאריך', locked:'הטופס נעול', podium:'הרביעייה הסופית', rank1:'אלופה',rank2:'מקום שני',rank3:'מקום שלישי',rank4:'מקום רביעי',
@@ -890,14 +892,15 @@ function renderRules(){
     <div class="card">
       <div class="card-title">${t('rulesPlayerTitle')}</div>
       <table class="rule-table">
-        ${['GK','DF','CM','ST'].map(pos => `<tr><td><span class="pos-tag badge-pos-${pos}">${pos}</span>${t('ruleGoal')}</td><td>${val(s.player.goal[pos])}</td></tr>`).join('')}
-        ${['GK','DF','CM','ST'].map(pos => `<tr><td><span class="pos-tag badge-pos-${pos}">${pos}</span>${t('ruleAssist')}</td><td>${val(s.player.assist[pos])}</td></tr>`).join('')}
-        <tr><td><span class="pos-tag badge-pos-GK">GK</span>${t('ruleCleanSheet')}</td><td>${val(s.player.cleanSheetGK)}</td></tr>
-        <tr><td><span class="pos-tag badge-pos-GK">GK</span>${t('rulePenaltySave')}</td><td>${val(s.player.penaltySave)}</td></tr>
+        ${['GK','DF','CM','ST'].map(pos => `<tr><td><span class="pos-tag badge-pos-${pos}">${pos}</span>${t('ruleGoal')}*</td><td>${val(s.player.goal[pos])}</td></tr>`).join('')}
+        ${['GK','DF','CM','ST'].map(pos => `<tr><td><span class="pos-tag badge-pos-${pos}">${pos}</span>${t('ruleAssist')}*</td><td>${val(s.player.assist[pos])}</td></tr>`).join('')}
+        <tr><td><span class="pos-tag badge-pos-GK">GK</span>${t('ruleCleanSheet')}**</td><td>${val(s.player.cleanSheetGK)}</td></tr>
+        <tr><td><span class="pos-tag badge-pos-GK">GK</span>${t('rulePenaltySave')}**</td><td>${val(s.player.penaltySave)}</td></tr>
         <tr><td>${t('ruleOwnGoal')}</td><td>${val(s.player.ownGoal)}</td></tr>
         <tr><td>${t('ruleRedCard')}</td><td>${val(s.player.redCard)}</td></tr>
         <tr><td>${t('ruleMissedPenalty')}</td><td>${val(s.player.missedPenalty)}</td></tr>
       </table>
+      <div class="section-sub" style="margin-top:10px; margin-bottom:0;">* ${t('ruleFootnoteMinutes')}<br>** ${t('ruleFootnotePlayed')}</div>
     </div>
   </div>
   <div class="card">
