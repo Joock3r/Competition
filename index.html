@@ -248,7 +248,7 @@ const CONFIG = {
   APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbzg9u__7JX1Tw-oodrqohyXP_h5jjFueewGKixkwZnz9rtAIP6rugOP376VuPYiunDb/exec',
 
   // --- General predictions form closes automatically at this time ---
-  GENERAL_DEADLINE: '2026-06-09T00:00:00+03:00',
+  GENERAL_DEADLINE: '2028-06-09T00:00:00+03:00',
 
   // --- Teams: a stable ID (used everywhere in the Sheet) + display name per language.
   //     The Sheet, all bets, and all matching logic use the ID only — never the
@@ -473,11 +473,12 @@ const I18N = {
     ruleOwnGoal:'Own goal', ruleRedCard:'Red card', ruleCleanSheet:'GK clean sheet', ruleMissedPenalty:'Missed penalty', rulePenaltySave:'Penalty save (or shooter misses)',
     ruleGoal:'Goal scored', ruleAssist:'Assist', ruleStackNote:'Tiers stack — an exact score also earns the goal-difference and outcome points.',
     ruleFootnoteMinutes:'Regardless of how many minutes the player was on the pitch.', ruleFootnotePlayed:'Only if the player actually played in the match.',
+    rulesDoubleTitle:'Double points', ruleDoubleText:'Once per tournament, each participant may choose one game to double their points on — for better or worse. It can be moved to a different game any time before the chosen game kicks off; once that game starts, the choice is locked in for the rest of the tournament.',
     positionsLegend:'Positions', posGK:'Goalkeepers', posDF:'Defenders', posCM:'Midfielders', posST:'Strikers / Forwards',
     generalTitle:'General predictions', generalSub:'Predict the podium, top scorer, top assister, and the finishing order of every group. Locks automatically at the deadline below.',
     deadline:'Closes', locked:'Predictions are locked', podium:'Final four', rank1:'Champion',rank2:'Runner-up',rank3:'3rd place',rank4:'4th place',
     revealSub:"Predictions are locked — here's what everyone picked.", noneYet:'No predictions were submitted.',
-    revealPodiumTitle:'Podium & top picks', revealGroupsTitle:'Group finishing order predictions',
+    revealPodiumTitle:'Podium & top picks', revealGroupsTitle:'Group finishing order predictions', groupPos1:'1st place',
     topScorer:'Top goal scorer', topAssist:'Top assister', groupsTitle:'Group finishing order', dragHint:'Drag to reorder',
     save:'Save predictions', saved:'Saved — you can edit until the deadline.', choose:'Choose…',
     saving:'Saving…', saveFailed:'Save failed — check the Apps Script deployment (see SETUP.md troubleshooting).',
@@ -513,11 +514,12 @@ const I18N = {
     ruleOwnGoal:'שער עצמי', ruleRedCard:'כרטיס אדום', ruleCleanSheet:'שער נקי', ruleMissedPenalty:'החטאת בעיטת עונשין', rulePenaltySave:'עצירת פנדל (או שהיריב מחטיא)',
     ruleGoal:'שער', ruleAssist:'בישול', ruleStackNote:'הניקוד מצטבר — תוצאה מדויקת מזכה גם בנקודות ההפרש והתוצאה.',
     ruleFootnoteMinutes:'ללא תלות בכמות הדקות ששחקן שיחק', ruleFootnotePlayed:'רק אם השחקן שיחק במשחק',
+    rulesDoubleTitle:'דאבל ניקוד', ruleDoubleText:'לכל משתתף יש, פעם אחת בלבד לאורך הטורניר, אפשרות לבחור משחק אחד שבו הניקוד שלו יוכפל — לטוב ולרע. אפשר להעביר את הבחירה למשחק אחר בכל עת, כל עוד המשחק שנבחר עדיין לא התחיל; ברגע שהמשחק מתחיל, הבחירה ננעלת לשאר הטורניר.',
     positionsLegend:'תפקידים', posGK:'שוערים', posDF:'הגנה', posCM:'קישור', posST:'התקפה',
     generalTitle:'ניחושים כלליים', generalSub:'נחשו את הפודיום, מלך השערים, מלך הבישולים, וסדר הסיום בכל בית. הטופס ננעל אוטומטית במועד שלמטה.',
     deadline:'נסגר בתאריך', locked:'הטופס נעול', podium:'הרביעייה הסופית', rank1:'אלופה',rank2:'מקום שני',rank3:'מקום שלישי',rank4:'מקום רביעי',
     revealSub:'הניחושים ננעלו — הנה מה שכולם בחרו.', noneYet:'לא הוגשו ניחושים.',
-    revealPodiumTitle:'פודיום ובחירות מובילות', revealGroupsTitle:'ניחושי סדר סיום הבתים',
+    revealPodiumTitle:'פודיום ובחירות מובילות', revealGroupsTitle:'ניחושי סדר סיום הבתים', groupPos1:'מקום ראשון',
     topScorer:'מלך שערים', topAssist:'מלך בישולים', groupsTitle:'סדר סיום הבתים', dragHint:'גררו כדי לשנות סדר',
     save:'שמירת ניחושים', saved:'נשמר — ניתן לערוך עד למועד הסגירה.', choose:'בחירה…',
     saving:'שומר…', saveFailed:'השמירה נכשלה — בדוק את פריסת ה-Apps Script (ראה פתרון בעיות ב-SETUP.md).',
@@ -904,15 +906,19 @@ function renderRules(){
       </table>
       <div class="section-sub" style="margin-top:10px; margin-bottom:0;">* ${t('ruleFootnoteMinutes')}<br>** ${t('ruleFootnotePlayed')}</div>
     </div>
+    <div class="card">
+      <div class="card-title">${t('positionsLegend')}</div>
+      <div class="rules-grid">
+        ${['GK','DF','CM','ST'].map(pos => `
+          <div style="display:flex; align-items:center; gap:8px; padding:4px 0;">
+            <span class="pos-tag badge-pos-${pos}">${pos}</span><span style="font-size:13.5px;">${posLabels[pos]}</span>
+          </div>`).join('')}
+      </div>
+    </div>
   </div>
   <div class="card">
-    <div class="card-title">${t('positionsLegend')}</div>
-    <div class="rules-grid">
-      ${['GK','DF','CM','ST'].map(pos => `
-        <div style="display:flex; align-items:center; gap:8px; padding:4px 0;">
-          <span class="pos-tag badge-pos-${pos}">${pos}</span><span style="font-size:13.5px;">${posLabels[pos]}</span>
-        </div>`).join('')}
-    </div>
+    <div class="card-title">🔥 ${t('rulesDoubleTitle')}</div>
+    <div class="section-sub" style="margin-bottom:0;">${t('ruleDoubleText')}</div>
   </div>`;
 }
 
@@ -1024,8 +1030,11 @@ function renderGeneralReveal(){
   <div class="section-sub">${t('revealSub')}</div>
   <div class="lock-banner">🔒 ${t('locked')} — ${t('deadline')} ${fmtDate(CONFIG.GENERAL_DEADLINE)}</div>
 
-  <div class="card-title">${t('revealPodiumTitle')}</div>
-  <div class="card">
+  <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
+    <div class="card-title" style="margin-bottom:0;">${t('revealPodiumTitle')}</div>
+    <button class="icon-btn" data-role="exportGeneral" data-target="export-general-podium" data-file="matchday-podium.png" style="font-size:11px; padding:5px 8px; display:flex; align-items:center; gap:4px;">📤 ${t('exportImage')}</button>
+  </div>
+  <div class="card" id="export-general-podium">
     <div style="overflow-x:auto;">
       <table class="leaderboard" style="min-width:620px;">
         <thead><tr>
@@ -1051,15 +1060,18 @@ function renderGeneralReveal(){
     </div>
   </div>
 
-  <div class="card-title" style="margin-top:20px;">${t('revealGroupsTitle')}</div>
+  <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; margin-top:20px;">
+    <div class="card-title" style="margin-bottom:0;">${t('revealGroupsTitle')}</div>
+    <button class="icon-btn" data-role="exportGeneral" data-target="export-general-group" data-file="matchday-group-${generalRevealGroupTab}.png" style="font-size:11px; padding:5px 8px; display:flex; align-items:center; gap:4px;">📤 ${t('exportImage')}</button>
+  </div>
   <div class="subtab-row" style="flex-wrap:wrap;">
     ${groupKeys.map(g => `<button class="filter-chip ${generalRevealGroupTab===g?'active':''}" data-reveal-group="${g}">${t('group')} ${g}</button>`).join('')}
   </div>
-  <div class="card">
+  <div class="card" id="export-general-group">
     <div style="overflow-x:auto;">
       <table class="leaderboard">
         <thead><tr>
-          <th style="${stickyBase}">${t('player')}</th><th>${t('rank1')}</th><th>${t('rank2')}</th><th>${t('rank3')}</th><th>${t('rank4')}</th>
+          <th style="${stickyBase}">${t('player')}</th><th>${t('groupPos1')}</th><th>${t('rank2')}</th><th>${t('rank3')}</th><th>${t('rank4')}</th>
         </tr></thead>
         <tbody>
           ${rows.map(({name,b}) => {
@@ -1079,6 +1091,9 @@ function renderGeneralReveal(){
 function wireGeneralReveal(){
   document.querySelectorAll('[data-reveal-group]').forEach(btn => {
     btn.addEventListener('click', () => { generalRevealGroupTab = btn.dataset.revealGroup; renderAll(); });
+  });
+  document.querySelectorAll('[data-role="exportGeneral"]').forEach(btn => {
+    btn.addEventListener('click', () => exportElementImage(btn.dataset.target, btn.dataset.file, btn));
   });
 }
 
