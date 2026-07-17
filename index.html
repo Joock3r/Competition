@@ -1164,8 +1164,8 @@ function renderGameCard(g){
     ${(() => {
       const usedElsewhere = myDoubleGameId() && myDoubleGameId() !== String(g.id);
       const checked = bet && isDoubleFlag(bet.betDouble);
-      return `<label style="display:flex; align-items:center; gap:8px; font-size:12.5px; color:${usedElsewhere?'var(--text-faint)':'var(--text-dim)'}; margin-top:4px; ${usedElsewhere?'opacity:.6;':'cursor:pointer;'}">
-        <input type="checkbox" data-role="double" ${checked?'checked':''} ${usedElsewhere?'disabled':''} style="width:16px; height:16px; accent-color:var(--amber);">
+      return `<label class="double-label" style="display:flex; align-items:center; gap:8px; font-size:12.5px; color:${usedElsewhere?'var(--text-faint)':'var(--text-dim)'}; margin-top:4px; ${usedElsewhere?'opacity:.6;':'cursor:pointer;'}">
+        <input type="checkbox" data-role="double" data-saved-locked="${usedElsewhere?'1':''}" ${checked?'checked':''} ${usedElsewhere?'disabled':''} style="width:16px; height:16px; accent-color:var(--amber);">
         🔥 ${t('doubleLabel')}${usedElsewhere ? ` — ${t('doubleUsedElsewhere')}` : ''}
       </label>`;
     })()}
@@ -1286,6 +1286,23 @@ function wireGamesForm(){
   document.querySelectorAll('[data-filter]').forEach(btn => {
     btn.addEventListener('click', () => { openGamesFilter = btn.dataset.filter; renderAll(); });
   });
+  function syncDoubleCheckboxes(){
+    const boxes = [...document.querySelectorAll('[data-role="double"]')];
+    const activeChecked = boxes.find(cb => cb.checked && !cb.disabled);
+    boxes.forEach(cb => {
+      if(cb.dataset.savedLocked === '1') return; // permanently locked by already-saved data — leave alone
+      const label = cb.closest('.double-label');
+      if(activeChecked && cb !== activeChecked){
+        cb.disabled = true;
+        if(label) label.style.opacity = '.6';
+      } else {
+        cb.disabled = false;
+        if(label) label.style.opacity = '';
+      }
+    });
+  }
+  document.querySelectorAll('[data-role="double"]').forEach(cb => cb.addEventListener('change', syncDoubleCheckboxes));
+  syncDoubleCheckboxes();
   document.querySelectorAll('[data-role="saveGame"]').forEach(btn => {
     btn.addEventListener('click', async () => {
       if(!STATE.user){ alert(t('emailFirst')); return; }
