@@ -250,6 +250,12 @@ const CONFIG = {
   // --- General predictions form closes automatically at this time ---
   GENERAL_DEADLINE: '2028-06-09T00:00:00+03:00',
 
+  // Does this tournament have an official 3rd-place match? (World Cup: yes. Euro: no.)
+  // When false, the Rules page hides the exact-position bonus for positions 3/4
+  // (there's no official decider between the two losing semifinalists), and
+  // Code.gs won't award it either. Keep this in sync with Code.gs's own copy.
+  HAS_THIRD_PLACE_MATCH: true,
+
   // --- Teams: a stable ID (used everywhere in the Sheet) + display name per language.
   //     The Sheet, all bets, and all matching logic use the ID only — never the
   //     display text — so switching language never breaks a saved prediction. ---
@@ -468,6 +474,7 @@ const I18N = {
     ruleGroupPositionNote:'Up to 4 teams × 2 pts = 8 pts per group.', ruleAdvancing:'Correct pick in the knockout stage',
     rulesPodiumTitle:'Podium (final four)', exact:'exact', ruleOverlapNote:'Plus, regardless of position — how many of your 4 picks made the real final four:',
     ruleOverlapCount:(n)=>`${n} of 4 correct`, rulePodiumStackNote:'Both parts stack — an exact position also counts toward the overlap bonus.',
+    ruleNoThirdPlaceNote:"This tournament has no 3rd-place match, so positions 3 and 4 aren't exact-position-scoreable — only the champion and runner-up are.",
     rulesTopPickTitle:'Top scorer & top assister',
     ruleExact:'Exact score', ruleDiff:'Correct goal difference', ruleOutcome:'Correct win / draw / loss',
     ruleOwnGoal:'Own goal', ruleRedCard:'Red card', ruleCleanSheet:'GK clean sheet', ruleMissedPenalty:'Missed penalty', rulePenaltySave:'Penalty save (or shooter misses)',
@@ -509,6 +516,7 @@ const I18N = {
     ruleGroupPositionNote:"עד 4 נבחרות × 2 נק' = 8 נק' לכל בית.", ruleAdvancing:'ניחוש נכון בשלב הפלייאוף',
     rulesPodiumTitle:'פודיום (הרביעייה הסופית)', exact:'מדויק', ruleOverlapNote:'בנוסף, ללא תלות במיקום — כמה מ-4 הבחירות שלכם באמת הגיעו לחצי גמר:',
     ruleOverlapCount:(n)=>`${n} מתוך 4 נכונות`, rulePodiumStackNote:'שני החלקים מצטברים — מיקום מדויק גם נספר לטובת בונוס ההתאמה.',
+    ruleNoThirdPlaceNote:'בטורניר הזה אין משחק על מקום שלישי, ולכן מיקום 3 ו-4 לא ניתנים לניקוד מדויק — רק האלופה והמקום השני כן.',
     rulesTopPickTitle:'מלך שערים ומלך בישולים',
     ruleExact:'תוצאה מדויקת', ruleDiff:'הפרש שערים נכון', ruleOutcome:'ניצחון / תיקו / הפסד נכון',
     ruleOwnGoal:'שער עצמי', ruleRedCard:'כרטיס אדום', ruleCleanSheet:'שער נקי', ruleMissedPenalty:'החטאת בעיטת עונשין', rulePenaltySave:'עצירת פנדל (או שהיריב מחטיא)',
@@ -875,9 +883,11 @@ function renderRules(){
       <table class="rule-table">
         <tr><td>${t('rank1')} (${t('exact')})</td><td>${val(s.podiumPosition[0])}</td></tr>
         <tr><td>${t('rank2')} (${t('exact')})</td><td>${val(s.podiumPosition[1])}</td></tr>
+        ${CONFIG.HAS_THIRD_PLACE_MATCH ? `
         <tr><td>${t('rank3')} (${t('exact')})</td><td>${val(s.podiumPosition[2])}</td></tr>
-        <tr><td>${t('rank4')} (${t('exact')})</td><td>${val(s.podiumPosition[3])}</td></tr>
+        <tr><td>${t('rank4')} (${t('exact')})</td><td>${val(s.podiumPosition[3])}</td></tr>` : ''}
       </table>
+      ${!CONFIG.HAS_THIRD_PLACE_MATCH ? `<div class="section-sub" style="margin:10px 0 0;">${t('ruleNoThirdPlaceNote')}</div>` : ''}
       <div class="section-sub" style="margin:10px 0 4px;">${t('ruleOverlapNote')}</div>
       <table class="rule-table">
         ${[1,2,3,4].map(n => `<tr><td>${t('ruleOverlapCount', n)}</td><td>${val(s.podiumOverlapBonus[n])}</td></tr>`).join('')}
