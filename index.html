@@ -47,6 +47,7 @@ input,select{font-family:inherit;}
 }
 .header-top{display:flex; align-items:center; justify-content:space-between; padding:12px 16px; gap:8px;}
 .brand{display:flex; align-items:center; gap:8px; font-family:var(--font-mono); font-weight:700; font-size:19px; letter-spacing:.5px; flex-shrink:0; white-space:nowrap;}
+html[dir="rtl"] .brand{font-family:var(--font-he); letter-spacing:normal;}
 .brand .dot{width:9px; height:9px; border-radius:50%; background:var(--amber); box-shadow:0 0 8px var(--amber); flex-shrink:0;}
 .header-controls{display:flex; align-items:center; gap:6px; min-width:0;}
 .icon-btn{
@@ -256,6 +257,13 @@ const CONFIG = {
   // (there's no official decider between the two losing semifinalists), and
   // Code.gs won't award it either. Keep this in sync with Code.gs's own copy.
   HAS_THIRD_PLACE_MATCH: false,
+
+  // --- Money: entry fee (₪, per participant) funds the prize pool.
+  // 3rd and 2nd place are fixed; 1st place gets whatever's left of the pot. ---
+  ENTRY_FEE: 50,
+  PRIZE_3RD: 50,
+  PRIZE_2ND: 150,
+  PAYBOX_URL: 'https://payboxapp.page.link/YOUR_PAYBOX_LINK_HERE', // paste your real PayBox group link here
 
   // --- Teams: a stable ID (used everywhere in the Sheet) + display name per language.
   //     The Sheet, all bets, and all matching logic use the ID only — never the
@@ -469,7 +477,7 @@ const CONFIG = {
 const I18N = {
   en:{ brandName:'MATCHDAY', tab_home:'Home', tab_rules:'Rules', tab_general:'General', tab_games:'Games',
     tab_stats:'Stats', tab_hof:'Hall of Fame', rank:'Rank', player:'Player', points:'Points', form:'Form',
-    leaderLabel:'Leader', signIn:'Sign in', signOut:'Sign out', exportImage:'Share',
+    leaderLabel:'Leader', signIn:'Sign in', signOut:'Sign out', exportImage:'Share', exactPctShort:'Exact %',
     rulesTitle:'How scoring works', rulesGameTitle:'Match score bets', rulesPlayerTitle:'Top player of the game',
     rulesStageTitle:'Group stage & knockout', ruleGroupPosition:'Exact team position at end of group stage (per team)',
     ruleGroupPositionNote:'Up to 4 teams × 2 pts = 8 pts per group.', ruleAdvancing:'Correct pick in the knockout stage',
@@ -482,6 +490,12 @@ const I18N = {
     ruleGoal:'Goal scored', ruleAssist:'Assist', ruleStackNote:'Tiers stack — an exact score also earns the goal-difference and outcome points.',
     ruleFootnoteMinutes:'Regardless of how many minutes the player was on the pitch.', ruleFootnotePlayed:'Only if the player actually played in the match.',
     rulesDoubleTitle:'Double points', ruleDoubleText:'Once per tournament, each participant may choose one game to double their points on — for better or worse. It can be moved to a different game any time before the chosen game kicks off; once that game starts, the choice is locked in for the rest of the tournament.',
+    rulesTiebreakTitle:'Tiebreaker', ruleTiebreakText:"If two or more participants finish level on total points, whoever has the higher percentage of exact-score predictions ranks higher. If that's tied too, they share the same rank.",
+    rulesPrizesTitle:'Prizes', prize1st:'1st place', prize2nd:'2nd place', prize3rd:'3rd place',
+    prizePotNote:(n,fee,pot)=>`Based on ${n} participants × ₪${fee} entry fee = ₪${pot} pot. 1st place gets whatever's left after 2nd and 3rd place.`,
+    prizePotUnknown:(fee)=>`Entry fee: ₪${fee} per participant. 1st place gets whatever's left of the pot after 2nd and 3rd place.`,
+    prizeTieNote:'A tie for any adjacent placing (1st-2nd, 2nd-3rd, or 3rd-4th) splits those two prizes evenly between the tied participants — e.g. a 3rd-4th tie means ₪25 each.',
+    payEntryFee:(fee)=>`Pay the ₪${fee} entry fee`,
     positionsLegend:'Positions', posGK:'Goalkeepers', posDF:'Defenders', posCM:'Midfielders', posST:'Strikers / Forwards',
     generalTitle:'General predictions', generalSub:'Predict the podium, top scorer, top assister, and the finishing order of every group. Locks automatically at the deadline below.',
     deadline:'Closes', locked:'Predictions are locked', podium:'Final four', rank1:'Champion',rank2:'Runner-up',rank3:'3rd place',rank4:'4th place',
@@ -511,7 +525,7 @@ const I18N = {
   },
   he:{ brandName:'מאצדיי', tab_home:'ראשי', tab_rules:'חוקים', tab_general:'טופס כללי', tab_games:'משחקים',
     tab_stats:'סטטיסטיקות', tab_hof:'היכל התהילה', rank:'דירוג', player:'שם', points:'נקודות', form:'פורמה',
-    leaderLabel:'מוביל', signIn:'התחברות', signOut:'התנתקות', exportImage:'שיתוף',
+    leaderLabel:'מוביל', signIn:'התחברות', signOut:'התנתקות', exportImage:'שיתוף', exactPctShort:'% מדויק',
     rulesTitle:'איך מחשבים ניקוד', rulesGameTitle:'ניחושי תוצאות משחק', rulesPlayerTitle:'שחקן המשחק',
     rulesStageTitle:'שלב הבתים ופלייאוף', ruleGroupPosition:'מיקום מדויק של נבחרת בסיום שלב הבתים (לכל נבחרת)',
     ruleGroupPositionNote:"עד 4 נבחרות × 2 נק' = 8 נק' לכל בית.", ruleAdvancing:'ניחוש נכון בשלב הפלייאוף',
@@ -524,6 +538,12 @@ const I18N = {
     ruleGoal:'שער', ruleAssist:'בישול', ruleStackNote:'הניקוד מצטבר — תוצאה מדויקת מזכה גם בנקודות ההפרש והתוצאה.',
     ruleFootnoteMinutes:'ללא תלות בכמות הדקות ששחקן שיחק', ruleFootnotePlayed:'רק אם השחקן שיחק במשחק',
     rulesDoubleTitle:'דאבל ניקוד', ruleDoubleText:'לכל משתתף יש, פעם אחת בלבד לאורך הטורניר, אפשרות לבחור משחק אחד שבו הניקוד שלו יוכפל — לטוב ולרע. אפשר להעביר את הבחירה למשחק אחר בכל עת, כל עוד המשחק שנבחר עדיין לא התחיל; ברגע שהמשחק מתחיל, הבחירה ננעלת לשאר הטורניר.',
+    rulesTiebreakTitle:'שוברי שוויון', ruleTiebreakText:'אם שני משתתפים או יותר מסיימים עם אותו ניקוד כולל, מי שיש לו אחוז גבוה יותר של ניחושי תוצאה מדויקת מדורג גבוה יותר. אם יש שוויון גם באחוז הזה — הם חולקים את אותו המיקום.',
+    rulesPrizesTitle:'פרסים', prize1st:'מקום ראשון', prize2nd:'מקום שני', prize3rd:'מקום שלישי',
+    prizePotNote:(n,fee,pot)=>`לפי ${n} משתתפים × ${fee} ₪ דמי השתתפות = קופה של ${pot} ₪. מקום ראשון מקבל את כל מה שנשאר אחרי מקום שני ושלישי.`,
+    prizePotUnknown:(fee)=>`דמי השתתפות: ${fee} ₪ לכל משתתף. מקום ראשון מקבל את כל מה שנשאר בקופה אחרי מקום שני ושלישי.`,
+    prizeTieNote:'שוויון בין שני מקומות סמוכים (1-2 / 2-3 / 3-4) גורם לפרסים של שני המקומות האלה להתחלק שווה בשווה בין המשתתפים המעורבים — לדוגמה, שוויון במקום 3-4 אומר 25 ₪ לכל אחד.',
+    payEntryFee:(fee)=>`תשלום דמי השתתפות (${fee} ₪)`,
     positionsLegend:'תפקידים', posGK:'שוערים', posDF:'הגנה', posCM:'קישור', posST:'התקפה',
     generalTitle:'ניחושים כלליים', generalSub:'נחשו את הפודיום, מלך השערים, מלך הבישולים, וסדר הסיום בכל בית. הטופס ננעל אוטומטית במועד שלמטה.',
     deadline:'נסגר בתאריך', locked:'הטופס נעול', podium:'הרביעייה הסופית', rank1:'אלופה',rank2:'מקום שני',rank3:'מקום שלישי',rank4:'מקום רביעי',
@@ -653,7 +673,7 @@ function demoData(){
   ];
   const participants = people.map((n,i) => ({
     email:`${n.en.split(' ')[0].toLowerCase()}@example.com`, name_en:n.en, name_he:n.he,
-    totalPoints: 34 - i*4 + (i%2), form: JSON.stringify([7, 5, 3, 0, -2].slice(0, 5-i%3)),
+    totalPoints: 34 - i*4 + (i%2), exactPct: [22.5, 18, 18, 30, 12, 0][i] ?? 0, form: JSON.stringify([7, 5, 3, 0, -2].slice(0, 5-i%3)),
   }));
   const games = [
     {id:'G1', kickoffISO:'2026-06-11T21:00:00+03:00', group:'A', stage:'group', teamA:'team_a1', teamB:'team_a2', status:'final', scoreA:2, scoreB:1, advancingTeam:''},
@@ -768,10 +788,15 @@ function demoBanner(){
 
 /* ---- HOME ---- */
 function rankedParticipants(){
-  return [...STATE.participants]
-    .map(p => ({...p, displayName: participantName(p), totalPoints:+p.totalPoints || 0, form: safeParse(p.form, [])}))
-    .sort((a,b) => b.totalPoints - a.totalPoints)
-    .map((p,i) => ({...p, rank:i+1}));
+  const sorted = [...STATE.participants]
+    .map(p => ({...p, displayName: participantName(p), totalPoints:+p.totalPoints || 0, exactPct:+p.exactPct || 0, form: safeParse(p.form, [])}))
+    .sort((a,b) => b.totalPoints - a.totalPoints || b.exactPct - a.exactPct);
+  let rank = 0, prevKey = null;
+  return sorted.map((p,i) => {
+    const key = p.totalPoints + '|' + p.exactPct;
+    if(key !== prevKey){ rank = i+1; prevKey = key; }
+    return {...p, rank};
+  });
 }
 function safeParse(s, fallback){ try{ return typeof s==='string' ? JSON.parse(s) : (s||fallback); }catch{ return fallback; } }
 
@@ -799,19 +824,20 @@ function renderHome(){
   </div>
   <div class="card" id="exportCapture">
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; gap:10px; flex-wrap:wrap;">
-      <div class="mono" style="font-size:11px; color:var(--text-faint); letter-spacing:1px;">🏆 ${t('brandName')} · ${new Date().toLocaleDateString(LANG==='he'?'he-IL':'en-GB',{day:'numeric',month:'short',year:'numeric'})}</div>
+      <div class="${LANG==='he'?'':'mono'}" style="font-size:11px; color:var(--text-faint); letter-spacing:1px;">🏆 ${t('brandName')} · ${new Date().toLocaleDateString(LANG==='he'?'he-IL':'en-GB',{day:'numeric',month:'short',year:'numeric'})}</div>
       <div data-export-exclude style="display:flex; gap:6px; flex-wrap:wrap;">
         <button class="icon-btn" id="exportImgBtn" style="display:flex; align-items:center; gap:5px;">📤 ${t('exportImage')}</button>
       </div>
     </div>
     <table class="leaderboard">
-      <thead><tr><th>${t('rank')}</th><th>${t('player')}</th><th>${t('form')}</th><th style="text-align:right">${t('points')}</th></tr></thead>
+      <thead><tr><th>${t('rank')}</th><th>${t('player')}</th><th>${t('form')}</th><th style="text-align:center">${t('exactPctShort')}</th><th style="text-align:right">${t('points')}</th></tr></thead>
       <tbody>
         ${ranked.map(p => `
           <tr>
             <td class="rank-cell ${p.rank<=3?'top'+p.rank:''}">${medal(p.rank)}<span class="iso-num">${p.rank}</span></td>
             <td><div class="player-name-cell"><div class="avatar">${initials(p.displayName)}</div>${p.displayName}</div></td>
             <td><div class="form-dots">${formDots(p.form)}</div></td>
+            <td style="text-align:center; color:var(--text-dim); font-size:13px;"><span class="iso-num">${p.exactPct}%</span></td>
             <td class="points-cell"><span class="iso-num">${p.totalPoints}</span></td>
           </tr>`).join('')}
       </tbody>
@@ -930,6 +956,29 @@ function renderRules(){
   <div class="card">
     <div class="card-title">🔥 ${t('rulesDoubleTitle')}</div>
     <div class="section-sub" style="margin-bottom:0;">${t('ruleDoubleText')}</div>
+  </div>
+  <div class="card">
+    <div class="card-title">${t('rulesTiebreakTitle')}</div>
+    <div class="section-sub" style="margin-bottom:0;">${t('ruleTiebreakText')}</div>
+  </div>
+  ${renderRulesPrizes()}`;
+}
+function renderRulesPrizes(){
+  const numParticipants = STATE.participants.length;
+  const pot = numParticipants * CONFIG.ENTRY_FEE;
+  const firstPrize = Math.max(pot - CONFIG.PRIZE_2ND - CONFIG.PRIZE_3RD, 0);
+  const potKnown = numParticipants > 0 && !STATE.demo;
+  return `
+  <div class="card">
+    <div class="card-title">${t('rulesPrizesTitle')}</div>
+    <table class="rule-table">
+      <tr><td>${t('prize1st')}</td><td><span class="rule-value">${potKnown ? firstPrize : '?'} ₪</span></td></tr>
+      <tr><td>${t('prize2nd')}</td><td><span class="rule-value">${CONFIG.PRIZE_2ND} ₪</span></td></tr>
+      <tr><td>${t('prize3rd')}</td><td><span class="rule-value">${CONFIG.PRIZE_3RD} ₪</span></td></tr>
+    </table>
+    <div class="section-sub" style="margin-top:10px;">${potKnown ? t('prizePotNote', numParticipants, CONFIG.ENTRY_FEE, pot) : t('prizePotUnknown', CONFIG.ENTRY_FEE)}</div>
+    <div class="section-sub" style="margin-top:8px; margin-bottom:0;">${t('prizeTieNote')}</div>
+    <a href="${CONFIG.PAYBOX_URL}" target="_blank" rel="noopener" class="btn" style="display:inline-block; margin-top:14px; text-decoration:none; text-align:center;">💳 ${t('payEntryFee', CONFIG.ENTRY_FEE)}</a>
   </div>`;
 }
 
@@ -1314,7 +1363,7 @@ function renderPlayedGameCard(g){
   return `
   <div class="game-card" id="${exportId}">
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; gap:8px; flex-wrap:wrap;">
-      <div class="mono" style="font-size:10.5px; color:var(--text-faint); letter-spacing:1px;">🏆 ${t('brandName')}</div>
+      <div class="${LANG==='he'?'':'mono'}" style="font-size:10.5px; color:var(--text-faint); letter-spacing:1px;">🏆 ${t('brandName')}</div>
       <div data-export-exclude style="display:flex; gap:6px; flex-wrap:wrap;">
         <button class="icon-btn" data-role="exportGameBets" data-target="${exportId}" data-file="matchday-${g.id}.png" style="font-size:11px; padding:5px 8px; display:flex; align-items:center; gap:4px;">📤 ${t('exportImage')}</button>
       </div>
