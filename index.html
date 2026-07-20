@@ -888,7 +888,6 @@ function renderRules(){
   const posLabels = { GK:t('posGK'), DF:t('posDF'), CM:t('posCM'), ST:t('posST') };
   return `
   <div class="section-title">${t('rulesTitle')}</div>
-  <a href="${CONFIG.WHATSAPP_GROUP_URL}" target="_blank" rel="noopener" class="btn whatsapp-btn" style="display:inline-flex; align-items:center; gap:6px; text-decoration:none; margin-bottom:16px;">💬 ${t('joinWhatsapp')}</a>
   <div class="rules-grid">
     <div class="card">
       <div class="card-title">${t('rulesGameTitle')}</div>
@@ -982,7 +981,10 @@ function renderRulesPrizes(){
     </table>
     <div class="section-sub" style="margin-top:10px;">${potKnown ? t('prizePotNote', numParticipants, CONFIG.ENTRY_FEE, pot) : t('prizePotUnknown', CONFIG.ENTRY_FEE)}</div>
     <div class="section-sub" style="margin-top:8px; margin-bottom:0;">${t('prizeTieNote')}</div>
-    <a href="${CONFIG.PAYBOX_URL}" target="_blank" rel="noopener" class="btn" style="display:inline-block; margin-top:14px; text-decoration:none; text-align:center;">💳 ${t('payEntryFee', CONFIG.ENTRY_FEE)}</a>
+    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:14px;">
+      <a href="${CONFIG.PAYBOX_URL}" target="_blank" rel="noopener" class="btn" style="display:inline-flex; align-items:center; gap:6px; text-decoration:none;">💳 ${t('payEntryFee', CONFIG.ENTRY_FEE)}</a>
+      <a href="${CONFIG.WHATSAPP_GROUP_URL}" target="_blank" rel="noopener" class="btn whatsapp-btn" style="display:inline-flex; align-items:center; gap:6px; text-decoration:none;">💬 ${t('joinWhatsapp')}</a>
+    </div>
   </div>`;
 }
 
