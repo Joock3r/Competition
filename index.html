@@ -147,6 +147,12 @@ html[dir="rtl"] .leaderboard th{text-align:right;}
 @media(max-width:640px){.podium-grid{grid-template-columns:1fr 1fr;}}
 .group-editor{background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:12px; margin-bottom:10px;}
 .group-editor h4{font-family:var(--font-mono); font-size:12px; color:var(--text-faint); margin-bottom:8px; text-transform:uppercase;}
+html[dir="rtl"] .group-editor h4{font-family:var(--font-he); letter-spacing:normal;}
+.groups-grid{display:flex; flex-direction:column;}
+@media(min-width:860px){
+  .groups-grid{display:grid; grid-template-columns:repeat(3, 1fr); gap:10px;}
+  .groups-grid .group-editor{margin-bottom:0;}
+}
 .drag-list{list-style:none; display:flex; flex-direction:column; gap:6px;}
 .drag-item{
   background:var(--surface-3); border:1px solid var(--border); border-radius:8px; padding:9px 12px;
@@ -1052,15 +1058,17 @@ function renderGeneral(){
     <div class="card">
       <div class="card-title">${t('groupsTitle')}</div>
       <div class="section-sub" style="margin-bottom:12px;">${t('dragHint')}</div>
-      ${Object.entries(CONFIG.GROUPS).map(([g, teams]) => {
-        const order = (existingGroups && existingGroups[g]) || teams;
-        return `<div class="group-editor" data-group="${g}">
-          <h4>${t('group')} ${g}</h4>
-          <ul class="drag-list" data-group="${g}">
-            ${order.map((teamId,i) => `<li class="drag-item" draggable="true" data-team="${teamId}"><span class="drag-pos iso-num">${i+1}</span><span class="drag-handle">⠿</span>${teamName(teamId)}</li>`).join('')}
-          </ul>
-        </div>`;
-      }).join('')}
+      <div class="groups-grid">
+        ${Object.entries(CONFIG.GROUPS).map(([g, teams]) => {
+          const order = (existingGroups && existingGroups[g]) || teams;
+          return `<div class="group-editor" data-group="${g}">
+            <h4>${t('group')} ${g}</h4>
+            <ul class="drag-list" data-group="${g}">
+              ${order.map((teamId,i) => `<li class="drag-item" draggable="true" data-team="${teamId}"><span class="drag-pos iso-num">${i+1}</span><span class="drag-handle">⠿</span>${teamName(teamId)}</li>`).join('')}
+            </ul>
+          </div>`;
+        }).join('')}
+      </div>
     </div>
   </form>`;
 }
