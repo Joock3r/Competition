@@ -1644,7 +1644,9 @@ function renderHof(){
       const runnerUp = h['runnerUp_'+LANG] || h.runnerUp_en || h.runnerUp_he;
       const champion = h['championTeam_'+LANG] || h.championTeam_en || h.championTeam_he;
       const location = h['location_'+LANG] || h.location_en || h.location_he;
-      const typeLabel = h.tournamentType === 'euro' ? t('euro') : t('worldcup');
+      const rawType = String(h.tournamentType||'').trim();
+      const isEuro = rawType.toLowerCase() === 'euro' || rawType === 'יורו';
+      const typeLabel = isEuro ? t('euro') : t('worldcup');
       return `
       <div class="hof-item">
         <div class="hof-year iso-num">${h.year}</div>
