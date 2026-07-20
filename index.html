@@ -518,7 +518,9 @@ const I18N = {
     statusScheduled:'Open', statusLocked:'Locked', statusFinal:'Final', earned:'earned',
     noOpenGames:'No open games right now.', playedGamesTitle:'Played games', playedGamesSub:"Results, everyone's bets, and match events.",
     timerLabel:'Closes in:', timerDaysShort:'d', timerClosedShort:'Closed', timerDaysWord:'days', timerHoursWord:'hours',
-    tabOpenGames:'Open', tabPlayedGames:'Played',
+    tabOpenGames:'Open', tabPlayedGames:'Played', tabAllGames:'All', tabClosedGames:'Closed for betting',
+    filterFilled:'Filled in', noneFilledYet:"You haven't filled in any predictions yet.",
+    statusClosed:'Closed for betting', awaitingResult:'Awaiting result',
     filterAllGames:'All', filterUnfilled:'Not predicted yet', allFilled:"You've predicted every open game 🎉",
     everyoneBets:"Everyone's bets", matchEventsTitle:'Match events', noEventsYet:'No events recorded for this game yet.',
     advancingShort:'Advancing', advancingLabel:'Team advancing to the next stage',
@@ -566,7 +568,9 @@ const I18N = {
     statusScheduled:'פתוח', statusLocked:'נעול', statusFinal:'הסתיים', earned:'נצברו',
     noOpenGames:'אין משחקים פתוחים כרגע.', playedGamesTitle:'משחקים ששוחקו', playedGamesSub:'תוצאות, ההימורים של כולם, ואירועי המשחק.',
     timerLabel:'נסגר בעוד:', timerDaysShort:'י׳', timerClosedShort:'נסגר', timerDaysWord:'ימים', timerHoursWord:'שעות',
-    tabOpenGames:'פתוחים', tabPlayedGames:'ששוחקו',
+    tabOpenGames:'פתוחים', tabPlayedGames:'שוחקו', tabAllGames:'הכל', tabClosedGames:'סגורים להימור',
+    filterFilled:'מולאו', noneFilledYet:'עדיין לא מילאת אף ניחוש.',
+    statusClosed:'סגור להימור', awaitingResult:'ממתין לתוצאה',
     filterAllGames:'הכל', filterUnfilled:'טרם מולא', allFilled:'מילאת ניחוש לכל המשחקים הפתוחים 🎉',
     everyoneBets:'ההימורים של כולם', matchEventsTitle:'אירועי המשחק', noEventsYet:'לא הוזנו אירועים למשחק זה עדיין.',
     advancingShort:'העפלה', advancingLabel:'הנבחרת שמעפילה לשלב הבא',
@@ -1245,32 +1249,63 @@ function hasFilledBet(g){
   const b = betFor(g.id);
   return !!(b && b.betA!==undefined && b.betA!==null && b.betA!=='' && b.betB!==undefined && b.betB!==null && b.betB!=='');
 }
+function gameBucket(g, now){
+  if(g.status === 'final') return 'played';
+  if(g.status === 'scheduled' && now <= new Date(g.kickoffISO)) return 'open';
+  return 'closed'; // betting window closed (kickoff passed, or status changed) but no result recorded yet
+}
+function renderGameByBucket(g, bucket){
+  if(bucket === 'open') return renderGameCard(g);
+  if(bucket === 'played') return renderPlayedGameCard(g);
+  return renderClosedGameCard(g);
+}
 function renderGames(){
   if(!STATE.games.length){
     return `<div class="section-title">${t('gamesTitle')}</div><div class="card"><div class="empty-state">${STATE.loaded?'':'<div class="spinner"></div><br>'}${t('noGames')}</div></div>`;
   }
   const now = new Date();
-  const isOpen = g => g.status === 'scheduled' && now <= new Date(g.kickoffISO);
-  const openGames = STATE.games.filter(isOpen).sort((a,b) => new Date(a.kickoffISO) - new Date(b.kickoffISO));
-  const playedGames = STATE.games.filter(g => !isOpen(g)).sort((a,b) => new Date(b.kickoffISO) - new Date(a.kickoffISO)); // most recently played first
+  const withBucket = STATE.games.map(g => ({ g, bucket: gameBucket(g, now) }));
+  const openGames = withBucket.filter(x => x.bucket==='open').map(x=>x.g).sort((a,b) => new Date(a.kickoffISO) - new Date(b.kickoffISO));
+  const closedGames = withBucket.filter(x => x.bucket==='closed').map(x=>x.g).sort((a,b) => new Date(b.kickoffISO) - new Date(a.kickoffISO));
+  const playedGames = withBucket.filter(x => x.bucket==='played').map(x=>x.g).sort((a,b) => new Date(b.kickoffISO) - new Date(a.kickoffISO));
+  const allGames = [...STATE.games].sort((a,b) => new Date(a.kickoffISO) - new Date(b.kickoffISO));
   const unfilledCount = openGames.filter(g => !hasFilledBet(g)).length;
-  const visibleOpenGames = openGamesFilter==='unfilled' ? openGames.filter(g => !hasFilledBet(g)) : openGames;
+  const filledCount = openGames.length - unfilledCount;
+  const visibleOpenGames = openGamesFilter==='unfilled' ? openGames.filter(g => !hasFilledBet(g))
+    : openGamesFilter==='filled' ? openGames.filter(g => hasFilledBet(g))
+    : openGames;
+
+  const tabs = [
+    { key:'all', label:t('tabAllGames'), count:allGames.length },
+    { key:'open', label:t('tabOpenGames'), count:openGames.length },
+    { key:'closed', label:t('tabClosedGames'), count:closedGames.length },
+    { key:'played', label:t('tabPlayedGames'), count:playedGames.length },
+  ];
+
+  let body;
+  if(gamesSubTab === 'all'){
+    body = allGames.length ? allGames.map(g => renderGameByBucket(g, gameBucket(g, now))).join('') : `<div class="card"><div class="empty-state">${t('noGames')}</div></div>`;
+  } else if(gamesSubTab === 'open'){
+    body = visibleOpenGames.length ? visibleOpenGames.map(g => renderGameCard(g)).join('') : `<div class="card"><div class="empty-state">${openGamesFilter==='unfilled' ? t('allFilled') : openGamesFilter==='filled' ? t('noneFilledYet') : t('noOpenGames')}</div></div>`;
+  } else if(gamesSubTab === 'closed'){
+    body = closedGames.length ? closedGames.map(g => renderClosedGameCard(g)).join('') : `<div class="card"><div class="empty-state">${t('noneYet')}</div></div>`;
+  } else {
+    body = playedGames.length ? playedGames.map(g => renderPlayedGameCard(g)).join('') : `<div class="card"><div class="empty-state">${t('noneYet')}</div></div>`;
+  }
+
   return `
   <div class="section-title">${t('gamesTitle')}</div>
   <div class="section-sub">${t('gamesSub')}</div>
-  <div class="subtab-row">
-    <button class="subtab-btn ${gamesSubTab==='open'?'active':''}" data-subtab="open">${t('tabOpenGames')} (${openGames.length})</button>
-    <button class="subtab-btn ${gamesSubTab==='played'?'active':''}" data-subtab="played">${t('tabPlayedGames')} (${playedGames.length})</button>
+  <div class="subtab-row" style="flex-wrap:wrap;">
+    ${tabs.map(tb => `<button class="subtab-btn ${gamesSubTab===tb.key?'active':''}" data-subtab="${tb.key}">${tb.label} (${tb.count})</button>`).join('')}
   </div>
   ${gamesSubTab==='open' ? `
   <div class="filter-row">
     <button class="filter-chip ${openGamesFilter==='all'?'active':''}" data-filter="all">${t('filterAllGames')} (${openGames.length})</button>
     <button class="filter-chip ${openGamesFilter==='unfilled'?'active':''}" data-filter="unfilled">${t('filterUnfilled')} (${unfilledCount})</button>
+    <button class="filter-chip ${openGamesFilter==='filled'?'active':''}" data-filter="filled">${t('filterFilled')} (${filledCount})</button>
   </div>` : ''}
-  ${gamesSubTab==='open'
-    ? (visibleOpenGames.length ? visibleOpenGames.map(g => renderGameCard(g)).join('') : `<div class="card"><div class="empty-state">${openGamesFilter==='unfilled' ? t('allFilled') : t('noOpenGames')}</div></div>`)
-    : (playedGames.length ? playedGames.map(g => renderPlayedGameCard(g)).join('') : `<div class="card"><div class="empty-state">${t('noneYet')}</div></div>`)
-  }
+  ${body}
   ${demoBanner()}`;
 }
 
@@ -1367,6 +1402,44 @@ function eventBreakdownText(events){
   const counts = {};
   events.forEach(ev => { counts[ev.eventType] = (counts[ev.eventType]||0) + (+ev.count || 1); });
   return Object.entries(counts).map(([k,n]) => `${n>1 ? n+'× ' : ''}${labels[k]||k}`).join(' · ');
+}
+
+function renderClosedGameCard(g){
+  const bets = gameBetsFor(g.id);
+  return `
+  <div class="game-card">
+    <div class="game-meta">
+      <span>${t('group')} ${g.group||'—'} · ${fmtDate(g.kickoffISO)}</span>
+      <span class="status-pill status-locked">${t('statusClosed')}</span>
+    </div>
+    <div class="game-teams" style="margin-bottom:10px;">
+      <div class="team-name">${teamName(g.teamA)}</div>
+      <div class="mono" style="font-size:16px; color:var(--text-faint);">${t('awaitingResult')}</div>
+      <div class="team-name">${teamName(g.teamB)}</div>
+    </div>
+    <div class="card-title" style="margin-bottom:8px;">${t('everyoneBets')}</div>
+    ${bets.length ? `
+    <table class="leaderboard">
+      <thead><tr>
+        <th>${t('player')}</th><th>${t('yourScore')}</th><th>${t('topPlayerOfGame')}</th>
+        ${isKnockout(g) ? `<th>${t('advancingShort')}</th>` : ''}
+      </tr></thead>
+      <tbody>
+        ${bets.map(b => {
+          const participant = STATE.participants.find(pp => normEmail(pp.email)===normEmail(b.email));
+          const name = participant ? participantName(participant) : b.email;
+          const tp = findPlayer(b.betTopPlayer);
+          const isDouble = isDoubleFlag(b.betDouble);
+          return `<tr>
+            <td>${name}${isDouble ? ` <span class="rule-value" style="background:var(--amber-dim); color:var(--amber);" title="${t('doubleLabel')}">🔥×2</span>` : ''}</td>
+            <td class="mono"><span class="iso-num">${b.betA ?? '—'}:${b.betB ?? '—'}</span></td>
+            <td>${tp ? playerName(tp) : (b.betTopPlayer || '—')}</td>
+            ${isKnockout(g) ? `<td>${b.betAdvancing ? teamName(b.betAdvancing) : '—'}</td>` : ''}
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>` : `<div class="empty-state" style="padding:20px;">${t('noneYet')}</div>`}
+  </div>`;
 }
 
 function renderPlayedGameCard(g){
