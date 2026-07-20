@@ -215,6 +215,8 @@ canvas{width:100%; height:280px; display:block;}
 .filter-row{display:flex; gap:6px; margin-bottom:14px; flex-wrap:wrap;}
 .filter-chip{background:transparent; border:1px solid var(--border); color:var(--text-dim); font-weight:600; font-size:12px; padding:6px 12px; border-radius:20px;}
 .filter-chip.active{background:var(--surface-3); color:var(--text); border-color:var(--border-strong);}
+.whatsapp-btn{background:#25D366; color:#07321a; border-color:#25D366;}
+.whatsapp-btn:hover{filter:brightness(1.05);}
 </style>
 </head>
 <body>
@@ -264,6 +266,7 @@ const CONFIG = {
   PRIZE_3RD: 50,
   PRIZE_2ND: 150,
   PAYBOX_URL: 'https://payboxapp.page.link/YOUR_PAYBOX_LINK_HERE', // paste your real PayBox group link here
+  WHATSAPP_GROUP_URL: 'https://chat.whatsapp.com/CXEZS9aQy6TKUXn3Qdwu1D',
 
   // --- Teams: a stable ID (used everywhere in the Sheet) + display name per language.
   //     The Sheet, all bets, and all matching logic use the ID only — never the
@@ -478,7 +481,7 @@ const I18N = {
   en:{ brandName:'MATCHDAY', tab_home:'Home', tab_rules:'Rules', tab_general:'General', tab_games:'Games',
     tab_stats:'Stats', tab_hof:'Hall of Fame', rank:'Rank', player:'Player', points:'Points', form:'Form',
     leaderLabel:'Leader', signIn:'Sign in', signOut:'Sign out', exportImage:'Share', exactPctShort:'Exact %',
-    rulesTitle:'How scoring works', rulesGameTitle:'Match score bets', rulesPlayerTitle:'Top player of the game',
+    rulesTitle:'How scoring works', rulesGameTitle:'Match score bets', rulesPlayerTitle:'Top player of the game', joinWhatsapp:'Join the WhatsApp group',
     rulesStageTitle:'Group stage & knockout', ruleGroupPosition:'Exact team position at end of group stage (per team)',
     ruleGroupPositionNote:'Up to 4 teams × 2 pts = 8 pts per group.', ruleAdvancing:'Correct pick in the knockout stage',
     rulesPodiumTitle:'Podium (final four)', exact:'exact', ruleOverlapNote:'Plus, regardless of position — how many of your 4 picks made the real final four:',
@@ -526,7 +529,7 @@ const I18N = {
   he:{ brandName:'מאצדיי', tab_home:'ראשי', tab_rules:'חוקים', tab_general:'טופס כללי', tab_games:'משחקים',
     tab_stats:'סטטיסטיקות', tab_hof:'היכל התהילה', rank:'דירוג', player:'שם', points:'נקודות', form:'פורמה',
     leaderLabel:'מוביל', signIn:'התחברות', signOut:'התנתקות', exportImage:'שיתוף', exactPctShort:'% מדויק',
-    rulesTitle:'איך מחשבים ניקוד', rulesGameTitle:'ניחושי תוצאות משחק', rulesPlayerTitle:'שחקן המשחק',
+    rulesTitle:'איך מחשבים ניקוד', rulesGameTitle:'ניחושי תוצאות משחק', rulesPlayerTitle:'שחקן המשחק', joinWhatsapp:'הצטרפות לקבוצת הוואטסאפ',
     rulesStageTitle:'שלב הבתים ופלייאוף', ruleGroupPosition:'מיקום מדויק של נבחרת בסיום שלב הבתים (לכל נבחרת)',
     ruleGroupPositionNote:"עד 4 נבחרות × 2 נק' = 8 נק' לכל בית.", ruleAdvancing:'ניחוש נכון בשלב הפלייאוף',
     rulesPodiumTitle:'פודיום (הרביעייה הסופית)', exact:'מדויק', ruleOverlapNote:'בנוסף, ללא תלות במיקום — כמה מ-4 הבחירות שלכם באמת הגיעו לחצי גמר:',
@@ -885,6 +888,7 @@ function renderRules(){
   const posLabels = { GK:t('posGK'), DF:t('posDF'), CM:t('posCM'), ST:t('posST') };
   return `
   <div class="section-title">${t('rulesTitle')}</div>
+  <a href="${CONFIG.WHATSAPP_GROUP_URL}" target="_blank" rel="noopener" class="btn whatsapp-btn" style="display:inline-flex; align-items:center; gap:6px; text-decoration:none; margin-bottom:16px;">💬 ${t('joinWhatsapp')}</a>
   <div class="rules-grid">
     <div class="card">
       <div class="card-title">${t('rulesGameTitle')}</div>
