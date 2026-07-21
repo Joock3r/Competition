@@ -546,6 +546,7 @@ const I18N = {
     tipsPlayerTitle:'Picking the top player of the game', tipsPlayerList:"Scoring rewards goals and assists from defenders and goalkeepers far more than strikers (5 / 2 / 1 / 0.5 by position) — an unlikely scorer is worth more if it happens.\nA clean-sheet or penalty-save pick on a strong defensive goalkeeper can be a safer bet than chasing a striker's goal.\nRemember: it only counts if the player actually plays in the match.",
     tipsBracketTitle:'Qualification odds calculators', tipsBracketSub:"Use these to check each team's real qualification odds before locking in your predictions.",
     teamsTitle:'Teams', teamsSub:'Every squad, with each player\'s tournament totals so far.', posHeader:'Pos', noRosterYet:'No roster added for this team yet.',
+    headToHead:'Head to head', closeHeadToHead:'Close comparison', teamA:'Team A', teamB:'Team B',
   },
   he:{ brandName:'מאצדיי', tab_home:'ראשי', tab_rules:'חוקים', tab_tips:'המלצות', tab_teams:'נבחרות', tab_general:'טופס כללי', tab_games:'משחקים',
     tab_stats:'סטטיסטיקות', tab_hof:'היכל התהילה', rank:'דירוג', player:'שם', points:'נקודות', form:'פורמה',
@@ -602,6 +603,7 @@ const I18N = {
     tipsPlayerTitle:'בחירת שחקן המשחק', tipsPlayerList:'הניקוד מתגמל שערים ובישולים של מגנים ושוערים הרבה יותר משל חלוצים (5 / 2 / 1 / 0.5 לפי תפקיד) — שער לא צפוי שווה יותר אם הוא קורה.\nבחירת שוער חזק בהגנה עם סיכוי לשער נקי או עצירת פנדל יכולה להיות הימור בטוח יותר מרדיפה אחרי שער של חלוץ.\nזכרו: זה נספר רק אם השחקן באמת שיחק במשחק.',
     tipsBracketTitle:'מחשבוני סיכויי העפלה', tipsBracketSub:'השתמשו בהם כדי לבדוק את סיכויי ההעפלה האמיתיים של כל נבחרת לפני שאתם נועלים ניחושים.',
     teamsTitle:'נבחרות', teamsSub:'כל הסגלים, עם הסטטיסטיקה המצטברת של כל שחקן בטורניר עד כה.', posHeader:'תפקיד', noRosterYet:'עדיין לא הוזן סגל לקבוצה הזו.',
+    headToHead:'ראש בראש', closeHeadToHead:'סגירת השוואה', teamA:'נבחרת A', teamB:'נבחרת B',
   }
 };
 let LANG = localStorage.getItem('md_lang') || 'en';
@@ -1048,7 +1050,10 @@ function renderTips(){
 }
 
 /* ---- TEAMS ---- */
-let teamsGroupTab = null;
+let teamsSelectedTeam = null;
+let h2hMode = false;
+let h2hTeamA = null;
+let h2hTeamB = null;
 function playerSeasonStats(playerId){
   const stats = { goal:0, assist:0, redCard:0, cleanSheet:0, penaltySave:0, ownGoal:0, missedPenalty:0 };
   STATE.gameEvents.filter(ev => ev.player === playerId).forEach(ev => {
@@ -1057,57 +1062,104 @@ function playerSeasonStats(playerId){
   });
   return stats;
 }
-function renderTeams(){
-  const groupKeys = Object.keys(CONFIG.GROUPS);
-  if(!teamsGroupTab || !groupKeys.includes(teamsGroupTab)) teamsGroupTab = groupKeys[0];
-  const teams = CONFIG.GROUPS[teamsGroupTab] || [];
+/** A player's total accumulated points across every game this tournament,
+ *  using the same position-based rates as the live scoring engine. */
+function computePlayerTotalPoints(playerId, pos){
+  const s = playerSeasonStats(playerId), sp = CONFIG.SCORING.player;
+  let pts = (sp.goal[pos]||0)*s.goal + (sp.assist[pos]||0)*s.assist
+    + sp.redCard*s.redCard + sp.ownGoal*s.ownGoal + sp.missedPenalty*s.missedPenalty;
+  if(pos==='GK') pts += sp.cleanSheetGK*s.cleanSheet + sp.penaltySave*s.penaltySave;
+  return pts;
+}
+function renderTeamRosterCard(teamId){
+  const roster = CONFIG.ROSTERS[teamId] || [];
   const stickyBase = `position:sticky; ${LANG==='he'?'right':'left'}:0; background:var(--surface); z-index:1;`;
   return `
+  <div class="card">
+    <div class="card-title" style="font-size:15px; text-transform:none; letter-spacing:normal; margin-bottom:12px;">${teamName(teamId)}</div>
+    ${roster.length ? `
+    <div style="overflow-x:auto;">
+      <table class="leaderboard" style="min-width:720px;">
+        <thead><tr>
+          <th style="${stickyBase}">${t('player')}</th><th>${t('posHeader')}</th>
+          <th>${t('evGoal')}</th><th>${t('evAssist')}</th><th>${t('evRedCard')}</th>
+          <th>${t('evCleanSheet')}</th><th>${t('evPenaltySave')}</th>
+          <th>${t('evOwnGoal')}</th><th>${t('evMissedPenalty')}</th>
+          <th style="text-align:${LANG==='he'?'left':'right'}">${t('points')}</th>
+        </tr></thead>
+        <tbody>
+          ${roster.map(p => {
+            const s = playerSeasonStats(p.id);
+            const gkOnly = v => p.pos==='GK' ? `<span class="iso-num">${v}</span>` : '—';
+            const pts = computePlayerTotalPoints(p.id, p.pos);
+            return `<tr>
+              <td style="${stickyBase} font-weight:700;">${playerName(p)}</td>
+              <td><span class="pos-tag badge-pos-${p.pos}">${p.pos}</span></td>
+              <td><span class="iso-num">${s.goal}</span></td>
+              <td><span class="iso-num">${s.assist}</span></td>
+              <td><span class="iso-num">${s.redCard}</span></td>
+              <td>${gkOnly(s.cleanSheet)}</td>
+              <td>${gkOnly(s.penaltySave)}</td>
+              <td><span class="iso-num">${s.ownGoal}</span></td>
+              <td><span class="iso-num">${s.missedPenalty}</span></td>
+              <td class="points-cell"><span class="iso-num">${pts}</span></td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>` : `<div class="empty-state" style="padding:16px;">${t('noRosterYet')}</div>`}
+  </div>`;
+}
+function renderTeams(){
+  const allTeamIds = Object.keys(CONFIG.TEAMS);
+  if(!teamsSelectedTeam || !allTeamIds.includes(teamsSelectedTeam)) teamsSelectedTeam = allTeamIds[0];
+  if(!h2hTeamA || !allTeamIds.includes(h2hTeamA)) h2hTeamA = allTeamIds[0];
+  if(!h2hTeamB || !allTeamIds.includes(h2hTeamB)) h2hTeamB = allTeamIds[1] || allTeamIds[0];
+
+  const header = `
   <div class="section-title">${t('teamsTitle')}</div>
   <div class="section-sub">${t('teamsSub')}</div>
-  <div class="subtab-row" style="flex-wrap:wrap;">
-    ${groupKeys.map(g => `<button class="filter-chip ${teamsGroupTab===g?'active':''}" data-teams-group="${g}">${t('group')} ${g}</button>`).join('')}
+  <div style="display:flex; justify-content:flex-end; margin-bottom:10px;">
+    <button class="icon-btn" id="h2hToggleBtn" style="display:flex; align-items:center; gap:6px;">⚔️ ${h2hMode ? t('closeHeadToHead') : t('headToHead')}</button>
+  </div>`;
+
+  if(h2hMode){
+    return `${header}
+    <div class="rules-grid" style="margin-bottom:4px;">
+      <div class="field">
+        <label>${t('teamA')}</label>
+        <select data-h2h="A">${allTeamIds.map(id => `<option value="${id}" ${h2hTeamA===id?'selected':''}>${teamName(id)}</option>`).join('')}</select>
+      </div>
+      <div class="field">
+        <label>${t('teamB')}</label>
+        <select data-h2h="B">${allTeamIds.map(id => `<option value="${id}" ${h2hTeamB===id?'selected':''}>${teamName(id)}</option>`).join('')}</select>
+      </div>
+    </div>
+    <div class="rules-grid">
+      ${renderTeamRosterCard(h2hTeamA)}
+      ${renderTeamRosterCard(h2hTeamB)}
+    </div>
+    ${demoBanner()}`;
+  }
+
+  return `${header}
+  <div class="filter-row">
+    ${allTeamIds.map(id => `<button class="filter-chip ${teamsSelectedTeam===id?'active':''}" data-teams-select="${id}">${teamName(id)}</button>`).join('')}
   </div>
-  ${teams.map(teamId => {
-    const roster = CONFIG.ROSTERS[teamId] || [];
-    return `
-    <div class="card">
-      <div class="card-title" style="font-size:15px; text-transform:none; letter-spacing:normal; margin-bottom:12px;">${teamName(teamId)}</div>
-      ${roster.length ? `
-      <div style="overflow-x:auto;">
-        <table class="leaderboard" style="min-width:680px;">
-          <thead><tr>
-            <th style="${stickyBase}">${t('player')}</th><th>${t('posHeader')}</th>
-            <th>${t('evGoal')}</th><th>${t('evAssist')}</th><th>${t('evRedCard')}</th>
-            <th>${t('evCleanSheet')}</th><th>${t('evPenaltySave')}</th>
-            <th>${t('evOwnGoal')}</th><th>${t('evMissedPenalty')}</th>
-          </tr></thead>
-          <tbody>
-            ${roster.map(p => {
-              const s = playerSeasonStats(p.id);
-              const gkOnly = v => p.pos==='GK' ? `<span class="iso-num">${v}</span>` : '—';
-              return `<tr>
-                <td style="${stickyBase} font-weight:700;">${playerName(p)}</td>
-                <td><span class="pos-tag badge-pos-${p.pos}">${p.pos}</span></td>
-                <td><span class="iso-num">${s.goal}</span></td>
-                <td><span class="iso-num">${s.assist}</span></td>
-                <td><span class="iso-num">${s.redCard}</span></td>
-                <td>${gkOnly(s.cleanSheet)}</td>
-                <td>${gkOnly(s.penaltySave)}</td>
-                <td><span class="iso-num">${s.ownGoal}</span></td>
-                <td><span class="iso-num">${s.missedPenalty}</span></td>
-              </tr>`;
-            }).join('')}
-          </tbody>
-        </table>
-      </div>` : `<div class="empty-state" style="padding:16px;">${t('noRosterYet')}</div>`}
-    </div>`;
-  }).join('')}
+  ${renderTeamRosterCard(teamsSelectedTeam)}
   ${demoBanner()}`;
 }
 function wireTeams(){
-  document.querySelectorAll('[data-teams-group]').forEach(btn => {
-    btn.addEventListener('click', () => { teamsGroupTab = btn.dataset.teamsGroup; renderAll(); });
+  const h2hBtn = document.getElementById('h2hToggleBtn');
+  if(h2hBtn) h2hBtn.addEventListener('click', () => { h2hMode = !h2hMode; renderAll(); });
+  document.querySelectorAll('[data-teams-select]').forEach(btn => {
+    btn.addEventListener('click', () => { teamsSelectedTeam = btn.dataset.teamsSelect; renderAll(); });
+  });
+  document.querySelectorAll('[data-h2h]').forEach(sel => {
+    sel.addEventListener('change', () => {
+      if(sel.dataset.h2h === 'A') h2hTeamA = sel.value; else h2hTeamB = sel.value;
+      renderAll();
+    });
   });
 }
 function normEmail(e){ return (e||'').trim().toLowerCase(); }
