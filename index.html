@@ -274,6 +274,13 @@ const CONFIG = {
   PAYBOX_URL: 'https://payboxapp.page.link/YOUR_PAYBOX_LINK_HERE', // paste your real PayBox group link here
   WHATSAPP_GROUP_URL: 'https://chat.whatsapp.com/CXEZS9aQy6TKUXn3Qdwu1D',
 
+  // Bracket/qualification-odds calculators — paste your real links here.
+  BRACKET_LINKS: [
+    { en:'Bracket calculator 1', he:'מחשבון סיכויי העפלה 1', url:'https://YOUR_LINK_1_HERE' },
+    { en:'Bracket calculator 2', he:'מחשבון סיכויי העפלה 2', url:'https://YOUR_LINK_2_HERE' },
+    { en:'Bracket calculator 3', he:'מחשבון סיכויי העפלה 3', url:'https://YOUR_LINK_3_HERE' },
+  ],
+
   // --- Teams: a stable ID (used everywhere in the Sheet) + display name per language.
   //     The Sheet, all bets, and all matching logic use the ID only — never the
   //     display text — so switching language never breaks a saved prediction. ---
@@ -484,7 +491,7 @@ const CONFIG = {
    ============  2. i18n  ====================================
    ========================================================= */
 const I18N = {
-  en:{ brandName:'MATCHDAY', tab_home:'Home', tab_rules:'Rules', tab_general:'General', tab_games:'Games',
+  en:{ brandName:'MATCHDAY', tab_home:'Home', tab_rules:'Rules', tab_tips:'Tips', tab_general:'General', tab_games:'Games',
     tab_stats:'Stats', tab_hof:'Hall of Fame', rank:'Rank', player:'Player', points:'Points', form:'Form',
     leaderLabel:'Leader', signIn:'Sign in', signOut:'Sign out', exportImage:'Share', exactPctShort:'Exact %',
     rulesTitle:'How scoring works', rulesGameTitle:'Match score bets', rulesPlayerTitle:'Top player of the game', joinWhatsapp:'Join the WhatsApp group',
@@ -533,8 +540,13 @@ const I18N = {
     noGames:'No games yet.', emailFirst:'Sign in to place your predictions.', noParticipants:'No participants yet — add rows to the Participants tab in the Sheet.', noHof:'No past champions yet.',
     scoreRequired:'Enter a score for both teams.', playerRequired:'Pick a top player before saving.',
     doubleLabel:'Use my double points on this game', doubleUsedElsewhere:'Your double points are already placed on another game.',
+    tipsTitle:'Tips', tipsSub:'A few pointers before you lock in your predictions.',
+    tipsGamesTitle:'Filling in match results', tipsGamesList:"Check each team's recent form and head-to-head history before committing to a scoreline.\nConsider injuries, suspensions, and rotation in matches that no longer affect the standings.\nThe outcome (win/draw/loss) is worth points even without the exact score — a safe outcome pick beats a risky exact guess.",
+    tipsGeneralTitle:'The General form', tipsGeneralList:"The overlap bonus rewards getting any of your 4 picks into the real final four, even in the wrong order — don't be afraid to include a strong dark horse.\nGroup order predictions score per exact position, so ranking the obvious favorite 1st in every group is usually safer than guessing upsets.\nRevisit your picks before the deadline if squads or the draw change.",
+    tipsPlayerTitle:'Picking the top player of the game', tipsPlayerList:"Scoring rewards goals and assists from defenders and goalkeepers far more than strikers (5 / 2 / 1 / 0.5 by position) — an unlikely scorer is worth more if it happens.\nA clean-sheet or penalty-save pick on a strong defensive goalkeeper can be a safer bet than chasing a striker's goal.\nRemember: it only counts if the player actually plays in the match.",
+    tipsBracketTitle:'Qualification odds calculators', tipsBracketSub:"Use these to check each team's real qualification odds before locking in your predictions.",
   },
-  he:{ brandName:'מאצדיי', tab_home:'ראשי', tab_rules:'חוקים', tab_general:'טופס כללי', tab_games:'משחקים',
+  he:{ brandName:'מאצדיי', tab_home:'ראשי', tab_rules:'חוקים', tab_tips:'המלצות', tab_general:'טופס כללי', tab_games:'משחקים',
     tab_stats:'סטטיסטיקות', tab_hof:'היכל התהילה', rank:'דירוג', player:'שם', points:'נקודות', form:'פורמה',
     leaderLabel:'מוביל', signIn:'התחברות', signOut:'התנתקות', exportImage:'שיתוף', exactPctShort:'% מדויק',
     rulesTitle:'איך מחשבים ניקוד', rulesGameTitle:'ניחושי תוצאות משחק', rulesPlayerTitle:'שחקן המשחק', joinWhatsapp:'הצטרפות לקבוצת הוואטסאפ',
@@ -583,6 +595,11 @@ const I18N = {
     noGames:'אין משחקים עדיין.', emailFirst:'התחברו כדי להזין ניחושים.', noParticipants:'עדיין אין משתתפים — הוסיפו שורות לטאב Participants בגיליון.', noHof:'עדיין אין אלופים קודמים.',
     scoreRequired:'יש להזין תוצאה לשתי הקבוצות.', playerRequired:'יש לבחור שחקן משחק לפני השמירה.',
     doubleLabel:'השתמש בדאבל ניקוד למשחק זה', doubleUsedElsewhere:'הדאבל שלך כבר מוצב על משחק אחר.',
+    tipsTitle:'המלצות', tipsSub:'כמה טיפים לפני שנועלים ניחושים.',
+    tipsGamesTitle:'מילוי תוצאות משחקים', tipsGamesList:'תבדקו את הפורמה האחרונה של שתי הקבוצות ואת ההיסטוריה ביניהן לפני שקובעים תוצאה.\nשימו לב לפציעות, השעיות, ורוטציה במשחקים שכבר לא משנים כלום מבחינה טורנירית.\nגם בלי לקלוע לתוצאה המדויקת, ניחוש נכון של התוצאה (ניצחון/תיקו/הפסד) כבר שווה נקודות — עדיף ניחוש בטוח על פני הימור מדויק מסוכן.',
+    tipsGeneralTitle:'הטופס הכללי', tipsGeneralList:'בונוס ההתאמה מזכה גם אם הקבוצה שבחרתם הגיעה לחצי הגמר במיקום אחר ממה שניחשתם — אל תפחדו לכלול קבוצת חושך חזקה בין הארבע.\nניחושי סדר הבתים מנוקדים לפי מיקום מדויק, אז דירוג המועדפת הברורה במקום הראשון בכל בית בדרך כלל בטוח יותר מניחוש הפתעות.\nכדאי לחזור ולבדוק את הבחירות לפני מועד הנעילה אם יש שינויים בסגלים או בהגרלה.',
+    tipsPlayerTitle:'בחירת שחקן המשחק', tipsPlayerList:'הניקוד מתגמל שערים ובישולים של מגנים ושוערים הרבה יותר משל חלוצים (5 / 2 / 1 / 0.5 לפי תפקיד) — שער לא צפוי שווה יותר אם הוא קורה.\nבחירת שוער חזק בהגנה עם סיכוי לשער נקי או עצירת פנדל יכולה להיות הימור בטוח יותר מרדיפה אחרי שער של חלוץ.\nזכרו: זה נספר רק אם השחקן באמת שיחק במשחק.',
+    tipsBracketTitle:'מחשבוני סיכויי העפלה', tipsBracketSub:'השתמשו בהם כדי לבדוק את סיכויי ההעפלה האמיתיים של כל נבחרת לפני שאתם נועלים ניחושים.',
   }
 };
 let LANG = localStorage.getItem('md_lang') || 'en';
@@ -733,7 +750,7 @@ function computeGameScore(betA, betB, actualA, actualB){
 /* =========================================================
    ============  6. Rendering  ================================
    ========================================================= */
-const TABS = ['home','rules','general','games','stats','hof'];
+const TABS = ['home','rules','tips','general','games','stats','hof'];
 let currentTab = 'home';
 
 function showToast(message, isError){
@@ -784,7 +801,7 @@ function renderShell(){
 function renderAll(){
   renderShell();
   const main = document.getElementById('main');
-  const renderers = { home:renderHome, rules:renderRules, general:renderGeneral, games:renderGames, stats:renderStats, hof:renderHof };
+  const renderers = { home:renderHome, rules:renderRules, tips:renderTips, general:renderGeneral, games:renderGames, stats:renderStats, hof:renderHof };
   main.innerHTML = renderers[currentTab]();
   if(currentTab==='home'){
     animateFlaps();
@@ -994,6 +1011,35 @@ function renderRulesPrizes(){
     <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:14px;">
       <a href="${CONFIG.PAYBOX_URL}" target="_blank" rel="noopener" class="btn" style="display:inline-flex; align-items:center; gap:6px; text-decoration:none;">💳 ${t('payEntryFee', CONFIG.ENTRY_FEE)}</a>
       <a href="${CONFIG.WHATSAPP_GROUP_URL}" target="_blank" rel="noopener" class="btn whatsapp-btn" style="display:inline-flex; align-items:center; gap:6px; text-decoration:none;">💬 ${t('joinWhatsapp')}</a>
+    </div>
+  </div>`;
+}
+
+/* ---- TIPS ---- */
+function renderTips(){
+  const tipList = key => t(key).split('\n').map(line => `<li style="margin-bottom:8px;">${line}</li>`).join('');
+  return `
+  <div class="section-title">${t('tipsTitle')}</div>
+  <div class="section-sub">${t('tipsSub')}</div>
+  <div class="rules-grid">
+    <div class="card">
+      <div class="card-title">⚽ ${t('tipsGamesTitle')}</div>
+      <ul style="padding-inline-start:18px; font-size:13.5px; color:var(--text-dim); margin:0;">${tipList('tipsGamesList')}</ul>
+    </div>
+    <div class="card">
+      <div class="card-title">🏆 ${t('tipsGeneralTitle')}</div>
+      <ul style="padding-inline-start:18px; font-size:13.5px; color:var(--text-dim); margin:0;">${tipList('tipsGeneralList')}</ul>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">🎯 ${t('tipsPlayerTitle')}</div>
+    <ul style="padding-inline-start:18px; font-size:13.5px; color:var(--text-dim); margin:0;">${tipList('tipsPlayerList')}</ul>
+  </div>
+  <div class="card">
+    <div class="card-title">📊 ${t('tipsBracketTitle')}</div>
+    <div class="section-sub" style="margin-bottom:14px;">${t('tipsBracketSub')}</div>
+    <div style="display:flex; flex-direction:column; gap:8px;">
+      ${CONFIG.BRACKET_LINKS.map((link,i) => `<a href="${link.url}" target="_blank" rel="noopener" class="btn btn-ghost" style="text-decoration:none; text-align:center;">🔗 ${link[LANG] || link.en}</a>`).join('')}
     </div>
   </div>`;
 }
