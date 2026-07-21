@@ -491,7 +491,7 @@ const CONFIG = {
    ============  2. i18n  ====================================
    ========================================================= */
 const I18N = {
-  en:{ brandName:'MATCHDAY', tab_home:'Home', tab_rules:'Rules', tab_tips:'Tips', tab_general:'General', tab_games:'Games',
+  en:{ brandName:'MATCHDAY', tab_home:'Home', tab_rules:'Rules', tab_tips:'Tips', tab_teams:'Teams', tab_general:'General', tab_games:'Games',
     tab_stats:'Stats', tab_hof:'Hall of Fame', rank:'Rank', player:'Player', points:'Points', form:'Form',
     leaderLabel:'Leader', signIn:'Sign in', signOut:'Sign out', exportImage:'Share', exactPctShort:'Exact %',
     rulesTitle:'How scoring works', rulesGameTitle:'Match score bets', rulesPlayerTitle:'Top player of the game', joinWhatsapp:'Join the WhatsApp group',
@@ -545,8 +545,9 @@ const I18N = {
     tipsGeneralTitle:'The General form', tipsGeneralList:"The overlap bonus rewards getting any of your 4 picks into the real final four, even in the wrong order — don't be afraid to include a strong dark horse.\nGroup order predictions score per exact position, so ranking the obvious favorite 1st in every group is usually safer than guessing upsets.\nRevisit your picks before the deadline if squads or the draw change.",
     tipsPlayerTitle:'Picking the top player of the game', tipsPlayerList:"Scoring rewards goals and assists from defenders and goalkeepers far more than strikers (5 / 2 / 1 / 0.5 by position) — an unlikely scorer is worth more if it happens.\nA clean-sheet or penalty-save pick on a strong defensive goalkeeper can be a safer bet than chasing a striker's goal.\nRemember: it only counts if the player actually plays in the match.",
     tipsBracketTitle:'Qualification odds calculators', tipsBracketSub:"Use these to check each team's real qualification odds before locking in your predictions.",
+    teamsTitle:'Teams', teamsSub:'Every squad, with each player\'s tournament totals so far.', posHeader:'Pos', noRosterYet:'No roster added for this team yet.',
   },
-  he:{ brandName:'מאצדיי', tab_home:'ראשי', tab_rules:'חוקים', tab_tips:'המלצות', tab_general:'טופס כללי', tab_games:'משחקים',
+  he:{ brandName:'מאצדיי', tab_home:'ראשי', tab_rules:'חוקים', tab_tips:'המלצות', tab_teams:'נבחרות', tab_general:'טופס כללי', tab_games:'משחקים',
     tab_stats:'סטטיסטיקות', tab_hof:'היכל התהילה', rank:'דירוג', player:'שם', points:'נקודות', form:'פורמה',
     leaderLabel:'מוביל', signIn:'התחברות', signOut:'התנתקות', exportImage:'שיתוף', exactPctShort:'% מדויק',
     rulesTitle:'איך מחשבים ניקוד', rulesGameTitle:'ניחושי תוצאות משחק', rulesPlayerTitle:'שחקן המשחק', joinWhatsapp:'הצטרפות לקבוצת הוואטסאפ',
@@ -597,9 +598,10 @@ const I18N = {
     doubleLabel:'השתמש בדאבל ניקוד למשחק זה', doubleUsedElsewhere:'הדאבל שלך כבר מוצב על משחק אחר.',
     tipsTitle:'המלצות', tipsSub:'כמה טיפים לפני שנועלים ניחושים.',
     tipsGamesTitle:'מילוי תוצאות משחקים', tipsGamesList:'תבדקו את הפורמה האחרונה של שתי הקבוצות ואת ההיסטוריה ביניהן לפני שקובעים תוצאה.\nשימו לב לפציעות, השעיות, ורוטציה במשחקים שכבר לא משנים כלום מבחינה טורנירית.\nגם בלי לקלוע לתוצאה המדויקת, ניחוש נכון של התוצאה (ניצחון/תיקו/הפסד) כבר שווה נקודות — עדיף ניחוש בטוח על פני הימור מדויק מסוכן.',
-    tipsGeneralTitle:'הטופס הכללי', tipsGeneralList:'בונוס ההתאמה מזכה גם אם הקבוצה שבחרתם הגיעה לחצי הגמר במיקום אחר ממה שניחשתם — אל תפחדו לכלול קבוצת חושך חזקה בין הארבע.\nניחושי סדר הבתים מנוקדים לפי מיקום מדויק, אז דירוג המועדפת הברורה במקום הראשון בכל בית בדרך כלל בטוח יותר מניחוש הפתעות.\nכדאי לחזור ולבדוק את הבחירות לפני מועד הנעילה אם יש שינויים בסגלים או בהגרלה.',
+    tipsGeneralTitle:'הטופס הכללי', tipsGeneralList:'בונוס ההתאמה מזכה גם אם הקבוצה שבחרתם הגיעה לחצי הגמר במיקום אחר ממה שניחשתם — אל תפחדו לכלול קבוצת חושך חזקה בין הארבע.\nניחושי סדר הבתים מנוקדים לפי מיקום מדויק, אז דירוג המועדפת הברורה במקום הראשון בכל בית בדרך כלל בטוח יותר מניחוש הפתעות.\nכדאי לחזור ולבדוק את החבירות לפני מועד הנעילה.',
     tipsPlayerTitle:'בחירת שחקן המשחק', tipsPlayerList:'הניקוד מתגמל שערים ובישולים של מגנים ושוערים הרבה יותר משל חלוצים (5 / 2 / 1 / 0.5 לפי תפקיד) — שער לא צפוי שווה יותר אם הוא קורה.\nבחירת שוער חזק בהגנה עם סיכוי לשער נקי או עצירת פנדל יכולה להיות הימור בטוח יותר מרדיפה אחרי שער של חלוץ.\nזכרו: זה נספר רק אם השחקן באמת שיחק במשחק.',
     tipsBracketTitle:'מחשבוני סיכויי העפלה', tipsBracketSub:'השתמשו בהם כדי לבדוק את סיכויי ההעפלה האמיתיים של כל נבחרת לפני שאתם נועלים ניחושים.',
+    teamsTitle:'נבחרות', teamsSub:'כל הסגלים, עם הסטטיסטיקה המצטברת של כל שחקן בטורניר עד כה.', posHeader:'תפקיד', noRosterYet:'עדיין לא הוזן סגל לקבוצה הזו.',
   }
 };
 let LANG = localStorage.getItem('md_lang') || 'en';
@@ -750,7 +752,7 @@ function computeGameScore(betA, betB, actualA, actualB){
 /* =========================================================
    ============  6. Rendering  ================================
    ========================================================= */
-const TABS = ['home','rules','tips','general','games','stats','hof'];
+const TABS = ['home','rules','tips','teams','general','games','stats','hof'];
 let currentTab = 'home';
 
 function showToast(message, isError){
@@ -801,13 +803,14 @@ function renderShell(){
 function renderAll(){
   renderShell();
   const main = document.getElementById('main');
-  const renderers = { home:renderHome, rules:renderRules, tips:renderTips, general:renderGeneral, games:renderGames, stats:renderStats, hof:renderHof };
+  const renderers = { home:renderHome, rules:renderRules, tips:renderTips, teams:renderTeams, general:renderGeneral, games:renderGames, stats:renderStats, hof:renderHof };
   main.innerHTML = renderers[currentTab]();
   if(currentTab==='home'){
     animateFlaps();
     const eb = document.getElementById('exportImgBtn'); if(eb) eb.onclick = exportLeaderboardImage;
   }
   if(currentTab==='general'){ wireGeneralForm(); wireGeneralReveal(); }
+  if(currentTab==='teams') wireTeams();
   if(currentTab==='games') wireGamesForm();
   if(currentTab==='stats') drawStatsChart();
 }
@@ -1044,7 +1047,69 @@ function renderTips(){
   </div>`;
 }
 
-/* ---- GENERAL ---- */
+/* ---- TEAMS ---- */
+let teamsGroupTab = null;
+function playerSeasonStats(playerId){
+  const stats = { goal:0, assist:0, redCard:0, cleanSheet:0, penaltySave:0, ownGoal:0, missedPenalty:0 };
+  STATE.gameEvents.filter(ev => ev.player === playerId).forEach(ev => {
+    const n = +ev.count || 1;
+    if(stats.hasOwnProperty(ev.eventType)) stats[ev.eventType] += n;
+  });
+  return stats;
+}
+function renderTeams(){
+  const groupKeys = Object.keys(CONFIG.GROUPS);
+  if(!teamsGroupTab || !groupKeys.includes(teamsGroupTab)) teamsGroupTab = groupKeys[0];
+  const teams = CONFIG.GROUPS[teamsGroupTab] || [];
+  const stickyBase = `position:sticky; ${LANG==='he'?'right':'left'}:0; background:var(--surface); z-index:1;`;
+  return `
+  <div class="section-title">${t('teamsTitle')}</div>
+  <div class="section-sub">${t('teamsSub')}</div>
+  <div class="subtab-row" style="flex-wrap:wrap;">
+    ${groupKeys.map(g => `<button class="filter-chip ${teamsGroupTab===g?'active':''}" data-teams-group="${g}">${t('group')} ${g}</button>`).join('')}
+  </div>
+  ${teams.map(teamId => {
+    const roster = CONFIG.ROSTERS[teamId] || [];
+    return `
+    <div class="card">
+      <div class="card-title" style="font-size:15px; text-transform:none; letter-spacing:normal; margin-bottom:12px;">${teamName(teamId)}</div>
+      ${roster.length ? `
+      <div style="overflow-x:auto;">
+        <table class="leaderboard" style="min-width:680px;">
+          <thead><tr>
+            <th style="${stickyBase}">${t('player')}</th><th>${t('posHeader')}</th>
+            <th>${t('evGoal')}</th><th>${t('evAssist')}</th><th>${t('evRedCard')}</th>
+            <th>${t('evCleanSheet')}</th><th>${t('evPenaltySave')}</th>
+            <th>${t('evOwnGoal')}</th><th>${t('evMissedPenalty')}</th>
+          </tr></thead>
+          <tbody>
+            ${roster.map(p => {
+              const s = playerSeasonStats(p.id);
+              const gkOnly = v => p.pos==='GK' ? `<span class="iso-num">${v}</span>` : '—';
+              return `<tr>
+                <td style="${stickyBase} font-weight:700;">${playerName(p)}</td>
+                <td><span class="pos-tag badge-pos-${p.pos}">${p.pos}</span></td>
+                <td><span class="iso-num">${s.goal}</span></td>
+                <td><span class="iso-num">${s.assist}</span></td>
+                <td><span class="iso-num">${s.redCard}</span></td>
+                <td>${gkOnly(s.cleanSheet)}</td>
+                <td>${gkOnly(s.penaltySave)}</td>
+                <td><span class="iso-num">${s.ownGoal}</span></td>
+                <td><span class="iso-num">${s.missedPenalty}</span></td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>` : `<div class="empty-state" style="padding:16px;">${t('noRosterYet')}</div>`}
+    </div>`;
+  }).join('')}
+  ${demoBanner()}`;
+}
+function wireTeams(){
+  document.querySelectorAll('[data-teams-group]').forEach(btn => {
+    btn.addEventListener('click', () => { teamsGroupTab = btn.dataset.teamsGroup; renderAll(); });
+  });
+}
 function normEmail(e){ return (e||'').trim().toLowerCase(); }
 function currentGeneralBet(){
   if(!STATE.user) return null;
