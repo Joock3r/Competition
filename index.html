@@ -126,6 +126,7 @@ html[dir="rtl"] .leaderboard th{text-align:right;}
 
 /* ---------- Rules ---------- */
 .rules-grid{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+.rules-grid > *{min-width:0;}
 @media(max-width:720px){.rules-grid{grid-template-columns:1fr;}}
 .rule-table{width:100%; border-collapse:collapse; font-size:13.5px;}
 .rule-table td{padding:7px 4px; border-bottom:1px solid var(--border);}
