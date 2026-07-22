@@ -1072,9 +1072,28 @@ function computePlayerTotalPoints(playerId, pos){
   if(pos==='GK') pts += sp.cleanSheetGK*s.cleanSheet + sp.penaltySave*s.penaltySave;
   return pts;
 }
+let teamsSortState = {}; // teamId -> {key, dir} — dir: 1 ascending, -1 descending
+function sortRoster(teamId, roster){
+  const state = teamsSortState[teamId];
+  if(!state) return roster;
+  const getVal = p => {
+    if(state.key === 'name') return playerName(p);
+    if(state.key === 'pos') return p.pos;
+    if(state.key === 'points') return computePlayerTotalPoints(p.id, p.pos);
+    return playerSeasonStats(p.id)[state.key] ?? 0;
+  };
+  return [...roster].sort((a,b) => {
+    const va = getVal(a), vb = getVal(b);
+    if(typeof va === 'string') return state.dir * va.localeCompare(vb, LANG==='he'?'he':'en');
+    return state.dir * (va - vb);
+  });
+}
 function renderTeamRosterCard(teamId){
-  const roster = CONFIG.ROSTERS[teamId] || [];
+  const roster = sortRoster(teamId, CONFIG.ROSTERS[teamId] || []);
   const stickyBase = `position:sticky; ${LANG==='he'?'right':'left'}:0; background:var(--surface); z-index:1;`;
+  const state = teamsSortState[teamId];
+  const arrow = key => state && state.key===key ? (state.dir===1 ? ' ▲' : ' ▼') : '';
+  const th = (key, label, extraStyle='') => `<th data-sort-key="${key}" data-sort-team="${teamId}" style="cursor:pointer; user-select:none; white-space:nowrap; ${extraStyle}">${label}${arrow(key)}</th>`;
   return `
   <div class="card">
     <div class="card-title" style="font-size:15px; text-transform:none; letter-spacing:normal; margin-bottom:12px;">${teamName(teamId)}</div>
@@ -1082,11 +1101,16 @@ function renderTeamRosterCard(teamId){
     <div style="overflow-x:auto;">
       <table class="leaderboard" style="min-width:720px;">
         <thead><tr>
-          <th style="${stickyBase}">${t('player')}</th><th>${t('posHeader')}</th>
-          <th>${t('evGoal')}</th><th>${t('evAssist')}</th><th>${t('evRedCard')}</th>
-          <th>${t('evCleanSheet')}</th><th>${t('evPenaltySave')}</th>
-          <th>${t('evOwnGoal')}</th><th>${t('evMissedPenalty')}</th>
-          <th style="text-align:${LANG==='he'?'left':'right'}">${t('points')}</th>
+          ${th('name', t('player'), stickyBase)}
+          ${th('pos', t('posHeader'))}
+          ${th('goal', t('evGoal'))}
+          ${th('assist', t('evAssist'))}
+          ${th('redCard', t('evRedCard'))}
+          ${th('cleanSheet', t('evCleanSheet'))}
+          ${th('penaltySave', t('evPenaltySave'))}
+          ${th('ownGoal', t('evOwnGoal'))}
+          ${th('missedPenalty', t('evMissedPenalty'))}
+          ${th('points', t('points'), `text-align:${LANG==='he'?'left':'right'};`)}
         </tr></thead>
         <tbody>
           ${roster.map(p => {
@@ -1144,8 +1168,9 @@ function renderTeams(){
   }
 
   return `${header}
-  <div class="filter-row">
-    ${allTeamIds.map(id => `<button class="filter-chip ${teamsSelectedTeam===id?'active':''}" data-teams-select="${id}">${teamName(id)}</button>`).join('')}
+  <div class="field" style="max-width:320px;">
+    <label>${t('teamsTitle')}</label>
+    <select data-teams-select>${allTeamIds.map(id => `<option value="${id}" ${teamsSelectedTeam===id?'selected':''}>${teamName(id)}</option>`).join('')}</select>
   </div>
   ${renderTeamRosterCard(teamsSelectedTeam)}
   ${demoBanner()}`;
@@ -1153,12 +1178,19 @@ function renderTeams(){
 function wireTeams(){
   const h2hBtn = document.getElementById('h2hToggleBtn');
   if(h2hBtn) h2hBtn.addEventListener('click', () => { h2hMode = !h2hMode; renderAll(); });
-  document.querySelectorAll('[data-teams-select]').forEach(btn => {
-    btn.addEventListener('click', () => { teamsSelectedTeam = btn.dataset.teamsSelect; renderAll(); });
-  });
+  const teamSelect = document.querySelector('[data-teams-select]');
+  if(teamSelect) teamSelect.addEventListener('change', () => { teamsSelectedTeam = teamSelect.value; renderAll(); });
   document.querySelectorAll('[data-h2h]').forEach(sel => {
     sel.addEventListener('change', () => {
       if(sel.dataset.h2h === 'A') h2hTeamA = sel.value; else h2hTeamB = sel.value;
+      renderAll();
+    });
+  });
+  document.querySelectorAll('[data-sort-key]').forEach(th => {
+    th.addEventListener('click', () => {
+      const key = th.dataset.sortKey, teamId = th.dataset.sortTeam;
+      const current = teamsSortState[teamId];
+      teamsSortState[teamId] = (current && current.key === key) ? { key, dir: -current.dir } : { key, dir: 1 };
       renderAll();
     });
   });
