@@ -1136,7 +1136,11 @@ function renderTeamRosterCard(teamId){
   </div>`;
 }
 function renderTeams(){
-  const allTeamIds = Object.keys(CONFIG.TEAMS);
+  const allTeamIds = Object.keys(CONFIG.TEAMS).sort((a,b) => {
+    const na = CONFIG.TEAMS[a][LANG] || CONFIG.TEAMS[a].en || a;
+    const nb = CONFIG.TEAMS[b][LANG] || CONFIG.TEAMS[b].en || b;
+    return na.localeCompare(nb, LANG==='he' ? 'he' : 'en');
+  });
   if(!teamsSelectedTeam || !allTeamIds.includes(teamsSelectedTeam)) teamsSelectedTeam = allTeamIds[0];
   if(!h2hTeamA || !allTeamIds.includes(h2hTeamA)) h2hTeamA = allTeamIds[0];
   if(!h2hTeamB || !allTeamIds.includes(h2hTeamB)) h2hTeamB = allTeamIds[1] || allTeamIds[0];
