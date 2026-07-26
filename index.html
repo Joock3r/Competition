@@ -4,6 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Matchday — Tournament Predictions</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0e1512">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Matchday">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Manrope:wght@400;500;700;800&family=Heebo:wght@400;500;700;800&display=swap" rel="stylesheet">
 <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -188,6 +195,15 @@ html[dir="rtl"] .group-editor h4{font-family:var(--font-he); letter-spacing:norm
 
 /* ---------- Stats ---------- */
 canvas{width:100%; height:280px; display:block;}
+.stats-point{cursor:pointer; transition:r .15s;}
+.stats-point:hover{r:6.5;}
+.stats-chart-wrap{position:relative;}
+.stats-tooltip{
+  position:absolute; display:none; pointer-events:none; transform:translate(-50%,-130%);
+  background:var(--surface-3); border:1px solid var(--border-strong); border-radius:6px;
+  padding:6px 10px; font-size:12px; font-weight:600; white-space:nowrap; z-index:10;
+  box-shadow:0 4px 12px rgba(0,0,0,.25);
+}
 .legend{display:flex; flex-wrap:wrap; gap:12px; margin-top:12px;}
 .legend-item{display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--text-dim);}
 .legend-swatch{width:10px; height:10px; border-radius:3px;}
@@ -529,12 +545,14 @@ const I18N = {
     tabOpenGames:'Open', tabPlayedGames:'Played', tabAllGames:'All', tabClosedGames:'Closed for betting',
     filterFilled:'Filled in', noneFilledYet:"You haven't filled in any predictions yet.",
     statusClosed:'Closed for betting', awaitingResult:'Awaiting result',
+    oneXTwoTitle:'Prediction distribution (1X2)', drawShort:'Draw',
     filterAllGames:'All', filterUnfilled:'Not predicted yet', allFilled:"You've predicted every open game 🎉",
     everyoneBets:"Everyone's bets", matchEventsTitle:'Match events', noEventsYet:'No events recorded for this game yet.',
     advancingShort:'Advancing', advancingLabel:'Team advancing to the next stage',
     advancingWinnerLabel:'Match winner (including extra time / penalties)',
     evGoal:'Goal', evAssist:'Assist', evOwnGoal:'Own goal', evRedCard:'Red card', evMissedPenalty:'Missed penalty', evCleanSheet:'Clean sheet', evPenaltySave:'Penalty save',
     statsTitle:'Stats', statsSub:'Points over time and recent form for every participant.', pointsOverTime:'Points over time',
+    statsStart:'Start', statsXAxis:'Game', pointsShort:'pts', rankOverTime:'Rank over time',
     hofTitle:'Hall of Fame', hofSub:'Champions of tournaments past.',
     worldcup:'World Cup', euro:'Euro', hofChampionTeam:'Champion', runnerUpLabel:'Runner-up',
     loading:'Loading…', demoNote:'Showing sample data — connect your Google Sheet in CONFIG to go live.',
@@ -586,12 +604,14 @@ const I18N = {
     tabOpenGames:'פתוחים', tabPlayedGames:'שוחקו', tabAllGames:'הכל', tabClosedGames:'סגורים להימור',
     filterFilled:'מולאו', noneFilledYet:'עדיין לא מילאת אף ניחוש.',
     statusClosed:'סגור להימור', awaitingResult:'ממתין לתוצאה',
+    oneXTwoTitle:'התפלגות ניחושים (1X2)', drawShort:'תיקו',
     filterAllGames:'הכל', filterUnfilled:'טרם מולא', allFilled:'מילאת ניחוש לכל המשחקים הפתוחים 🎉',
     everyoneBets:'ההימורים של כולם', matchEventsTitle:'אירועי המשחק', noEventsYet:'לא הוזנו אירועים למשחק זה עדיין.',
     advancingShort:'העפלה', advancingLabel:'הנבחרת שמעפילה לשלב הבא',
     advancingWinnerLabel:'הנבחרת המנצחת במשחק (כולל הארכה / פנדלים)',
     evGoal:'שער', evAssist:'בישול', evOwnGoal:'שער עצמי', evRedCard:'כרטיס אדום', evMissedPenalty:'החטאת פנדל', evCleanSheet:'שער נקי', evPenaltySave:'עצירת פנדל',
     statsTitle:'סטטיסטיקות', statsSub:'נקודות לאורך זמן ופורמה אחרונה לכל משתתף.', pointsOverTime:'נקודות לאורך זמן',
+    statsStart:'התחלה', statsXAxis:'משחק', pointsShort:"נק'", rankOverTime:'מיקום לאורך זמן',
     hofTitle:'היכל התהילה', hofSub:'אלופי הטורנירים הקודמים.',
     worldcup:'מונדיאל', euro:'יורו', hofChampionTeam:'אלופת הטורניר', runnerUpLabel:'מקום שני',
     loading:'טוען…', demoNote:'מוצגים נתוני דוגמה — חברו את הגיליון שלכם ב-CONFIG כדי לעלות לאוויר.',
@@ -815,7 +835,7 @@ function renderAll(){
   if(currentTab==='general'){ wireGeneralForm(); wireGeneralReveal(); }
   if(currentTab==='teams') wireTeams();
   if(currentTab==='games') wireGamesForm();
-  if(currentTab==='stats') drawStatsChart();
+  if(currentTab==='stats') drawStatsCharts();
 }
 
 function demoBanner(){
@@ -1592,6 +1612,60 @@ function computePlayerGamePoints(events){
   return pts;
 }
 function playerPtsColor(pts){ return pts<=0 ? 'red' : pts<5 ? 'yellow' : 'green'; }
+
+/** Builds a plain SVG pie chart (no external deps, captures cleanly in
+ *  exported images) from [{value, color}, ...]. */
+function svgPieChart(segments, size){
+  const total = segments.reduce((a,s) => a+s.value, 0);
+  const cx = size/2, cy = size/2, r = size/2 - 2;
+  if(total <= 0) return `<svg viewBox="0 0 ${size} ${size}" style="width:${size}px; height:${size}px; flex-shrink:0;"><circle cx="${cx}" cy="${cy}" r="${r}" fill="var(--surface-3)"/></svg>`;
+  let angle = -90, paths = '';
+  segments.forEach(s => {
+    const frac = s.value / total;
+    if(frac <= 0) return;
+    const startAngle = angle, endAngle = angle + frac*360;
+    const toXY = a => [cx + r*Math.cos(a*Math.PI/180), cy + r*Math.sin(a*Math.PI/180)];
+    if(frac >= 0.9999){
+      paths += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${s.color}"/>`;
+    } else {
+      const [x1,y1] = toXY(startAngle), [x2,y2] = toXY(endAngle);
+      const large = (endAngle-startAngle) > 180 ? 1 : 0;
+      paths += `<path d="M ${cx} ${cy} L ${x1.toFixed(2)} ${y1.toFixed(2)} A ${r} ${r} 0 ${large} 1 ${x2.toFixed(2)} ${y2.toFixed(2)} Z" fill="${s.color}"/>`;
+    }
+    angle = endAngle;
+  });
+  return `<svg viewBox="0 0 ${size} ${size}" style="width:${size}px; height:${size}px; flex-shrink:0;">${paths}</svg>`;
+}
+
+/** 1X2 prediction-distribution pie: how the group predicted the outcome
+ *  (not the actual result) — shown once a game's bets are locked/revealed. */
+function renderOneXTwoPie(g, bets){
+  let winA=0, draw=0, winB=0;
+  bets.forEach(b => {
+    const a = +b.betA, bb = +b.betB;
+    if(b.betA==null || b.betA==='' || b.betB==null || b.betB==='' || isNaN(a) || isNaN(bb)) return;
+    if(a>bb) winA++; else if(a<bb) winB++; else draw++;
+  });
+  const total = winA+draw+winB;
+  if(total===0) return '';
+  const pct = n => Math.round((n/total)*100);
+  const segs = [
+    { label: teamName(g.teamA), tag:'1', value: winA, color:'#4c9a6a' },
+    { label: t('drawShort'), tag:'X', value: draw, color:'#9aa69e' },
+    { label: teamName(g.teamB), tag:'2', value: winB, color:'#e2564f' },
+  ];
+  return `
+  <div class="card-title" style="margin-top:16px;">${t('oneXTwoTitle')}</div>
+  <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+    ${svgPieChart(segs, 104)}
+    <div style="display:flex; flex-direction:column; gap:6px; font-size:12.5px; min-width:0;">
+      ${segs.map(s => `<div style="display:flex; align-items:center; gap:6px;">
+        <span style="display:inline-block; width:10px; height:10px; border-radius:3px; background:${s.color}; flex-shrink:0;"></span>
+        <span>${s.label} (${s.tag}) — <span class="iso-num" style="font-weight:700;">${pct(s.value)}%</span> <span style="color:var(--text-faint);">(${s.value})</span></span>
+      </div>`).join('')}
+    </div>
+  </div>`;
+}
 function resolveEventPlayerDisplay(ev){
   const p = findPlayer(ev.player);
   if(p) return { name: playerName(p), team: teamName(p.teamId) };
@@ -1639,6 +1713,7 @@ function renderClosedGameCard(g){
         }).join('')}
       </tbody>
     </table>` : `<div class="empty-state" style="padding:20px;">${t('noneYet')}</div>`}
+    ${bets.length ? renderOneXTwoPie(g, bets) : ''}
   </div>`;
 }
 
@@ -1691,6 +1766,7 @@ function renderPlayedGameCard(g){
         }).join('')}
       </tbody>
     </table>` : `<div class="empty-state" style="padding:20px;">${t('noneYet')}</div>`}
+    ${bets.length ? renderOneXTwoPie(g, bets) : ''}
 
     <div class="card-title" style="margin-top:16px;">${t('matchEventsTitle')}</div>
     ${matchEvents.length ? matchEvents.map(p => {
@@ -1794,39 +1870,179 @@ function renderStats(){
   <div class="section-sub">${t('statsSub')}</div>
   <div class="card">
     <div class="card-title">${t('pointsOverTime')}</div>
-    <canvas id="statsCanvas"></canvas>
+    <div class="stats-chart-wrap">
+      <svg id="statsSvg" viewBox="0 0 700 320" style="width:100%; height:auto; display:block;"></svg>
+      <div id="statsTooltip" class="stats-tooltip"></div>
+    </div>
     <div class="legend" id="statsLegend"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">${t('rankOverTime')}</div>
+    <div class="stats-chart-wrap">
+      <svg id="rankSvg" viewBox="0 0 700 320" style="width:100%; height:auto; display:block;"></svg>
+      <div id="rankTooltip" class="stats-tooltip"></div>
+    </div>
+    <div class="legend" id="rankLegend"></div>
   </div>
   ${demoBanner()}`;
 }
-function drawStatsChart(){
-  const canvas = document.getElementById('statsCanvas'); if(!canvas) return;
-  const dpr = window.devicePixelRatio || 1;
-  const rect = canvas.getBoundingClientRect();
-  canvas.width = rect.width*dpr; canvas.height = 280*dpr;
-  const ctx = canvas.getContext('2d'); ctx.scale(dpr,dpr);
+
+let statsHiddenParticipants = new Set(); // by email — shared across both charts
+
+function buildStatsSeries(){
   const ranked = rankedParticipants();
   const palette = ['#ffb020','#4c9a6a','#5b8fd6','#e2564f','#c9c9c9','#8a611c'];
-  // Build a synthetic points-over-time series from each participant's form history (demo/derived).
-  const rounds = Math.max(...ranked.map(p => (p.form||[]).length), 1);
-  const W = rect.width, H = 280, padL = 30, padB = 20, padT = 10;
-  ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--border');
-  ctx.beginPath(); ctx.moveTo(padL, padT); ctx.lineTo(padL, H-padB); ctx.lineTo(W, H-padB); ctx.stroke();
-  ranked.forEach((p,pi) => {
+  const series = ranked.map((p,pi) => {
     const form = (p.form||[]).map(v => +v || 0);
     let running = p.totalPoints - form.reduce((a,b) => a+b, 0); // points before the tracked recent games
-    const pts = [running, ...form.map(v => running += v)];
-    ctx.strokeStyle = palette[pi % palette.length]; ctx.lineWidth = 2; ctx.beginPath();
-    pts.forEach((val,i) => {
-      const x = padL + (i/(pts.length-1||1)) * (W-padL-6);
-      const maxY = Math.max(...ranked.map(q => q.totalPoints), 1);
-      const y = (H-padB) - (val/maxY) * (H-padB-padT);
-      i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
-    });
-    ctx.stroke();
+    const values = [running, ...form.map(v => running += v)];
+    return { name: p.displayName, email: p.email, color: palette[pi % palette.length], values };
   });
-  document.getElementById('statsLegend').innerHTML = ranked.map((p,pi) =>
-    `<div class="legend-item"><span class="legend-swatch" style="background:${palette[pi%palette.length]}"></span>${p.displayName}</div>`).join('');
+  const maxLen = Math.max(1, ...series.map(s => s.values.length));
+  return { series, maxLen };
+}
+
+/** For each tracked point in time, ranks every participant against everyone
+ *  else at that same point (competition ranking — ties share a rank). This
+ *  is always computed from the FULL list regardless of what's hidden, since
+ *  hiding a line shouldn't change what anyone's true standing was. */
+function computeRankSeries(series, maxLen){
+  const ranks = series.map(() => []);
+  for(let i=0; i<maxLen; i++){
+    const entries = series.map((s,idx) => ({idx, val: s.values[i]})).filter(e => e.val !== undefined);
+    entries.sort((a,b) => b.val - a.val);
+    let rank = 0, prevVal = null;
+    entries.forEach((e,pos) => {
+      if(e.val !== prevVal){ rank = pos+1; prevVal = e.val; }
+      ranks[e.idx][i] = rank;
+    });
+  }
+  return ranks;
+}
+
+function wireChartTooltips(svg, tooltip, textFn){
+  svg.querySelectorAll('.stats-point').forEach(pt => {
+    const show = () => {
+      tooltip.textContent = textFn(pt);
+      tooltip.style.display = 'block';
+      const cx = parseFloat(pt.getAttribute('cx')), cy = parseFloat(pt.getAttribute('cy'));
+      tooltip.style.left = ((cx/700)*100) + '%';
+      tooltip.style.top = ((cy/320)*100) + '%';
+    };
+    pt.addEventListener('mouseenter', show);
+    pt.addEventListener('touchstart', show, {passive:true});
+    pt.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
+  });
+}
+
+function drawPointsChart(series, maxLen){
+  const svg = document.getElementById('statsSvg'); if(!svg) return;
+  const tooltip = document.getElementById('statsTooltip');
+  const visible = series.filter(s => !statsHiddenParticipants.has(s.email));
+  const W = 700, H = 320, padL = 42, padR = 14, padT = 14, padB = 30;
+  const allValues = visible.flatMap(s => s.values);
+  const minY = Math.min(0, ...(allValues.length ? allValues : [0]));
+  const maxY = Math.max(1, ...(allValues.length ? allValues : [1]));
+  const yRange = (maxY - minY) || 1;
+  const x = i => padL + (maxLen<=1 ? 0 : i/(maxLen-1)) * (W-padL-padR);
+  const y = v => H - padB - ((v - minY)/yRange) * (H-padT-padB);
+  const isRTL = LANG==='he';
+
+  let out = '';
+  const yTicks = 4;
+  for(let i=0; i<=yTicks; i++){
+    const val = minY + (yRange * i/yTicks);
+    const yy = y(val);
+    out += `<line x1="${padL}" y1="${yy}" x2="${W-padR}" y2="${yy}" stroke="var(--border)" stroke-width="1"/>`;
+    out += `<text x="${padL-8}" y="${yy+3.5}" font-size="10" fill="var(--text-faint)" text-anchor="${isRTL?'start':'end'}" font-family="var(--font-mono)">${Math.round(val)}</text>`;
+  }
+  for(let i=0; i<maxLen; i++){
+    const xx = x(i);
+    const label = i===0 ? t('statsStart') : String(i);
+    out += `<text x="${xx}" y="${H-padB+16}" font-size="10" fill="var(--text-faint)" text-anchor="middle" font-family="var(--font-mono)">${label}</text>`;
+  }
+  out += `<text x="${(padL+W-padR)/2}" y="${H-4}" font-size="10" fill="var(--text-faint)" text-anchor="middle">${t('statsXAxis')}</text>`;
+
+  visible.forEach(s => {
+    const d = s.values.map((v,i) => `${i===0?'M':'L'} ${x(i).toFixed(1)} ${y(v).toFixed(1)}`).join(' ');
+    out += `<path d="${d}" fill="none" stroke="${s.color}" stroke-width="2"/>`;
+    s.values.forEach((v,i) => {
+      out += `<circle class="stats-point" cx="${x(i).toFixed(1)}" cy="${y(v).toFixed(1)}" r="4" fill="${s.color}" stroke="var(--surface)" stroke-width="1.5" data-name="${s.name}" data-value="${v}" data-idx="${i}"/>`;
+    });
+  });
+  svg.innerHTML = out;
+  wireChartTooltips(svg, tooltip, pt => {
+    const idx = +pt.dataset.idx;
+    const label = idx===0 ? t('statsStart') : `${t('statsXAxis')} ${idx}`;
+    return `${pt.dataset.name} — ${label}: ${pt.dataset.value} ${t('pointsShort')}`;
+  });
+}
+
+function drawRankChart(series, maxLen){
+  const svg = document.getElementById('rankSvg'); if(!svg) return;
+  const tooltip = document.getElementById('rankTooltip');
+  const ranks = computeRankSeries(series, maxLen); // true standings, unaffected by hidden lines
+  const visible = series.map((s,idx) => ({s,idx})).filter(({s}) => !statsHiddenParticipants.has(s.email));
+  const maxRank = series.length || 1;
+  const W = 700, H = 320, padL = 42, padR = 14, padT = 14, padB = 30;
+  const x = i => padL + (maxLen<=1 ? 0 : i/(maxLen-1)) * (W-padL-padR);
+  const y = r => padT + ((r-1)/((maxRank-1)||1)) * (H-padT-padB); // rank 1 (best) at top
+  const isRTL = LANG==='he';
+
+  let out = '';
+  for(let r=1; r<=maxRank; r++){
+    const yy = y(r);
+    out += `<line x1="${padL}" y1="${yy}" x2="${W-padR}" y2="${yy}" stroke="var(--border)" stroke-width="1"/>`;
+    out += `<text x="${padL-8}" y="${yy+3.5}" font-size="10" fill="var(--text-faint)" text-anchor="${isRTL?'start':'end'}" font-family="var(--font-mono)">${r}</text>`;
+  }
+  for(let i=0; i<maxLen; i++){
+    const xx = x(i);
+    const label = i===0 ? t('statsStart') : String(i);
+    out += `<text x="${xx}" y="${H-padB+16}" font-size="10" fill="var(--text-faint)" text-anchor="middle" font-family="var(--font-mono)">${label}</text>`;
+  }
+  out += `<text x="${(padL+W-padR)/2}" y="${H-4}" font-size="10" fill="var(--text-faint)" text-anchor="middle">${t('statsXAxis')}</text>`;
+
+  visible.forEach(({s, idx}) => {
+    const points = ranks[idx].map((r,i) => r!==undefined ? {i, r} : null).filter(Boolean);
+    if(!points.length) return;
+    const d = points.map((p,pi) => `${pi===0?'M':'L'} ${x(p.i).toFixed(1)} ${y(p.r).toFixed(1)}`).join(' ');
+    out += `<path d="${d}" fill="none" stroke="${s.color}" stroke-width="2"/>`;
+    points.forEach(p => {
+      out += `<circle class="stats-point" cx="${x(p.i).toFixed(1)}" cy="${y(p.r).toFixed(1)}" r="4" fill="${s.color}" stroke="var(--surface)" stroke-width="1.5" data-name="${s.name}" data-value="${p.r}" data-idx="${p.i}"/>`;
+    });
+  });
+  svg.innerHTML = out;
+  wireChartTooltips(svg, tooltip, pt => {
+    const idx = +pt.dataset.idx;
+    const label = idx===0 ? t('statsStart') : `${t('statsXAxis')} ${idx}`;
+    return `${pt.dataset.name} — ${label}: #${pt.dataset.value}`;
+  });
+}
+
+function renderStatsLegend(containerId, series){
+  const el = document.getElementById(containerId); if(!el) return;
+  el.innerHTML = series.map(s => {
+    const hidden = statsHiddenParticipants.has(s.email);
+    return `<div class="legend-item" data-legend-toggle="${s.email}" style="cursor:pointer; opacity:${hidden?.35:1}; text-decoration:${hidden?'line-through':'none'};">
+      <span class="legend-swatch" style="background:${s.color}"></span>${s.name}
+    </div>`;
+  }).join('');
+  el.querySelectorAll('[data-legend-toggle]').forEach(item => {
+    item.addEventListener('click', () => {
+      const email = item.dataset.legendToggle;
+      if(statsHiddenParticipants.has(email)) statsHiddenParticipants.delete(email);
+      else statsHiddenParticipants.add(email);
+      drawStatsCharts();
+    });
+  });
+}
+
+function drawStatsCharts(){
+  const { series, maxLen } = buildStatsSeries();
+  drawPointsChart(series, maxLen);
+  drawRankChart(series, maxLen);
+  renderStatsLegend('statsLegend', series);
+  renderStatsLegend('rankLegend', series);
 }
 
 /* ---- HALL OF FAME ---- */
