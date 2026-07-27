@@ -123,6 +123,8 @@ html[dir="rtl"] .leaderboard th{text-align:right;}
 .leaderboard td{padding:12px 10px; border-bottom:1px solid var(--border); font-size:14px; vertical-align:middle;}
 .leaderboard tr:hover td{background:var(--surface-2);}
 .rank-cell{font-family:var(--font-mono); font-weight:700; width:36px; color:var(--text-dim);}
+.rank-delta{font-size:10px; font-weight:700; vertical-align:middle; unicode-bidi:isolate; direction:ltr; display:inline-block;}
+.rank-delta.up{color:var(--green);} .rank-delta.down{color:var(--red);} .rank-delta.same{color:var(--text-faint);}
 .rank-cell.top1{color:var(--amber);} .rank-cell.top2{color:#c9c9c9;} .rank-cell.top3{color:#c88a4d;}
 .points-cell{font-family:var(--font-mono); font-weight:700; font-size:16px; color:var(--amber); text-align:right;}
 .form-dots{display:flex; gap:4px;}
@@ -267,6 +269,10 @@ canvas{width:100%; height:280px; display:block;}
    scoring rules live here in code (per your choice). Games,
    bets and results live in the Google Sheet below.
 */
+// Only this email sees the hidden Admin tab and can post admin actions.
+// Keep in sync with Code.gs's own ADMIN_EMAIL — the real enforcement happens there.
+const ADMIN_EMAIL = 'nut.cr4ck3r.pro@gmail.com';
+
 const CONFIG = {
   // --- Apps Script Web App URL: the ONLY way this site talks to the Sheet.
   // The Sheet itself should be fully private (no "anyone with the link") —
@@ -509,8 +515,9 @@ const CONFIG = {
    ========================================================= */
 const I18N = {
   en:{ brandName:'MATCHDAY', tab_home:'Home', tab_rules:'Rules', tab_tips:'Tips', tab_teams:'Teams', tab_general:'General', tab_games:'Games',
-    tab_stats:'Stats', tab_hof:'Hall of Fame', rank:'Rank', player:'Player', points:'Points', form:'Form',
+    tab_stats:'Stats', tab_hof:'Hall of Fame', tab_settings:'Settings', tab_admin:'Admin', rank:'Rank', player:'Player', points:'Points', form:'Form',
     leaderLabel:'Leader', signIn:'Sign in', signOut:'Sign out', exportImage:'Share', exactPctShort:'Exact %',
+    movedUp:'Moved up since last game', movedDown:'Moved down since last game', noChange:'No change since last game',
     rulesTitle:'How scoring works', rulesGameTitle:'Match score bets', rulesPlayerTitle:'Top player of the game', joinWhatsapp:'Join the WhatsApp group',
     rulesStageTitle:'Group stage & knockout', ruleGroupPosition:'Exact team position at end of group stage (per team)',
     ruleGroupPositionNote:'Up to 4 teams × 2 pts = 8 pts per group.', ruleAdvancing:'Correct pick in the knockout stage',
@@ -565,11 +572,29 @@ const I18N = {
     tipsPlayerTitle:'Picking the top player of the game', tipsPlayerList:"Scoring rewards goals and assists from defenders and goalkeepers far more than strikers (5 / 2 / 1 / 0.5 by position) — an unlikely scorer is worth more if it happens.\nA clean-sheet or penalty-save pick on a strong defensive goalkeeper can be a safer bet than chasing a striker's goal.\nRemember: it only counts if the player actually plays in the match.",
     tipsBracketTitle:'Qualification odds calculators', tipsBracketSub:"Use these to check each team's real qualification odds before locking in your predictions.",
     teamsTitle:'Teams', teamsSub:'Every squad, with each player\'s tournament totals so far.', posHeader:'Pos', noRosterYet:'No roster added for this team yet.',
+    settingsTitle:'Settings', settingsSub:'Add Matchday to your home screen for quick, full-screen access — no browser address bar.',
+    installIOSTitle:'iPhone / iPad (Safari)',
+    installIOS1:'Open this site in Safari (not Chrome — Add to Home Screen only works from Safari on iOS).',
+    installIOS2:'Tap the Share button (the square with an arrow pointing up) in the toolbar.',
+    installIOS3:'Scroll down and tap "Add to Home Screen".',
+    installIOS4:'Tap "Add" in the top corner. An app icon now appears on your home screen.',
+    installAndroidTitle:'Android (Chrome)',
+    installAndroid1:'Open this site in Chrome.',
+    installAndroid2:'Tap the menu (⋮) in the top-right corner.',
+    installAndroid3:'Tap "Add to Home screen" or "Install app", then confirm.',
+    settingsNoteTitle:'Why bother?', settingsNoteText:'Once added, tapping the icon opens Matchday full-screen, like a real app — no address bar, no browser tabs, just the tournament.',
+    adminTitle:'Admin', adminSub:'Quick data entry — writes straight to the Sheet. Only visible to you.',
+    adminResultTitle:'Set match result', adminSelectGame:'Game', adminScoreA:'Score (Team A)', adminScoreB:'Score (Team B)',
+    adminAdvancingTeam:'Advancing team (knockout only)', adminSaveResult:'Save result',
+    adminEventTitle:'Add match event', adminSelectPlayer:'Player', adminEventType:'Event type', adminCount:'Count', adminSaveEvent:'Add event',
+    adminRecalcTitle:'Recalculate all scores', adminRecalcSub:'Run this after entering results/events so everyone\'s points update.',
+    adminRecalcBtn:'Recalculate now', adminRecalculating:'Recalculating…', adminRecalcDone:'Scores recalculated.',
     headToHead:'Head to head', closeHeadToHead:'Close comparison', teamA:'Team A', teamB:'Team B',
   },
   he:{ brandName:'מאצדיי', tab_home:'ראשי', tab_rules:'חוקים', tab_tips:'המלצות', tab_teams:'נבחרות', tab_general:'טופס כללי', tab_games:'משחקים',
-    tab_stats:'סטטיסטיקות', tab_hof:'היכל התהילה', rank:'דירוג', player:'שם', points:'נקודות', form:'פורמה',
+    tab_stats:'סטטיסטיקות', tab_hof:'היכל התהילה', tab_settings:'הגדרות', tab_admin:'ניהול', rank:'דירוג', player:'שם', points:'נקודות', form:'פורמה',
     leaderLabel:'מוביל', signIn:'התחברות', signOut:'התנתקות', exportImage:'שיתוף', exactPctShort:'% מדויק',
+    movedUp:'עלה מאז המשחק האחרון', movedDown:'ירד מאז המשחק האחרון', noChange:'ללא שינוי מאז המשחק האחרון',
     rulesTitle:'איך מחשבים ניקוד', rulesGameTitle:'ניחושי תוצאות משחק', rulesPlayerTitle:'שחקן המשחק', joinWhatsapp:'הצטרפות לקבוצת הוואטסאפ',
     rulesStageTitle:'שלב הבתים ופלייאוף', ruleGroupPosition:'מיקום מדויק של נבחרת בסיום שלב הבתים (לכל נבחרת)',
     ruleGroupPositionNote:"עד 4 נבחרות × 2 נק' = 8 נק' לכל בית.", ruleAdvancing:'ניחוש נכון בשלב הפלייאוף',
@@ -624,6 +649,23 @@ const I18N = {
     tipsPlayerTitle:'בחירת שחקן המשחק', tipsPlayerList:'הניקוד מתגמל שערים ובישולים של מגנים ושוערים הרבה יותר משל חלוצים (5 / 2 / 1 / 0.5 לפי תפקיד) — שער לא צפוי שווה יותר אם הוא קורה.\nבחירת שוער חזק בהגנה עם סיכוי לשער נקי או עצירת פנדל יכולה להיות הימור בטוח יותר מרדיפה אחרי שער של חלוץ.\nזכרו: זה נספר רק אם השחקן באמת שיחק במשחק.',
     tipsBracketTitle:'מחשבוני סיכויי העפלה', tipsBracketSub:'השתמשו בהם כדי לבדוק את סיכויי ההעפלה האמיתיים של כל נבחרת לפני שאתם נועלים ניחושים.',
     teamsTitle:'נבחרות', teamsSub:'כל הסגלים, עם הסטטיסטיקה המצטברת של כל שחקן בטורניר עד כה.', posHeader:'תפקיד', noRosterYet:'עדיין לא הוזן סגל לקבוצה הזו.',
+    settingsTitle:'הגדרות', settingsSub:'הוסיפו את מאצדיי למסך הבית לגישה מהירה, במסך מלא — בלי סרגל כתובת של הדפדפן.',
+    installIOSTitle:'אייפון / אייפד (ספארי)',
+    installIOS1:'פתחו את האתר בספארי (לא כרום — "הוספה למסך הבית" עובד רק מספארי ב-iOS).',
+    installIOS2:'הקישו על כפתור השיתוף (הריבוע עם החץ כלפי מעלה) בסרגל הכלים.',
+    installIOS3:'גללו למטה והקישו "הוספה למסך הבית".',
+    installIOS4:'הקישו "הוספה" בפינה העליונה. אייקון של אפליקציה יופיע עכשיו במסך הבית שלכם.',
+    installAndroidTitle:'אנדרואיד (כרום)',
+    installAndroid1:'פתחו את האתר בכרום.',
+    installAndroid2:'הקישו על התפריט (⋮) בפינה הימנית העליונה.',
+    installAndroid3:'הקישו "הוספה למסך הבית" או "התקנת אפליקציה", ואשרו.',
+    settingsNoteTitle:'למה זה שווה?', settingsNoteText:'אחרי ההוספה, לחיצה על האייקון פותחת את מאצדיי במסך מלא, כמו אפליקציה אמיתית — בלי סרגל כתובת, בלי כרטיסיות דפדפן, רק הטורניר.',
+    adminTitle:'ניהול', adminSub:'הזנת נתונים מהירה — נכתב ישירות לגיליון. גלוי רק לך.',
+    adminResultTitle:'קביעת תוצאת משחק', adminSelectGame:'משחק', adminScoreA:'תוצאה (קבוצה A)', adminScoreB:'תוצאה (קבוצה B)',
+    adminAdvancingTeam:'נבחרת מעפילה (פלייאוף בלבד)', adminSaveResult:'שמירת תוצאה',
+    adminEventTitle:'הוספת אירוע משחק', adminSelectPlayer:'שחקן', adminEventType:'סוג אירוע', adminCount:'כמות', adminSaveEvent:'הוספת אירוע',
+    adminRecalcTitle:'חישוב מחדש של כל הניקוד', adminRecalcSub:'הריצו את זה אחרי הזנת תוצאות/אירועים כדי שהניקוד של כולם יתעדכן.',
+    adminRecalcBtn:'חשב עכשיו', adminRecalculating:'מחשב מחדש…', adminRecalcDone:'הניקוד חושב מחדש.',
     headToHead:'ראש בראש', closeHeadToHead:'סגירת השוואה', teamA:'נבחרת A', teamB:'נבחרת B',
   }
 };
@@ -686,6 +728,7 @@ function participantName(p){
    ============  3. State  ===================================
    ========================================================= */
 const STATE = { user:null, participants:[], games:[], gameBets:[], generalBets:[], hof:[], gameEvents:[], groupResults:[], demo:false, loaded:false };
+function isAdmin(){ return !!STATE.user && String(STATE.user.email||'').trim().toLowerCase() === ADMIN_EMAIL.toLowerCase(); }
 
 /* =========================================================
    ============  4. Data layer (Google Sheets)  ==============
@@ -775,7 +818,7 @@ function computeGameScore(betA, betB, actualA, actualB){
 /* =========================================================
    ============  6. Rendering  ================================
    ========================================================= */
-const TABS = ['home','rules','tips','teams','general','games','stats','hof'];
+const TABS = ['home','rules','tips','teams','general','games','stats','hof','settings','admin'];
 let currentTab = 'home';
 
 function showToast(message, isError){
@@ -813,7 +856,7 @@ function renderShell(){
   document.documentElement.lang = LANG;
   document.documentElement.dir = LANG==='he' ? 'rtl' : 'ltr';
   document.getElementById('langToggle').textContent = LANG==='he' ? 'עב' : 'EN';
-  document.getElementById('tabNav').innerHTML = TABS.map(id =>
+  document.getElementById('tabNav').innerHTML = TABS.filter(id => id!=='admin' || isAdmin()).map(id =>
     `<button class="tab-btn ${id===currentTab?'active':''}" data-tab="${id}">${t('tab_'+id)}</button>`
   ).join('');
   document.querySelectorAll('.tab-btn').forEach(b => b.onclick = () => {
@@ -824,9 +867,10 @@ function renderShell(){
 }
 
 function renderAll(){
+  if(currentTab==='admin' && !isAdmin()) currentTab = 'home';
   renderShell();
   const main = document.getElementById('main');
-  const renderers = { home:renderHome, rules:renderRules, tips:renderTips, teams:renderTeams, general:renderGeneral, games:renderGames, stats:renderStats, hof:renderHof };
+  const renderers = { home:renderHome, rules:renderRules, tips:renderTips, teams:renderTeams, general:renderGeneral, games:renderGames, stats:renderStats, hof:renderHof, settings:renderSettings, admin:renderAdmin };
   main.innerHTML = renderers[currentTab]();
   if(currentTab==='home'){
     animateFlaps();
@@ -834,6 +878,7 @@ function renderAll(){
   }
   if(currentTab==='general'){ wireGeneralForm(); wireGeneralReveal(); }
   if(currentTab==='teams') wireTeams();
+  if(currentTab==='admin') wireAdmin();
   if(currentTab==='games') wireGamesForm();
   if(currentTab==='stats') drawStatsCharts();
 }
@@ -848,10 +893,29 @@ function rankedParticipants(){
     .map(p => ({...p, displayName: participantName(p), totalPoints:+p.totalPoints || 0, exactPct:+p.exactPct || 0, form: safeParse(p.form, [])}))
     .sort((a,b) => b.totalPoints - a.totalPoints || b.exactPct - a.exactPct);
   let rank = 0, prevKey = null;
-  return sorted.map((p,i) => {
+  const ranked = sorted.map((p,i) => {
     const key = p.totalPoints + '|' + p.exactPct;
     if(key !== prevKey){ rank = i+1; prevKey = key; }
     return {...p, rank};
+  });
+
+  // Previous standing = total points minus the most recent tracked game, so we
+  // can show whether each participant moved up/down since their last game.
+  const withPrevPoints = ranked.map(p => {
+    const hasHistory = p.form.length > 0;
+    const lastGamePts = hasHistory ? p.form[p.form.length-1] : 0;
+    return { ...p, prevPoints: p.totalPoints - lastGamePts, hasHistory };
+  });
+  const prevSorted = [...withPrevPoints].sort((a,b) => b.prevPoints - a.prevPoints);
+  let prevRank = 0, prevKey2 = null;
+  const prevRankMap = {};
+  prevSorted.forEach((p,i) => {
+    if(p.prevPoints !== prevKey2){ prevRank = i+1; prevKey2 = p.prevPoints; }
+    prevRankMap[p.email] = prevRank;
+  });
+  return withPrevPoints.map(p => {
+    if(!p.hasHistory) return { ...p, rankDelta: null };
+    return { ...p, rankDelta: prevRankMap[p.email] - p.rank }; // positive = moved up
   });
 }
 function safeParse(s, fallback){ try{ return typeof s==='string' ? JSON.parse(s) : (s||fallback); }catch{ return fallback; } }
@@ -890,7 +954,7 @@ function renderHome(){
       <tbody>
         ${ranked.map(p => `
           <tr>
-            <td class="rank-cell ${p.rank<=3?'top'+p.rank:''}">${medal(p.rank)}<span class="iso-num">${p.rank}</span></td>
+            <td class="rank-cell ${p.rank<=3?'top'+p.rank:''}">${medal(p.rank)}<span class="iso-num">${p.rank}</span> ${rankDeltaBadge(p.rankDelta)}</td>
             <td><div class="player-name-cell"><div class="avatar">${initials(p.displayName)}</div>${p.displayName}</div></td>
             <td><div class="form-dots">${formDots(p.form)}</div></td>
             <td style="text-align:center; color:var(--text-dim); font-size:13px;"><span class="iso-num">${p.exactPct}%</span></td>
@@ -930,6 +994,12 @@ async function exportLeaderboardImage(){
   await exportElementImage('exportCapture', 'matchday-leaderboard.png', document.getElementById('exportImgBtn'));
 }
 function medal(rank){ return rank===1?'🥇 ':rank===2?'🥈 ':rank===3?'🥉 ':''; }
+function rankDeltaBadge(delta){
+  if(delta === null || delta === undefined) return '';
+  if(delta > 0) return `<span class="rank-delta up" title="${t('movedUp')}">▲${delta>1?delta:''}</span>`;
+  if(delta < 0) return `<span class="rank-delta down" title="${t('movedDown')}">▼${-delta>1?-delta:''}</span>`;
+  return `<span class="rank-delta same" title="${t('noChange')}">▬</span>`;
+}
 function initials(name){ return (name||'?').split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase(); }
 function formDots(form){ return (form||[]).map(pts => `<span class="form-dot ${playerPtsColor(+pts)}" title="${pts}"></span>`).join(''); }
 function animateFlaps(){ document.querySelectorAll('.flap-char').forEach((el,i) => setTimeout(()=>el.classList.add('flip'), i*90)); }
@@ -1219,6 +1289,173 @@ function wireTeams(){
     });
   });
 }
+
+/* ---- SETTINGS ---- */
+function renderSettings(){
+  return `
+  <div class="section-title">${t('settingsTitle')}</div>
+  <div class="section-sub">${t('settingsSub')}</div>
+  <div class="rules-grid">
+    <div class="card">
+      <div class="card-title">📱 ${t('installIOSTitle')}</div>
+      <ol style="padding-inline-start:20px; font-size:13.5px; color:var(--text-dim); margin:0;">
+        <li style="margin-bottom:10px;">${t('installIOS1')}</li>
+        <li style="margin-bottom:10px;">${t('installIOS2')}</li>
+        <li style="margin-bottom:10px;">${t('installIOS3')}</li>
+        <li>${t('installIOS4')}</li>
+      </ol>
+    </div>
+    <div class="card">
+      <div class="card-title">🤖 ${t('installAndroidTitle')}</div>
+      <ol style="padding-inline-start:20px; font-size:13.5px; color:var(--text-dim); margin:0;">
+        <li style="margin-bottom:10px;">${t('installAndroid1')}</li>
+        <li style="margin-bottom:10px;">${t('installAndroid2')}</li>
+        <li>${t('installAndroid3')}</li>
+      </ol>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">${t('settingsNoteTitle')}</div>
+    <div class="section-sub" style="margin-bottom:0;">${t('settingsNoteText')}</div>
+  </div>`;
+}
+
+/* ---- ADMIN (hidden, visible only to ADMIN_EMAIL) ---- */
+function renderAdmin(){
+  const allGames = [...STATE.games].sort((a,b) => new Date(b.kickoffISO) - new Date(a.kickoffISO));
+  const gameOptions = g => `<option value="${g.id}">${teamName(g.teamA)} – ${teamName(g.teamB)} (${g.id}, ${g.status})</option>`;
+  return `
+  <div class="section-title">🔧 ${t('adminTitle')}</div>
+  <div class="section-sub">${t('adminSub')}</div>
+
+  <div class="card">
+    <div class="card-title">${t('adminResultTitle')}</div>
+    <form id="adminResultForm">
+      <div class="field">
+        <label>${t('adminSelectGame')}</label>
+        <select name="gameId" required>${allGames.map(gameOptions).join('')}</select>
+      </div>
+      <div class="podium-grid" style="grid-template-columns:1fr 1fr;">
+        <div class="field"><label>${t('adminScoreA')}</label><input type="number" name="scoreA" min="0" max="20" required></div>
+        <div class="field"><label>${t('adminScoreB')}</label><input type="number" name="scoreB" min="0" max="20" required></div>
+      </div>
+      <div class="field">
+        <label>${t('adminAdvancingTeam')}</label>
+        <select name="advancingTeam"><option value="">${t('choose')}</option>
+          ${Object.keys(CONFIG.TEAMS).map(id => `<option value="${id}">${teamName(id)}</option>`).join('')}
+        </select>
+      </div>
+      <button class="btn" type="submit">${t('adminSaveResult')}</button>
+      <div id="adminResultMsg" style="margin-top:8px; font-size:13px;"></div>
+    </form>
+  </div>
+
+  <div class="card">
+    <div class="card-title">${t('adminEventTitle')}</div>
+    <form id="adminEventForm">
+      <div class="field">
+        <label>${t('adminSelectGame')}</label>
+        <select name="gameId" id="adminEventGame" required>${allGames.map(gameOptions).join('')}</select>
+      </div>
+      <div class="field">
+        <label>${t('adminSelectPlayer')}</label>
+        <select name="playerId" id="adminEventPlayer" required></select>
+      </div>
+      <div class="podium-grid" style="grid-template-columns:1fr 1fr;">
+        <div class="field">
+          <label>${t('adminEventType')}</label>
+          <select name="eventType" required>
+            <option value="goal">${t('evGoal')}</option>
+            <option value="assist">${t('evAssist')}</option>
+            <option value="redCard">${t('evRedCard')}</option>
+            <option value="ownGoal">${t('evOwnGoal')}</option>
+            <option value="missedPenalty">${t('evMissedPenalty')}</option>
+            <option value="cleanSheet">${t('evCleanSheet')}</option>
+            <option value="penaltySave">${t('evPenaltySave')}</option>
+          </select>
+        </div>
+        <div class="field"><label>${t('adminCount')}</label><input type="number" name="count" min="1" value="1" required></div>
+      </div>
+      <button class="btn" type="submit">${t('adminSaveEvent')}</button>
+      <div id="adminEventMsg" style="margin-top:8px; font-size:13px;"></div>
+    </form>
+  </div>
+
+  <div class="card">
+    <div class="card-title">${t('adminRecalcTitle')}</div>
+    <div class="section-sub">${t('adminRecalcSub')}</div>
+    <button class="btn btn-ghost" id="adminRecalcBtn">${t('adminRecalcBtn')}</button>
+    <div id="adminRecalcMsg" style="margin-top:8px; font-size:13px;"></div>
+  </div>`;
+}
+
+function adminRosterOptions(gameId){
+  const g = STATE.games.find(gm => String(gm.id) === String(gameId));
+  if(!g) return '';
+  const roster = [
+    ...(CONFIG.ROSTERS[g.teamA]||[]).map(p => ({...p, teamId:g.teamA})),
+    ...(CONFIG.ROSTERS[g.teamB]||[]).map(p => ({...p, teamId:g.teamB})),
+  ];
+  return roster.map(p => `<option value="${p.id}" data-team="${p.teamId}" data-pos="${p.pos}">${playerName(p)} (${p.pos}) — ${teamName(p.teamId)}</option>`).join('');
+}
+
+function wireAdmin(){
+  const eventGameSelect = document.getElementById('adminEventGame');
+  const eventPlayerSelect = document.getElementById('adminEventPlayer');
+  const refreshPlayers = () => { eventPlayerSelect.innerHTML = adminRosterOptions(eventGameSelect.value); };
+  if(eventGameSelect){ refreshPlayers(); eventGameSelect.addEventListener('change', refreshPlayers); }
+
+  document.getElementById('adminResultForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const msg = document.getElementById('adminResultMsg');
+    msg.style.color = 'var(--text-dim)'; msg.textContent = t('saving');
+    const payload = {
+      type:'adminSetResult', adminEmail: STATE.user.email, gameId: fd.get('gameId'),
+      scoreA: fd.get('scoreA'), scoreB: fd.get('scoreB'), status:'final',
+      advancingTeam: fd.get('advancingTeam') || '',
+    };
+    await postBet(payload);
+    await loadAllData();
+    const updated = STATE.games.find(g => String(g.id)===String(payload.gameId));
+    if(updated && String(updated.scoreA)===String(payload.scoreA) && String(updated.status).trim()==='final'){
+      msg.style.color = 'var(--green)'; msg.textContent = t('saved'); showToast('✅ ' + t('saved'));
+    } else {
+      msg.style.color = 'var(--red)'; msg.textContent = t('saveFailed'); showToast('⚠️ ' + t('saveFailed'), true);
+    }
+    renderAll();
+  });
+
+  document.getElementById('adminEventForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const opt = eventPlayerSelect.selectedOptions[0];
+    const msg = document.getElementById('adminEventMsg');
+    msg.style.color = 'var(--text-dim)'; msg.textContent = t('saving');
+    const payload = {
+      type:'adminAddEvent', adminEmail: STATE.user.email, gameId: fd.get('gameId'),
+      player: fd.get('playerId'), team: opt ? opt.dataset.team : '', position: opt ? opt.dataset.pos : '',
+      eventType: fd.get('eventType'), count: fd.get('count') || 1,
+    };
+    await postBet(payload);
+    await new Promise(r => setTimeout(r, 1200));
+    await loadAllData();
+    msg.style.color = 'var(--green)'; msg.textContent = t('saved'); showToast('✅ ' + t('saved'));
+    renderAll();
+  });
+
+  document.getElementById('adminRecalcBtn').addEventListener('click', async () => {
+    const msg = document.getElementById('adminRecalcMsg');
+    msg.style.color = 'var(--text-dim)'; msg.textContent = t('adminRecalculating');
+    await postBet({ type:'adminRecalculate', adminEmail: STATE.user.email });
+    await new Promise(r => setTimeout(r, 2000)); // recalculation can take a moment across many rows
+    await loadAllData();
+    msg.style.color = 'var(--green)'; msg.textContent = t('adminRecalcDone');
+    showToast('✅ ' + t('adminRecalcDone'));
+    renderAll();
+  });
+}
+
 function normEmail(e){ return (e||'').trim().toLowerCase(); }
 function currentGeneralBet(){
   if(!STATE.user) return null;
