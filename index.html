@@ -531,6 +531,7 @@ const I18N = {
     movedUp:'Moved up since last game', movedDown:'Moved down since last game', noChange:'No change since last game',
     formNoBet:'No prediction for this game',
     sessionExpired:'Your sign-in expired — sign in again to save and to see your own predictions.',
+    demoBlocked:'Can\'t reach the server — showing sample data. Nothing you enter here will be saved. Check APPS_SCRIPT_URL / the deployment (see SETUP.md §6).',
     actualResult:'Actual result', keyExactHit:'Exact position', keyPartialHit:'Reached the final four, wrong position',
     rulesTitle:'How scoring works', rulesGameTitle:'Match score bets', rulesPlayerTitle:'Top player of the game', joinWhatsapp:'Join the WhatsApp group',
     rulesStageTitle:'Group stage & knockout', ruleGroupPosition:'Exact team position at end of group stage (per team)',
@@ -611,6 +612,7 @@ const I18N = {
     movedUp:'עלה מאז המשחק האחרון', movedDown:'ירד מאז המשחק האחרון', noChange:'ללא שינוי מאז המשחק האחרון',
     formNoBet:'לא הימר על המשחק הזה',
     sessionExpired:'תוקף ההתחברות פג — יש להתחבר מחדש כדי לשמור וכדי לראות את הניחושים שלכם.',
+    demoBlocked:'אין חיבור לשרת — מוצגים נתוני דוגמה. שום דבר שתמלאו כאן לא יישמר. בדקו את APPS_SCRIPT_URL / הפריסה (SETUP.md §6).',
     actualResult:'התוצאה בפועל', keyExactHit:'מיקום מדויק', keyPartialHit:'הגיעה לרביעייה הסופית, מיקום שגוי',
     rulesTitle:'איך מחשבים ניקוד', rulesGameTitle:'ניחושי תוצאות משחק', rulesPlayerTitle:'שחקן המשחק', joinWhatsapp:'הצטרפות לקבוצת הוואטסאפ',
     rulesStageTitle:'שלב הבתים ופלייאוף', ruleGroupPosition:'מיקום מדויק של נבחרת בסיום שלב הבתים (לכל נבחרת)',
@@ -793,6 +795,30 @@ async function postBet(payload){
     body: JSON.stringify(payload)
   });
 }
+/** Nothing may be written while we're on sample data — the backend is
+ *  unreachable, so a "save" would only ever update this browser's memory and
+ *  disappear on the next refresh. Better to refuse than to fake it. */
+function blockedByDemo(){
+  if(!STATE.demo) return false;
+  showToast('⛔ ' + t('demoBlocked'), true);
+  return true;
+}
+/** Writes go out blind (no-cors), so a rejection never reaches us. When the
+ *  background check reports nothing landed, ask the server why — that's a plain
+ *  GET, which we *can* read. Returns a short reason code, or '' if auth is fine
+ *  (in which case the save failed for some other reason). */
+async function diagnoseSaveFailure(){
+  try{
+    const res = await fetch(`${CONFIG.APPS_SCRIPT_URL}?whoami=1&idToken=${encodeURIComponent(authToken())}`);
+    const info = await res.json();
+    return info.verified ? '' : String(info.reason || 'auth_failed');
+  }catch(e){ return 'no_connection'; }
+}
+async function reportSaveFailure(){
+  const reason = await diagnoseSaveFailure();
+  showToast('⚠️ ' + t('saveFailed') + (reason ? ` (${reason})` : ''), true);
+  loadAllData().then(renderAll);
+}
 
 async function loadAllData(){
   try{
@@ -925,7 +951,12 @@ function renderAll(){
   // saved picks look empty. Say so instead of letting it look like data loss.
   const staleWarning = (STATE.user && !tokenIsFresh())
     ? `<div class="lock-banner">⚠️ ${t('sessionExpired')}</div>` : '';
-  main.innerHTML = staleWarning + renderers[currentTab]();
+  // The backend is unreachable and we fell back to sample data. This has to be
+  // impossible to miss — otherwise saving looks like it works and silently
+  // vanishes on the next refresh, since nothing is reaching the Sheet at all.
+  const demoWarning = STATE.demo
+    ? `<div class="lock-banner" style="background:var(--red-dim); border-color:var(--red);">⛔ ${t('demoBlocked')}</div>` : '';
+  main.innerHTML = demoWarning + staleWarning + renderers[currentTab]();
   if(currentTab==='home'){
     animateFlaps();
     const eb = document.getElementById('exportImgBtn'); if(eb) eb.onclick = exportLeaderboardImage;
@@ -1785,6 +1816,7 @@ function wireGeneralForm(){
   });
   document.getElementById('generalForm').addEventListener('submit', async e => {
     e.preventDefault();
+    if(blockedByDemo()) return;
     const fd = new FormData(e.target);
     const groupsJSON = {};
     document.querySelectorAll('.drag-list').forEach(list => {
@@ -1815,7 +1847,7 @@ function wireGeneralForm(){
       STATE.generalBets.find(b => normEmail(b.email)===normEmail(STATE.user.email) && b.rank1===payload.rank1 && b.topScorer===payload.topScorer),
       4, 1200
     ).then(landed => {
-      if(!landed){ showToast('⚠️ ' + t('saveFailed'), true); loadAllData().then(renderAll); }
+      if(!landed) reportSaveFailure();
     });
   });
 }
@@ -2206,6 +2238,7 @@ function wireGamesForm(){
         showToast('⚠️ ' + t('doubleUsedElsewhere'), true);
         return;
       }
+      if(blockedByDemo()) return;
       // The server identifies us from this signed token alone — no email field,
       // so there is nothing to tamper with. Timestamps come from the server clock.
       const idToken = requireFreshToken();
@@ -2234,7 +2267,7 @@ function wireGamesForm(){
           && String(b.betA)===String(payload.betA) && String(b.betB)===String(payload.betB)),
         4, 1200
       ).then(landed => {
-        if(!landed){ showToast('⚠️ ' + t('saveFailed'), true); loadAllData().then(renderAll); }
+        if(!landed) reportSaveFailure();
       });
     });
   });
