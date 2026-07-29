@@ -1023,6 +1023,7 @@ const I18N = {
     topScorer:'Top goal scorer', topAssist:'Top assister', groupsTitle:'Group finishing order', dragHint:'Drag to reorder',
     save:'Save predictions', saved:'Saved — you can edit until the deadline.', choose:'Choose…',
     saving:'Saving…', saveFailed:'Save failed — check the Apps Script deployment (see SETUP.md troubleshooting).',
+    sessionExpired:'Your session expired — please sign in again.',
     gamesTitle:'Games', gamesSub:'Predict the score and pick your top player before kickoff.',
     yourScore:'Your score', topPlayerOfGame:'Top player', kickoff:'Kickoff', group:'Group',
     statusScheduled:'Open', statusLocked:'Locked', statusFinal:'Final', earned:'earned',
@@ -1100,6 +1101,7 @@ const I18N = {
     topScorer:'מלך שערים', topAssist:'מלך בישולים', groupsTitle:'סדר סיום הבתים', dragHint:'גררו כדי לשנות סדר',
     save:'שמירת ניחושים', saved:'נשמר — ניתן לערוך עד למועד הסגירה.', choose:'בחירה…',
     saving:'שומר…', saveFailed:'השמירה נכשלה — בדוק את פריסת ה-Apps Script (ראה פתרון בעיות ב-SETUP.md).',
+    sessionExpired:'החיבור שלך פג — יש להתחבר מחדש.',
     gamesTitle:'משחקים', gamesSub:'נחשו את התוצאה ובחרו את שחקן המשחק לפני הבעיטה הראשונה.',
     yourScore:'הניחוש שלך', topPlayerOfGame:'שחקן המשחק', kickoff:'שעת התחלה', group:'בית',
     statusScheduled:'פתוח', statusLocked:'נעול', statusFinal:'הסתיים', earned:'נצברו',
@@ -1213,17 +1215,20 @@ function isAdmin(){ return !!STATE.user && String(STATE.user.email||'').trim().t
    ============  4. Data layer (Google Sheets)  ==============
    ========================================================= */
 async function fetchTab(tabName){
-  const email = STATE.user ? STATE.user.email : '';
-  const url = `${CONFIG.APPS_SCRIPT_URL}?tab=${encodeURIComponent(tabName)}&email=${encodeURIComponent(email)}`;
+  if(STATE.user && isIdTokenExpired(STATE.user.idToken)) clearExpiredSession();
+  const idToken = STATE.user ? STATE.user.idToken : '';
+  const url = `${CONFIG.APPS_SCRIPT_URL}?tab=${encodeURIComponent(tabName)}&idToken=${encodeURIComponent(idToken)}`;
   const res = await fetch(url);
   return res.json();
 }
 async function postBet(payload){
   // Apps Script web app handles auth + writes + server-side lock checks. See Code.gs
+  // idToken lets Code.gs verify the caller's real identity instead of trusting email/adminEmail.
+  const withAuth = { ...payload, idToken: STATE.user ? STATE.user.idToken : '' };
   return fetch(CONFIG.APPS_SCRIPT_URL, {
     method:'POST', mode:'no-cors', // no-cors: Apps Script doGet/doPost redirect responses aren't readable cross-origin
     headers:{'Content-Type':'text/plain;charset=utf-8'},
-    body: JSON.stringify(payload)
+    body: JSON.stringify(withAuth)
   });
 }
 
@@ -1886,6 +1891,7 @@ function wireAdmin(){
 
   document.getElementById('adminResultForm').addEventListener('submit', async e => {
     e.preventDefault();
+    if(!requireFreshSession()){ showToast('⚠️ ' + t('sessionExpired'), true); renderAll(); return; }
     const fd = new FormData(e.target);
     const msg = document.getElementById('adminResultMsg');
     msg.style.color = 'var(--text-dim)'; msg.textContent = t('saving');
@@ -1907,6 +1913,7 @@ function wireAdmin(){
 
   document.getElementById('adminEventForm').addEventListener('submit', async e => {
     e.preventDefault();
+    if(!requireFreshSession()){ showToast('⚠️ ' + t('sessionExpired'), true); renderAll(); return; }
     const fd = new FormData(e.target);
     const opt = eventPlayerSelect.selectedOptions[0];
     const msg = document.getElementById('adminEventMsg');
@@ -1924,6 +1931,7 @@ function wireAdmin(){
   });
 
   document.getElementById('adminRecalcBtn').addEventListener('click', async () => {
+    if(!requireFreshSession()){ showToast('⚠️ ' + t('sessionExpired'), true); renderAll(); return; }
     const msg = document.getElementById('adminRecalcMsg');
     msg.style.color = 'var(--text-dim)'; msg.textContent = t('adminRecalculating');
     await postBet({ type:'adminRecalculate', adminEmail: STATE.user.email });
@@ -2127,6 +2135,7 @@ function wireGeneralForm(){
   });
   document.getElementById('generalForm').addEventListener('submit', async e => {
     e.preventDefault();
+    if(!requireFreshSession()){ showToast('⚠️ ' + t('sessionExpired'), true); renderAll(); return; }
     const fd = new FormData(e.target);
     const groupsJSON = {};
     document.querySelectorAll('.drag-list').forEach(list => {
@@ -2525,6 +2534,7 @@ function wireGamesForm(){
   document.querySelectorAll('[data-role="saveGame"]').forEach(btn => {
     btn.addEventListener('click', async () => {
       if(!STATE.user){ alert(t('emailFirst')); return; }
+      if(!requireFreshSession()){ showToast('⚠️ ' + t('sessionExpired'), true); renderAll(); return; }
       const card = btn.closest('.game-card');
       const scoreAInput = card.querySelector('[data-role="scoreA"]');
       const scoreBInput = card.querySelector('[data-role="scoreB"]');
@@ -2805,8 +2815,34 @@ function initGoogleSignIn(){
   });
   renderAuthArea();
 }
+/** Decodes a JWT's payload (no signature check — Code.gs is the one that
+ *  actually verifies the token; this is only used to read exp/profile fields). */
+function decodeJwtPayload(idToken){
+  try{ return JSON.parse(atob(idToken.split('.')[1].replace(/-/g,'+').replace(/_/g,'/'))); }catch{ return null; }
+}
+/** ID tokens only last ~1 hour. A stale one cached from a previous session
+ *  would make Code.gs's verification silently reject every read/write, so
+ *  treat it as "not signed in" up front instead of sending it. */
+function isIdTokenExpired(idToken){
+  const payload = idToken && decodeJwtPayload(idToken);
+  return !payload || !payload.exp || (Date.now()/1000) >= (payload.exp - 30);
+}
+function clearExpiredSession(){
+  STATE.user = null;
+  localStorage.removeItem('md_user');
+  renderAuthArea();
+}
+/** Bails out of a save early (before any optimistic UI update) if there's no
+ *  signed-in user or their token has gone stale, instead of letting the
+ *  server silently reject it later. Returns false and clears the session
+ *  (showing the Sign-in button again) when the check fails. */
+function requireFreshSession(){
+  if(!STATE.user) return false;
+  if(isIdTokenExpired(STATE.user.idToken)){ clearExpiredSession(); return false; }
+  return true;
+}
 function handleCredentialResponse(resp){
-  const payload = JSON.parse(atob(resp.credential.split('.')[1]));
+  const payload = decodeJwtPayload(resp.credential);
   STATE.user = { email: payload.email, name: payload.name, picture: payload.picture, idToken: resp.credential };
   localStorage.setItem('md_user', JSON.stringify(STATE.user));
   renderAuthArea(); loadAllData().then(renderAll);
@@ -2851,7 +2887,11 @@ document.getElementById('themeToggle').onclick = () => {
   document.getElementById('themeToggle').textContent = savedTheme==='light' ? '☀️' : '🌙';
   document.getElementById('timerToggle').classList.toggle('active', SHOW_TIMER);
   const savedUser = localStorage.getItem('md_user');
-  if(savedUser) STATE.user = JSON.parse(savedUser);
+  if(savedUser){
+    const parsed = JSON.parse(savedUser);
+    if(parsed && !isIdTokenExpired(parsed.idToken)) STATE.user = parsed;
+    else localStorage.removeItem('md_user');
+  }
   renderShell();
   document.getElementById('main').innerHTML = `<div class="card"><div class="empty-state"><div class="spinner"></div><br>${t('loading')}</div></div>`;
   initGoogleSignIn();
