@@ -130,6 +130,7 @@ html[dir="rtl"] .leaderboard th{text-align:right;}
 .form-dots{display:flex; gap:4px;}
 .form-dot{width:9px; height:9px; border-radius:50%;}
 .form-dot.green{background:var(--green);} .form-dot.yellow{background:var(--amber);} .form-dot.red{background:var(--red);}
+.form-dot.grey{background:var(--text-faint); opacity:.55;}
 .player-name-cell{display:flex; align-items:center; gap:10px; font-weight:600;}
 .avatar{width:28px; height:28px; border-radius:50%; background:var(--surface-3); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; color:var(--text-dim);}
 
@@ -242,6 +243,11 @@ canvas{width:100%; height:280px; display:block;}
 .filter-chip.active{background:var(--surface-3); color:var(--text); border-color:var(--border-strong);}
 .whatsapp-btn{background:#25D366; color:#07321a; border-color:#25D366;}
 .whatsapp-btn:hover{filter:brightness(1.05);}
+.actual-row td{background:var(--surface-3); font-weight:700;}
+.cell-hit{background:var(--green-dim); color:var(--green); font-weight:700;}
+.cell-partial{background:var(--amber-dim); color:var(--amber);}
+.reveal-key{display:flex; gap:14px; flex-wrap:wrap; font-size:11.5px; color:var(--text-dim); margin:8px 0 0;}
+.reveal-key span.swatch{display:inline-block; width:10px; height:10px; border-radius:3px; margin-inline-end:5px;}
 </style>
 </head>
 <body>
@@ -272,6 +278,11 @@ canvas{width:100%; height:280px; display:block;}
 // Only this email sees the hidden Admin tab and can post admin actions.
 // Keep in sync with Code.gs's own ADMIN_EMAIL — the real enforcement happens there.
 const ADMIN_EMAIL = 'nut.cr4ck3r.pro@gmail.com';
+
+// OAuth Web-application Client ID (Google Cloud Console). Code.gs holds the
+// same value and rejects any sign-in token that wasn't minted for it — keep
+// the two identical or every save will be refused. See SETUP.md step 3.
+const GOOGLE_CLIENT_ID = '431204508277-nm33th0fs73s81cpn09ngmmalmbvgso1.apps.googleusercontent.com';
 
 const CONFIG = {
   // --- Apps Script Web App URL: the ONLY way this site talks to the Sheet.
@@ -339,628 +350,149 @@ const CONFIG = {
   //     as-is (or rename consistently) so bets and events keep matching. ---
   ROSTERS: {
     germany: [
-      // Goalkeepers
-      {id:'germany_gk1', en:'Oliver Baumann', he:'אוליבר באומן', pos:'GK'},
-      {id:'germany_gk2', en:'Manuel Neuer', he:'מנואל נוייר', pos:'GK'},
-      {id:'germany_gk3', en:'Alexander Nubel', he:'אלכסנדר ניבל', pos:'GK'},
-      // Defenders
-      {id:'germany_df1', en:'Waldemar Anton', he:'ואלדמאר אנטון', pos:'DF'},
-      {id:'germany_df2', en:'David Raum', he:'דויד ראום', pos:'DF'},
-      {id:'germany_df3', en:'Antonio Rudiger', he:'אנטוניו רודיגר', pos:'DF'},
-      {id:'germany_df4', en:'Nico Schlotterbeck', he:'ניקו שלוטרבק', pos:'DF'},
-      {id:'germany_df5', en:'Jonathan Tah', he:'יונתן טאה', pos:'DF'},
-      {id:'germany_df6', en:'Malick Thiaw', he:'מאליק תיאוו', pos:'DF'},
-      // Midfielders
-      {id:'germany_cm1', en:'Pascal Gross', he:'פסקל גרוס', pos:'CM'},
-      {id:'germany_cm2', en:'Joshua Kimmich', he:'גושואה קימיך', pos:'CM'},
-      {id:'germany_cm3', en:'Felix Nmecha', he:'פליקס נמצה', pos:'CM'},
-      {id:'germany_cm4', en:'Aleksandar Pavlovic', he:'אלכסנדר פבלוביץ', pos:'CM'},
-      {id:'germany_cm5', en:'Angelo Stiller', he:'אנגלו שטילר', pos:'CM'},
-      {id:'germany_cm6', en:'Leon Goretzka', he:'לאון גורצקה', pos:'CM'},
-      {id:'germany_cm7', en:'Florian Wirtz', he:'פלוריאן וירץ', pos:'CM'},
-      // Forwards
-      {id:'germany_st1', en:'Maximilian Beier', he:'מקסימיליאן באייר', pos:'ST'},
-      {id:'germany_st2', en:'Kai Havertz', he:'קאי האברץ', pos:'ST'},
-      {id:'germany_st3', en:'Jamal Musiala', he:'גמאל מוסיאלה', pos:'ST'},
-      {id:'germany_st4', en:'Leroy Sane', he:'לירוי סאנה', pos:'ST'},
+      {id:'germany_gk1', en:'Goalkeeper (fill in real name)', he:'שוער (למלא שם אמיתי)', pos:'GK'},
+      {id:'germany_df1', en:'Defender (fill in real name)', he:'מגן (למלא שם אמיתי)', pos:'DF'},
+      {id:'germany_cm1', en:'Midfielder (fill in real name)', he:'קשר (למלא שם אמיתי)', pos:'CM'},
+      {id:'germany_st1', en:'Striker (fill in real name)', he:'חלוץ (למלא שם אמיתי)', pos:'ST'},
     ],
     france: [
-      {id:'france_gk1', en:'Mike Maignan', he:'מייק מניאן', pos:'GK'},
-      {id:'france_gk2', en:'Brice Samba', he:'בריס סמבה', pos:'GK'},
-      {id:'france_gk3', en:'Alphonse Areola', he:'אלפונס אראולה', pos:'GK'},
-      // Defenders
-      {id:'france_df1', en:'Jules Kounde', he:'זול קונדה', pos:'DF'},
-      {id:'france_df2', en:'Dayot Upamecano', he:'דאיו אופמקאנו', pos:'DF'},
-      {id:'france_df3', en:'William Saliba', he:'וויליאם סאליבה', pos:'DF'},
-      {id:'france_df4', en:'Theo Hernandez', he:'תיאו הרננדז', pos:'DF'},
-      {id:'france_df5', en:'Ibrahima Konate', he:'איברהימה קונאטה', pos:'DF'},
-      {id:'france_df6', en:'Benjamin Pavard', he:'בנגמין פבאר', pos:'DF'},
-      // Midfielders
-      {id:'france_cm1', en:'Aurelien Tchouameni', he:'אורליין צואמני', pos:'CM'},
-      {id:'france_cm2', en:'Eduardo Camavinga', he:'אדוארדו קמאבינגה', pos:'CM'},
-      {id:'france_cm3', en:'Adrien Rabiot', he:'אדריאן ראביו', pos:'CM'},
-      {id:'france_cm4', en:'N Golo Kante', he:'אנגולו קאנטה', pos:'CM'},
-      {id:'france_cm5', en:'Warren Zaire-Emery', he:'וורן זאיר-אמרי', pos:'CM'},
-      {id:'france_cm6', en:'Youssouf Fofana', he:'יוסוף פופאנה', pos:'CM'},
-      // Forwards
-      {id:'france_st1', en:'Kylian Mbappe', he:'קיליאן אמבפה', pos:'ST'},
-      {id:'france_st2', en:'Antoine Griezmann', he:'אנטואן גריזמן', pos:'ST'},
-      {id:'france_st3', en:'Ousmane Dembele', he:'עוסמאן דמבלה', pos:'ST'},
-      {id:'france_st4', en:'Marcus Thuram', he:'מרקוס תוראם', pos:'ST'},
-      {id:'france_st5', en:'Randal Kolo Muani', he:'רנדאל קולו מואני', pos:'ST'},
+      {id:'france_gk1', en:'Goalkeeper (fill in real name)', he:'שוער (למלא שם אמיתי)', pos:'GK'},
+      {id:'france_df1', en:'Defender (fill in real name)', he:'מגן (למלא שם אמיתי)', pos:'DF'},
+      {id:'france_cm1', en:'Midfielder (fill in real name)', he:'קשר (למלא שם אמיתי)', pos:'CM'},
+      {id:'france_st1', en:'Striker (fill in real name)', he:'חלוץ (למלא שם אמיתי)', pos:'ST'},
     ],
     england: [
-    // Goalkeepers
-    {id:'england_gk1', en:'Jordan Pickford', he:'גורדן פיקפורד', pos:'GK'},
-    {id:'england_gk2', en:'Aaron Ramsdale', he:'אהרון רמסדייל', pos:'GK'},
-    {id:'england_gk3', en:'Dean Henderson', he:'דין הנדרסון', pos:'GK'},
-    // Defenders
-    {id:'england_df1', en:'Kyle Walker', he:'קייל ווקר', pos:'DF'},
-    {id:'england_df2', en:'John Stones', he:'גון סטונס', pos:'DF'},
-    {id:'england_df3', en:'Marc Guehi', he:'מארק גהי', pos:'DF'},
-    {id:'england_df4', en:'Kieran Trippier', he:'קיראן טריפייר', pos:'DF'},
-    {id:'england_df5', en:'Trent Alexander-Arnold', he:'טרנט אלכסנדר-ארנולד', pos:'DF'},
-    {id:'england_df6', en:'Ezri Konsa', he:'עזרי קונסה', pos:'DF'},
-    // Midfielders
-    {id:'england_cm1', en:'Declan Rice', he:'דקלן רייס', pos:'CM'},
-    {id:'england_cm2', en:'Jude Bellingham', he:'גוד בלינגהאם', pos:'CM'},
-    {id:'england_cm3', en:'Conor Gallagher', he:'קונור גלאגר', pos:'CM'},
-    {id:'england_cm4', en:'Kobbie Mainoo', he:'קובי מיינו', pos:'CM'},
-    {id:'england_cm5', en:'Cole Palmer', he:'קול פאלמר', pos:'CM'},
-    {id:'england_cm6', en:'Adam Wharton', he:'אדם וורטון', pos:'CM'},
-    // Forwards
-    {id:'england_st1', en:'Harry Kane', he:'הארי קיין', pos:'ST'},
-    {id:'england_st2', en:'Bukayo Saka', he:'בוקאיו סאקה', pos:'ST'},
-    {id:'england_st3', en:'Phil Foden', he:'פיל פודן', pos:'ST'},
-    {id:'england_st4', en:'Ollie Watkins', he:'אולי ווטקינס', pos:'ST'},
-    {id:'england_st5', en:'Anthony Gordon', he:'אנתוני גורדון', pos:'ST'},
-  ],
-  spain: [
-    // Goalkeepers
-    {id:'spain_gk1', en:'Unai Simon', he:'אונאי סימון', pos:'GK'},
-    {id:'spain_gk2', en:'David Raya', he:'דויד ראיה', pos:'GK'},
-    {id:'spain_gk3', en:'Alex Remiro', he:'אלכס רמירו', pos:'GK'},
-    // Defenders
-    {id:'spain_df1', en:'Dani Carvajal', he:'דני קרבחאל', pos:'DF'},
-    {id:'spain_df2', en:'Robin Le Normand', he:'רובין לה נורמנד', pos:'DF'},
-    {id:'spain_df3', en:'Aymeric Laporte', he:'איימריק לאפורט', pos:'DF'},
-    {id:'spain_df4', en:'Marc Cucurella', he:'מארק קוקורייה', pos:'DF'},
-    {id:'spain_df5', en:'Pau Torres', he:'פאו טורס', pos:'DF'},
-    {id:'spain_df6', en:'Dani Vivian', he:'דני ויביאן', pos:'DF'},
-    // Midfielders
-    {id:'spain_cm1', en:'Rodri', he:'רודרי', pos:'CM'},
-    {id:'spain_cm2', en:'Pedri', he:'פדרי', pos:'CM'},
-    {id:'spain_cm3', en:'Fabián Ruiz', he:'פביאן רואיס', pos:'CM'},
-    {id:'spain_cm4', en:'Mikel Merino', he:'מיקל מרינו', pos:'CM'},
-    {id:'spain_cm5', en:'Dani Olmo', he:'דני אולמו', pos:'CM'},
-    {id:'spain_cm6', en:'Martin Zubimendi', he:'מרטין זובימנדי', pos:'CM'},
-    // Forwards
-    {id:'spain_st1', en:'Lamine Yamal', he:'לאמין ימאל', pos:'ST'},
-    {id:'spain_st2', en:'Nico Williams', he:'ניקו וויליאמס', pos:'ST'},
-    {id:'spain_st3', en:'Alvaro Morata', he:'אלברו מוראטה', pos:'ST'},
-    {id:'spain_st4', en:'Mikel Oyarzabal', he:'מיקל אויארסבאל', pos:'ST'},
-    {id:'spain_st5', en:'Ferran Torres', he:'פראן טורס', pos:'ST'},
-  ],
-  italy: [
-    // Goalkeepers
-    {id:'italy_gk1', en:'Gianluigi Donnarumma', he:'גאנלואיגי דונארומה', pos:'GK'},
-    {id:'italy_gk2', en:'Guglielmo Vicario', he:'גוליילמו ויקאריו', pos:'GK'},
-    {id:'italy_gk3', en:'Alex Meret', he:'אלכס מרט', pos:'GK'},
-    // Defenders
-    {id:'italy_df1', en:'Giovanni Di Lorenzo', he:'גובאני די לורנצו', pos:'DF'},
-    {id:'italy_df2', en:'Alessandro Bastoni', he:'אלסנדרו באסטוני', pos:'DF'},
-    {id:'italy_df3', en:'Riccardo Calafiori', he:'ריקרדו קלאפיורי', pos:'DF'},
-    {id:'italy_df4', en:'Federico Dimarco', he:'פדריקו דימארקו', pos:'DF'},
-    {id:'italy_df5', en:'Gianluca Mancini', he:'גאנלוקה מאנציני', pos:'DF'},
-    {id:'italy_df6', en:'Matteo Darmian', he:'מתיאו דארמיאן', pos:'DF'},
-    // Midfielders
-    {id:'italy_cm1', en:'Nicolò Barella', he:'ניקולו בארלה', pos:'CM'},
-    {id:'italy_cm2', en:'Jorginho', he:'זורזיניו', pos:'CM'},
-    {id:'italy_cm3', en:'Lorenzo Pellegrini', he:'לורנצו פלגריני', pos:'CM'},
-    {id:'italy_cm4', en:'Davide Frattesi', he:'דבידה פראטסי', pos:'CM'},
-    {id:'italy_cm5', en:'Bryan Cristante', he:'בריאן כריסטנטה', pos:'CM'},
-    {id:'italy_cm6', en:'Sandro Tonali', he:'סנדרו טונאלי', pos:'CM'},
-    // Forwards
-    {id:'italy_st1', en:'Federico Chiesa', he:'פדריקו קייזה', pos:'ST'},
-    {id:'italy_st2', en:'Gianluca Scamacca', he:'גאנלוקה סקמאקה', pos:'ST'},
-    {id:'italy_st3', en:'Mateo Retegui', he:'מתיאו רטגי', pos:'ST'},
-    {id:'italy_st4', en:'Giacomo Raspadori', he:'גאקומו רספאדורי', pos:'ST'},
-    {id:'italy_st5', en:'Moise Kean', he:'מואיז קין', pos:'ST'},
-  ],
-  portugal: [
-    // Goalkeepers
-    {id:'portugal_gk1', en:'Diogo Costa', he:'דיוגו קוסטה', pos:'GK'},
-    {id:'portugal_gk2', en:'Jose Sa', he:'זוסה סה', pos:'GK'},
-    {id:'portugal_gk3', en:'Rui Patricio', he:'רואי פטריסיו', pos:'GK'},
-    // Defenders
-    {id:'portugal_df1', en:'Ruben Dias', he:'רובן דיאש', pos:'DF'},
-    {id:'portugal_df2', en:'Pepe', he:'פפה', pos:'DF'},
-    {id:'portugal_df3', en:'Nuno Mendes', he:'נונו מנדש', pos:'DF'},
-    {id:'portugal_df4', en:'Joao Cancelo', he:'זואו קנסלו', pos:'DF'},
-    {id:'portugal_df5', en:'Diogo Dalot', he:'דיוגו דאלוט', pos:'DF'},
-    {id:'portugal_df6', en:'Goncalo Inacio', he:'גונסאלו אינסיו', pos:'DF'},
-    // Midfielders
-    {id:'portugal_cm1', en:'Bruno Fernandes', he:'ברונו פרננדש', pos:'CM'},
-    {id:'portugal_cm2', en:'Bernardo Silva', he:'ברנרדו סילבה', pos:'CM'},
-    {id:'portugal_cm3', en:'Vitinha', he:'ויטיניה', pos:'CM'},
-    {id:'portugal_cm4', en:'Joao Palhinha', he:'זואו פלהיניה', pos:'CM'},
-    {id:'portugal_cm5', en:'Ruben Neves', he:'רובן נבש', pos:'CM'},
-    {id:'portugal_cm6', en:'Otavio', he:'אוטאביו', pos:'CM'},
-    // Forwards
-    {id:'portugal_st1', en:'Cristiano Ronaldo', he:'כריסטיאנו רונאלדו', pos:'ST'},
-    {id:'portugal_st2', en:'Rafael Leao', he:'רפאל ליאו', pos:'ST'},
-    {id:'portugal_st3', en:'Diogo Jota', he:'דיוגו זוטה', pos:'ST'},
-    {id:'portugal_st4', en:'Goncalo Ramos', he:'גונסאלו ראמוס', pos:'ST'},
-    {id:'portugal_st5', en:'Joao Felix', he:'זואו פליקס', pos:'ST'},
-  ],
-  netherlands: [
-    // Goalkeepers
-    {id:'netherlands_gk1', en:'Bart Verbruggen', he:'בארט פרברוחן', pos:'GK'},
-    {id:'netherlands_gk2', en:'Mark Flekken', he:'מארק פלקן', pos:'GK'},
-    {id:'netherlands_gk3', en:'Justin Bijlow', he:'גאסטין בילואו', pos:'GK'},
-    // Defenders
-    {id:'netherlands_df1', en:'Virgil van Dijk', he:'וירגיל ואן דייק', pos:'DF'},
-    {id:'netherlands_df2', en:'Nathan Ake', he:'נתאן אקה', pos:'DF'},
-    {id:'netherlands_df3', en:'Denzel Dumfries', he:'דנזל דומפריס', pos:'DF'},
-    {id:'netherlands_df4', en:'Matthijs de Ligt', he:'מתייס דה ליכט', pos:'DF'},
-    {id:'netherlands_df5', en:'Stefan de Vrij', he:'סטפן דה פריי', pos:'DF'},
-    {id:'netherlands_df6', en:'Micky van de Ven', he:'מיקי ואן דה ון', pos:'DF'},
-    {id:'netherlands_df7', en:'Jeremie Frimpong', he:'גרמי פרימפונג', pos:'DF'},
-    // Midfielders
-    {id:'netherlands_cm1', en:'Tijjani Reijnders', he:'טיגאני ריינדרס', pos:'CM'},
-    {id:'netherlands_cm2', en:'Jerdy Schouten', he:'ירדי סחאוטן', pos:'CM'},
-    {id:'netherlands_cm3', en:'Joey Veerman', he:'גואי פירמן', pos:'CM'},
-    {id:'netherlands_cm4', en:'Ryan Gravenberch', he:'ראיין חראפנברך', pos:'CM'},
-    {id:'netherlands_cm5', en:'Teun Koopmeiners', he:'טון קופמיינרס', pos:'CM'},
-    // Forwards
-    {id:'netherlands_st1', en:'Cody Gakpo', he:'קודי גאקפו', pos:'ST'},
-    {id:'netherlands_st2', en:'Memphis Depay', he:'ממפיס דפאי', pos:'ST'},
-    {id:'netherlands_st3', en:'Donyell Malen', he:'דונייל מאלן', pos:'ST'},
-    {id:'netherlands_st4', en:'Wout Weghorst', he:'ואוט וחהורסט', pos:'ST'},
-    {id:'netherlands_st5', en:'Joshua Zirkzee', he:'גושואה זירקזי', pos:'ST'},
-  ],
-  belgium: [
-    // Goalkeepers
-    {id:'belgium_gk1', en:'Koen Casteels', he:'קון קסטילס', pos:'GK'},
-    {id:'belgium_gk2', en:'Matz Sels', he:'מאץ סלס', pos:'GK'},
-    {id:'belgium_gk3', en:'Thomas Kaminski', he:'תומאס קמינסקי', pos:'GK'},
-    // Defenders
-    {id:'belgium_df1', en:'Jan Vertonghen', he:'יאן ורטונגן', pos:'DF'},
-    {id:'belgium_df2', en:'Wout Faes', he:'ואוט פאס', pos:'DF'},
-    {id:'belgium_df3', en:'Arthur Theate', he:'ארתור תיאט', pos:'DF'},
-    {id:'belgium_df4', en:'Timothy Castagne', he:'טימוטי קסטאן', pos:'DF'},
-    {id:'belgium_df5', en:'Zeno Debast', he:'זנו דבאסט', pos:'DF'},
-    {id:'belgium_df6', en:'Maxim De Cuyper', he:'מקסים דה קאופר', pos:'DF'},
-    // Midfielders
-    {id:'belgium_cm1', en:'Kevin De Bruyne', he:'קיווין דה בראונה', pos:'CM'},
-    {id:'belgium_cm2', en:'Amadou Onana', he:'אמאדו אונאנה', pos:'CM'},
-    {id:'belgium_cm3', en:'Youri Tielemans', he:'יורי טילמנס', pos:'CM'},
-    {id:'belgium_cm4', en:'Orel Mangala', he:'אורל מנגאלה', pos:'CM'},
-    {id:'belgium_cm5', en:'Arthur Vermeeren', he:'ארתור ורמירן', pos:'CM'},
-    // Forwards
-    {id:'belgium_st1', en:'Romelu Lukaku', he:'רומלו לוקאקו', pos:'ST'},
-    {id:'belgium_st2', en:'Jeremy Doku', he:'גרמי דוקו', pos:'ST'},
-    {id:'belgium_st3', en:'Leandro Trossard', he:'לאנדרו טרוסארד', pos:'ST'},
-    {id:'belgium_st4', en:'Johan Bakayoko', he:'יוהאן בקאיוקו', pos:'ST'},
-    {id:'belgium_st5', en:'Dodi Lukebakio', he:'דודי לוקבאקיו', pos:'ST'},
-    {id:'belgium_st6', en:'Lois Openda', he:'לואיס אופנדה', pos:'ST'},
-  ],
-  croatia: [
-    // Goalkeepers
-    {id:'croatia_gk1', en:'Dominik Livakovic', he:'דומיניק ליבאקוביץ', pos:'GK'},
-    {id:'croatia_gk2', en:'Nediljko Labrovic', he:'נדיליקו לאברוביץ', pos:'GK'},
-    {id:'croatia_gk3', en:'Ivica Ivusic', he:'איביצה איבושיץ', pos:'GK'},
-    // Defenders
-    {id:'croatia_df1', en:'Josko Gvardiol', he:'יושקו גבארדיול', pos:'DF'},
-    {id:'croatia_df2', en:'Josip Sutalo', he:'יוסיפ שוטאלו', pos:'DF'},
-    {id:'croatia_df3', en:'Josip Stanisic', he:'יוסיפ סטנישיץ', pos:'DF'},
-    {id:'croatia_df4', en:'Marin Pongracic', he:'מארין פונגראציץ', pos:'DF'},
-    {id:'croatia_df5', en:'Domagoj Vida', he:'דומאגוי וידה', pos:'DF'},
-    {id:'croatia_df6', en:'Josip Juranovic', he:'יוסיפ יוראנוביץ', pos:'DF'},
-    // Midfielders
-    {id:'croatia_cm1', en:'Luka Modric', he:'לוקה מודריץ', pos:'CM'},
-    {id:'croatia_cm2', en:'Mateo Kovacic', he:'מתיאו קובאציץ', pos:'CM'},
-    {id:'croatia_cm3', en:'Marcelo Brozovic', he:'מרצלו ברוזוביץ', pos:'CM'},
-    {id:'croatia_cm4', en:'Mario Pasalic', he:'מאריו פשליץ', pos:'CM'},
-    {id:'croatia_cm5', en:'Luka Sucic', he:'לוקה סוציץ', pos:'CM'},
-    {id:'croatia_cm6', en:'Lovro Majer', he:'לוברו מייר', pos:'CM'},
-    // Forwards
-    {id:'croatia_st1', en:'Andrej Kramaric', he:'אנדריי קראמאריץ', pos:'ST'},
-    {id:'croatia_st2', en:'Bruno Petkovic', he:'ברונו פטקוביץ', pos:'ST'},
-    {id:'croatia_st3', en:'Ante Budimir', he:'אנטה בודימיר', pos:'ST'},
-    {id:'croatia_st4', en:'Ivan Perisic', he:'איבאן פרישיץ', pos:'ST'},
-    {id:'croatia_st5', en:'Marco Pasalic', he:'מרקו פשליץ', pos:'ST'},
-  ],
-  switzerland: [
-    // Goalkeepers
-    {id:'switzerland_gk1', en:'Gregor Kobel', he:'גרגור קובל', pos:'GK'},
-    {id:'switzerland_gk2', en:'Yvon Mvogo', he:'איבון אמבוגו', pos:'GK'},
-    {id:'switzerland_gk3', en:'Marvin Keller', he:'מרווין קלר', pos:'GK'},
-    // Defenders
-    {id:'switzerland_df1', en:'Manuel Akanji', he:'מנואל אקאנגי', pos:'DF'},
-    {id:'switzerland_df2', en:'Nico Elvedi', he:'ניקו אלבדי', pos:'DF'},
-    {id:'switzerland_df3', en:'Ricardo Rodriguez', he:'ריקרדו רודריגז', pos:'DF'},
-    {id:'switzerland_df4', en:'Silvan Widmer', he:'סילבאן וידמר', pos:'DF'},
-    {id:'switzerland_df5', en:'Miro Muheim', he:'מירו מוהיים', pos:'DF'},
-    {id:'switzerland_df6', en:'Aurele Amenda', he:'אורל אמנדה', pos:'DF'},
-    {id:'switzerland_df7', en:'Eray Comert', he:'אריי גומרט', pos:'DF'},
-    // Midfielders
-    {id:'switzerland_cm1', en:'Granit Xhaka', he:'גרניט גאקה', pos:'CM'},
-    {id:'switzerland_cm2', en:'Remo Freuler', he:'רמו פרוילר', pos:'CM'},
-    {id:'switzerland_cm3', en:'Denis Zakaria', he:'דניס זקאריה', pos:'CM'},
-    {id:'switzerland_cm4', en:'Ardon Jashari', he:'ארדון ישארי', pos:'CM'},
-    {id:'switzerland_cm5', en:'Djibril Sow', he:'גיבריל סו', pos:'CM'},
-    {id:'switzerland_cm6', en:'Michel Aebischer', he:'מישל אייבישר', pos:'CM'},
-    {id:'switzerland_cm7', en:'Fabian Rieder', he:'פביאן רידר', pos:'CM'},
-    // Forwards
-    {id:'switzerland_st1', en:'Breel Embolo', he:'בריל אמבולו', pos:'ST'},
-    {id:'switzerland_st2', en:'Noah Okafor', he:'נואה אוקאפור', pos:'ST'},
-    {id:'switzerland_st3', en:'Dan Ndoye', he:'דן אנדויה', pos:'ST'},
-  ],
-  denmark: [
-    // Goalkeepers
-    {id:'denmark_gk1', en:'Kasper Schmeichel', he:'קספר שמייכל', pos:'GK'},
-    {id:'denmark_gk2', en:'Frederik Ronnow', he:'פרדריק רונוב', pos:'GK'},
-    {id:'denmark_gk3', en:'Mads Hermansen', he:'מאדס הרמנסן', pos:'GK'},
-    // Defenders
-    {id:'denmark_df1', en:'Joachim Andersen', he:'יואכים אנדרסן', pos:'DF'},
-    {id:'denmark_df2', en:'Victor Nelsson', he:'ויקטור נלסון', pos:'DF'},
-    {id:'denmark_df3', en:'Jannik Vestergaard', he:'יאניק וסטרגארד', pos:'DF'},
-    {id:'denmark_df4', en:'Joakim Maehle', he:'יואכים מיילה', pos:'DF'},
-    {id:'denmark_df5', en:'Rasmus Kristensen', he:'רסמוס כריסטנסן', pos:'DF'},
-    {id:'denmark_df6', en:'Alexander Bah', he:'אלכסנדר בה', pos:'DF'},
-    // Midfielders
-    {id:'denmark_cm1', en:'Pierre-Emile Hojbjerg', he:'פייר-אמיל הויביירג', pos:'CM'},
-    {id:'denmark_cm2', en:'Christian Eriksen', he:'כריסטיאן אריקסן', pos:'CM'},
-    {id:'denmark_cm3', en:'Morten Hjulmand', he:'מורטן יולמאנד', pos:'CM'},
-    {id:'denmark_cm4', en:'Thomas Delaney', he:'תומאס דילייני', pos:'CM'},
-    {id:'denmark_cm5', en:'Christian Norgaard', he:'כריסטיאן נורגארד', pos:'CM'},
-    {id:'denmark_cm6', en:'Mikkel Damsgaard', he:'מיקל דמסגארד', pos:'CM'},
-    // Forwards
-    {id:'denmark_st1', en:'Rasmus Hojlund', he:'רסמוס הויגלונד', pos:'ST'},
-    {id:'denmark_st2', en:'Jonas Wind', he:'יונאס וינד', pos:'ST'},
-    {id:'denmark_st3', en:'Yussuf Poulsen', he:'יוסוף פאולסן', pos:'ST'},
-    {id:'denmark_st4', en:'Andreas Skov Olsen', he:'אנדריאס סקוב אולסן', pos:'ST'},
-    {id:'denmark_st5', en:'Kasper Dolberg', he:'קספר דולברג', pos:'ST'},
-  ],
-  austria: [
-    // Goalkeepers
-    {id:'austria_gk1', en:'Patrick Pentz', he:'פטריק פנץ', pos:'GK'},
-    {id:'austria_gk2', en:'Heinz Lindner', he:'היינץ לינדנר', pos:'GK'},
-    {id:'austria_gk3', en:'Niklas Hedl', he:'ניקלאס הדל', pos:'GK'},
-    // Defenders
-    {id:'austria_df1', en:'Stefan Posch', he:'סטפן פוש', pos:'DF'},
-    {id:'austria_df2', en:'Philipp Lienhart', he:'פיליפ לינהארט', pos:'DF'},
-    {id:'austria_df3', en:'Gernot Trauner', he:'גרנוט טראונר', pos:'DF'},
-    {id:'austria_df4', en:'Phillipp Mwene', he:'פיליפ מוונה', pos:'DF'},
-    {id:'austria_df5', en:'Kevin Danso', he:'קלווין דאנסו', pos:'DF'},
-    {id:'austria_df6', en:'Maximilian Wober', he:'מקסימיליאן וובר', pos:'DF'},
-    // Midfielders
-    {id:'austria_cm1', en:'Marcel Sabitzer', he:'מרסל זביצר', pos:'CM'},
-    {id:'austria_cm2', en:'Konrad Laimer', he:'קונראד ליימר', pos:'CM'},
-    {id:'austria_cm3', en:'Christoph Baumgartner', he:'כריסטוף באומגרטנר', pos:'CM'},
-    {id:'austria_cm4', en:'Nicolas Seiwald', he:'ניקולאס זיוואלד', pos:'CM'},
-    {id:'austria_cm5', en:'Florian Grillitsch', he:'פלוריאן גריליץ', pos:'CM'},
-    {id:'austria_cm6', en:'Patrick Wimmer', he:'פטריק וימר', pos:'CM'},
-    {id:'austria_cm7', en:'Romano Schmid', he:'רומנו שמיד', pos:'CM'},
-    // Forwards
-    {id:'austria_st1', en:'Marko Arnautovic', he:'מרקו ארנאוטוביץ', pos:'ST'},
-    {id:'austria_st2', en:'Michael Gregoritsch', he:'מיכאל גרגוריץ', pos:'ST'},
-    {id:'austria_st3', en:'Andreas Weimann', he:'אנדריאס ויימן', pos:'ST'},
-    {id:'austria_st4', en:'Marco Grull', he:'מרקו גרול', pos:'ST'},
-  ],
-  turkey: [
-    // Goalkeepers
-    {id:'turkey_gk1', en:'Ugurcan Cakir', he:'אוגורגאן צאקיר', pos:'GK'},
-    {id:'turkey_gk2', en:'Mert Gunok', he:'מרט גונוק', pos:'GK'},
-    {id:'turkey_gk3', en:'Altay Bayindir', he:'אלטאי באינדיר', pos:'GK'},
-    // Defenders
-    {id:'turkey_df1', en:'Merih Demiral', he:'מריח דמיראל', pos:'DF'},
-    {id:'turkey_df2', en:'Zeki Celik', he:'זקי צליק', pos:'DF'},
-    {id:'turkey_df3', en:'Caglar Soyuncu', he:'גאגלר סויונגו', pos:'DF'},
-    {id:'turkey_df4', en:'Mert Muldur', he:'מרט מולדור', pos:'DF'},
-    {id:'turkey_df5', en:'Ferdi Kadioglu', he:'פרדי קאדיאוגלו', pos:'DF'},
-    {id:'turkey_df6', en:'Abdulkerim Bardakci', he:'עבדולכרים ברדקגי', pos:'DF'},
-    // Midfielders
-    {id:'turkey_cm1', en:'Hakan Calhanoglu', he:'הקאן צלהאנולו', pos:'CM'},
-    {id:'turkey_cm2', en:'Kaan Ayhan', he:'קאן אייהאן', pos:'CM'},
-    {id:'turkey_cm3', en:'Orkun Kokcu', he:'אורקון קקצי', pos:'CM'},
-    {id:'turkey_cm4', en:'Ismail Yuksek', he:'איסמיל יוקסק', pos:'CM'},
-    {id:'turkey_cm5', en:'Salih Ozcan', he:'סאליה אוזגאן', pos:'CM'},
-    // Forwards
-    {id:'turkey_st1', en:'Kerem Akturkoglu', he:'כרם אקטורקוגלו', pos:'ST'},
-    {id:'turkey_st2', en:'Irfan Can Kahveci', he:'עירפאן גאן קהבצי', pos:'ST'},
-    {id:'turkey_st3', en:'Baris Alper Yilmaz', he:'באריש אלפר ילמאז', pos:'ST'},
-    {id:'turkey_st4', en:'Arda Guler', he:'ארדה גולר', pos:'ST'},
-    {id:'turkey_st5', en:'Kenan Yildiz', he:'כנאן ילדיז', pos:'ST'},
-    {id:'turkey_st6', en:'Yunus Akgun', he:'יונוס אקגון', pos:'ST'},
-  ],
-  ukraine: [
-    // Goalkeepers
-    {id:'ukraine_gk1', en:'Andriy Lunin', he:'אנדריי לונין', pos:'GK'},
-    {id:'ukraine_gk2', en:'Anatoliy Trubin', he:'אנאטולי טרובין', pos:'GK'},
-    {id:'ukraine_gk3', en:'Heorhiy Bushchan', he:'האורחי בושצן', pos:'GK'},
-    // Defenders
-    {id:'ukraine_df1', en:'Mykola Matviyenko', he:'מיקולה מטביינקו', pos:'DF'},
-    {id:'ukraine_df2', en:'Illia Zabarnyi', he:'איליה זבארני', pos:'DF'},
-    {id:'ukraine_df3', en:'Vitaliy Mykolenko', he:'ויטלי מיקולנקו', pos:'DF'},
-    {id:'ukraine_df4', en:'Oleksandr Tymchyk', he:'אולכסנדר טימציק', pos:'DF'},
-    {id:'ukraine_df5', en:'Yukhym Konoplya', he:'יוחים קונופליה', pos:'DF'},
-    {id:'ukraine_df6', en:'Valeriy Bondar', he:'ולרי בונדר', pos:'DF'},
-    // Midfielders
-    {id:'ukraine_cm1', en:'Oleksandr Zinchenko', he:'אולכסנדר זינצנקו', pos:'CM'},
-    {id:'ukraine_cm2', en:'Heorhiy Sudakov', he:'האורחי סודקוב', pos:'CM'},
-    {id:'ukraine_cm3', en:'Tarass Stepanenko', he:'טאראס סטפננקו', pos:'CM'},
-    {id:'ukraine_cm4', en:'Ruslan Malinovskyi', he:'רוסלן מלינובסקי', pos:'CM'},
-    {id:'ukraine_cm5', en:'Volodymyr Brazhko', he:'וולודימיר בראזקו', pos:'CM'},
-    {id:'ukraine_cm6', en:'Mykola Shaparenko', he:'מיקולה שפארנקו', pos:'CM'},
-    // Forwards
-    {id:'ukraine_st1', en:'Artem Dovbyk', he:'ארטם דובביק', pos:'ST'},
-    {id:'ukraine_st2', en:'Mykhailo Mudryk', he:'מיחאילו מודריק', pos:'ST'},
-    {id:'ukraine_st3', en:'Viktor Tsygankov', he:'ויקטור ציגנקוב', pos:'ST'},
-    {id:'ukraine_st4', en:'Roman Yaremchuk', he:'רומן יארמצוק', pos:'ST'},
-    {id:'ukraine_st5', en:'Vladyslav Vanat', he:'ולדיסלב ואנאט', pos:'ST'},
-  ],
-  scotland: [
-    // Goalkeepers
-    {id:'scotland_gk1', en:'Craig Gordon', he:'קרייג גורדון', pos:'GK'},
-    {id:'scotland_gk2', en:'Angus Gunn', he:'אנגוס גאן', pos:'GK'},
-    {id:'scotland_gk3', en:'Liam Kelly', he:'ליאם קלי', pos:'GK'},
-    // Defenders
-    {id:'scotland_df1', en:'Andy Robertson', he:'אנדי רוברטסון', pos:'DF'},
-    {id:'scotland_df2', en:'Kieran Tierney', he:'קיראן טירני', pos:'DF'},
-    {id:'scotland_df3', en:'Jack Hendry', he:'גק הנדרי', pos:'DF'},
-    {id:'scotland_df4', en:'Scott McKenna', he:'סקוט מקנה', pos:'DF'},
-    {id:'scotland_df5', en:'Grant Hanley', he:'גרנט הנלי', pos:'DF'},
-    {id:'scotland_df6', en:'Nathan Patterson', he:'ניתן פטרסון', pos:'DF'},
-    {id:'scotland_df7', en:'John Souttar', he:'גון סוטאר', pos:'DF'},
-    // Midfielders
-    {id:'scotland_cm1', en:'Scott McTominay', he:'סקוט מקטומיני', pos:'CM'},
-    {id:'scotland_cm2', en:'John McGinn', he:'גון מקגין', pos:'CM'},
-    {id:'scotland_cm3', en:'Billy Gilmour', he:'בילי גילמור', pos:'CM'},
-    {id:'scotland_cm4', en:'Ryan Christie', he:'ראיין כריסטי', pos:'CM'},
-    {id:'scotland_cm5', en:'Callum McGregor', he:'קאלום מקגרגור', pos:'CM'},
-    {id:'scotland_cm6', en:'Kenny McLean', he:'קני מקלין', pos:'CM'},
-    // Forwards
-    {id:'scotland_st1', en:'Che Adams', he:'צה אדאמס', pos:'ST'},
-    {id:'scotland_st2', en:'Lyndon Dykes', he:'לינדון דייקס', pos:'ST'},
-    {id:'scotland_st3', en:'Lawrence Shankland', he:'לורנס שנקלנד', pos:'ST'},
-    {id:'scotland_st4', en:'Ben Doak', he:'בן דואק', pos:'ST'},
-  ],
-  hungary: [
-    // Goalkeepers
-    {id:'hungary_gk1', en:'Peter Gulacsi', he:'פטר גולאצי', pos:'GK'},
-    {id:'hungary_gk2', en:'Denes Dibusz', he:'דנש דיבוס', pos:'GK'},
-    {id:'hungary_gk3', en:'Péter Szappanos', he:'פטר ספנוש', pos:'GK'},
-    // Defenders
-    {id:'hungary_df1', en:'Willi Orban', he:'ווילי אורבן', pos:'DF'},
-    {id:'hungary_df2', en:'Attila Szalai', he:'אטילה סאלאי', pos:'DF'},
-    {id:'hungary_df3', en:'Milos Kerkez', he:'מילוש קרקז', pos:'DF'},
-    {id:'hungary_df4', en:'Adam Lang', he:'אדם לאנג', pos:'DF'},
-    {id:'hungary_df5', en:'Endre Botka', he:'אנדרה בוטקה', pos:'DF'},
-    {id:'hungary_df6', en:'Loic Nego', he:'לואיק נגו', pos:'DF'},
-    {id:'hungary_df7', en:'Marton Dardai', he:'מארטון דרדאי', pos:'DF'},
-    // Midfielders
-    {id:'hungary_cm1', en:'Dominik Szoboszlai', he:'דומיניק סובוסלאי', pos:'CM'},
-    {id:'hungary_cm2', en:'Andras Schafer', he:'אנדראש שאפר', pos:'CM'},
-    {id:'hungary_cm3', en:'Adam Nagy', he:'אדם נאגי', pos:'CM'},
-    {id:'hungary_cm4', en:'Callum Styles', he:'קאלום סטיילס', pos:'CM'},
-    {id:'hungary_cm5', en:'Daniel Gazdag', he:'דניאל גזדאג', pos:'CM'},
-    {id:'hungary_cm6', en:'Laszlo Kleinheisler', he:'לאסלו קליינהייסלר', pos:'CM'},
-    // Forwards
-    {id:'hungary_st1', en:'Roland Sallai', he:'רולאנד שלאי', pos:'ST'},
-    {id:'hungary_st2', en:'Barnabas Varga', he:'ברנבאש וארגה', pos:'ST'},
-    {id:'hungary_st3', en:'Martin Adam', he:'מארטון אדם', pos:'ST'},
-    {id:'hungary_st4', en:'Kevin Csoboth', he:'קווין צובות', pos:'ST'},
-  ],
+      {id:'england_gk1', en:'Goalkeeper (fill in real name)', he:'שוער (למלא שם אמיתי)', pos:'GK'},
+      {id:'england_df1', en:'Defender (fill in real name)', he:'מגן (למלא שם אמיתי)', pos:'DF'},
+      {id:'england_cm1', en:'Midfielder (fill in real name)', he:'קשר (למלא שם אמיתי)', pos:'CM'},
+      {id:'england_st1', en:'Striker (fill in real name)', he:'חלוץ (למלא שם אמיתי)', pos:'ST'},
+    ],
+    spain: [
+      {id:'spain_gk1', en:'Goalkeeper (fill in real name)', he:'שוער (למלא שם אמיתי)', pos:'GK'},
+      {id:'spain_df1', en:'Defender (fill in real name)', he:'מגן (למלא שם אמיתי)', pos:'DF'},
+      {id:'spain_cm1', en:'Midfielder (fill in real name)', he:'קשר (למלא שם אמיתי)', pos:'CM'},
+      {id:'spain_st1', en:'Striker (fill in real name)', he:'חלוץ (למלא שם אמיתי)', pos:'ST'},
+    ],
+    italy: [
+      {id:'italy_gk1', en:'Goalkeeper (fill in real name)', he:'שוער (למלא שם אמיתי)', pos:'GK'},
+      {id:'italy_df1', en:'Defender (fill in real name)', he:'מגן (למלא שם אמיתי)', pos:'DF'},
+      {id:'italy_cm1', en:'Midfielder (fill in real name)', he:'קשר (למלא שם אמיתי)', pos:'CM'},
+      {id:'italy_st1', en:'Striker (fill in real name)', he:'חלוץ (למלא שם אמיתי)', pos:'ST'},
+    ],
+    portugal: [
+      {id:'portugal_gk1', en:'Goalkeeper (fill in real name)', he:'שוער (למלא שם אמיתי)', pos:'GK'},
+      {id:'portugal_df1', en:'Defender (fill in real name)', he:'מגן (למלא שם אמיתי)', pos:'DF'},
+      {id:'portugal_cm1', en:'Midfielder (fill in real name)', he:'קשר (למלא שם אמיתי)', pos:'CM'},
+      {id:'portugal_st1', en:'Striker (fill in real name)', he:'חלוץ (למלא שם אמיתי)', pos:'ST'},
+    ],
+    netherlands: [
+      {id:'netherlands_gk1', en:'Goalkeeper (fill in real name)', he:'שוער (למלא שם אמיתי)', pos:'GK'},
+      {id:'netherlands_df1', en:'Defender (fill in real name)', he:'מגן (למלא שם אמיתי)', pos:'DF'},
+      {id:'netherlands_cm1', en:'Midfielder (fill in real name)', he:'קשר (למלא שם אמיתי)', pos:'CM'},
+      {id:'netherlands_st1', en:'Striker (fill in real name)', he:'חלוץ (למלא שם אמיתי)', pos:'ST'},
+    ],
+    belgium: [
+      {id:'belgium_gk1', en:'Goalkeeper (fill in real name)', he:'שוער (למלא שם אמיתי)', pos:'GK'},
+      {id:'belgium_df1', en:'Defender (fill in real name)', he:'מגן (למלא שם אמיתי)', pos:'DF'},
+      {id:'belgium_cm1', en:'Midfielder (fill in real name)', he:'קשר (למלא שם אמיתי)', pos:'CM'},
+      {id:'belgium_st1', en:'Striker (fill in real name)', he:'חלוץ (למלא שם אמיתי)', pos:'ST'},
+    ],
+    croatia: [
+      {id:'croatia_gk1', en:'Goalkeeper (fill in real name)', he:'שוער (למלא שם אמיתי)', pos:'GK'},
+      {id:'croatia_df1', en:'Defender (fill in real name)', he:'מגן (למלא שם אמיתי)', pos:'DF'},
+      {id:'croatia_cm1', en:'Midfielder (fill in real name)', he:'קשר (למלא שם אמיתי)', pos:'CM'},
+      {id:'croatia_st1', en:'Striker (fill in real name)', he:'חלוץ (למלא שם אמיתי)', pos:'ST'},
+    ],
+    switzerland: [
+      {id:'switzerland_gk1', en:'Goalkeeper (fill in real name)', he:'שוער (למלא שם אמיתי)', pos:'GK'},
+      {id:'switzerland_df1', en:'Defender (fill in real name)', he:'מגן (למלא שם אמיתי)', pos:'DF'},
+      {id:'switzerland_cm1', en:'Midfielder (fill in real name)', he:'קשר (למלא שם אמיתי)', pos:'CM'},
+      {id:'switzerland_st1', en:'Striker (fill in real name)', he:'חלוץ (למלא שם אמיתי)', pos:'ST'},
+    ],
+    denmark: [
+      {id:'denmark_gk1', en:'Goalkeeper (fill in real name)', he:'שוער (למלא שם אמיתי)', pos:'GK'},
+      {id:'denmark_df1', en:'Defender (fill in real name)', he:'מגן (למלא שם אמיתי)', pos:'DF'},
+      {id:'denmark_cm1', en:'Midfielder (fill in real name)', he:'קשר (למלא שם אמיתי)', pos:'CM'},
+      {id:'denmark_st1', en:'Striker (fill in real name)', he:'חלוץ (למלא שם אמיתי)', pos:'ST'},
+    ],
+    austria: [
+      {id:'austria_gk1', en:'Goalkeeper (fill in real name)', he:'שוער (למלא שם אמיתי)', pos:'GK'},
+      {id:'austria_df1', en:'Defender (fill in real name)', he:'מגן (למלא שם אמיתי)', pos:'DF'},
+      {id:'austria_cm1', en:'Midfielder (fill in real name)', he:'קשר (למלא שם אמיתי)', pos:'CM'},
+      {id:'austria_st1', en:'Striker (fill in real name)', he:'חלוץ (למלא שם אמיתי)', pos:'ST'},
+    ],
+    turkey: [
+      {id:'turkey_gk1', en:'Goalkeeper (fill in real name)', he:'שוער (למלא שם אמיתי)', pos:'GK'},
+      {id:'turkey_df1', en:'Defender (fill in real name)', he:'מגן (למלא שם אמיתי)', pos:'DF'},
+      {id:'turkey_cm1', en:'Midfielder (fill in real name)', he:'קשר (למלא שם אמיתי)', pos:'CM'},
+      {id:'turkey_st1', en:'Striker (fill in real name)', he:'חלוץ (למלא שם אמיתי)', pos:'ST'},
+    ],
+    ukraine: [
+      {id:'ukraine_gk1', en:'Goalkeeper (fill in real name)', he:'שוער (למלא שם אמיתי)', pos:'GK'},
+      {id:'ukraine_df1', en:'Defender (fill in real name)', he:'מגן (למלא שם אמיתי)', pos:'DF'},
+      {id:'ukraine_cm1', en:'Midfielder (fill in real name)', he:'קשר (למלא שם אמיתי)', pos:'CM'},
+      {id:'ukraine_st1', en:'Striker (fill in real name)', he:'חלוץ (למלא שם אמיתי)', pos:'ST'},
+    ],
+    scotland: [
+      {id:'scotland_gk1', en:'Goalkeeper (fill in real name)', he:'שוער (למלא שם אמיתי)', pos:'GK'},
+      {id:'scotland_df1', en:'Defender (fill in real name)', he:'מגן (למלא שם אמיתי)', pos:'DF'},
+      {id:'scotland_cm1', en:'Midfielder (fill in real name)', he:'קשר (למלא שם אמיתי)', pos:'CM'},
+      {id:'scotland_st1', en:'Striker (fill in real name)', he:'חלוץ (למלא שם אמיתי)', pos:'ST'},
+    ],
+    hungary: [
+      {id:'hungary_gk1', en:'Goalkeeper (fill in real name)', he:'שוער (למלא שם אמיתי)', pos:'GK'},
+      {id:'hungary_df1', en:'Defender (fill in real name)', he:'מגן (למלא שם אמיתי)', pos:'DF'},
+      {id:'hungary_cm1', en:'Midfielder (fill in real name)', he:'קשר (למלא שם אמיתי)', pos:'CM'},
+      {id:'hungary_st1', en:'Striker (fill in real name)', he:'חלוץ (למלא שם אמיתי)', pos:'ST'},
+    ],
     serbia: [
-    // Goalkeepers
-    {id:'serbia_gk1', en:'Predrag Rajkovic', he:'פרדראג ראיקוביץ', pos:'GK'},
-    {id:'serbia_gk2', en:'Vanja Milinkovic-Savic', he:'וואניה מילינקוביץ-סאביץ', pos:'GK'},
-    {id:'serbia_gk3', en:'Djordje Petrovic', he:'גורגה פטרוביץ', pos:'GK'},
-    // Defenders
-    {id:'serbia_df1', en:'Nikola Milenkovic', he:'ניקולה מילנקוביץ', pos:'DF'},
-    {id:'serbia_df2', en:'Strahinja Pavlovic', he:'סטרהיניה פבלוביץ', pos:'DF'},
-    {id:'serbia_df3', en:'Milos Veljkovic', he:'מילוש ולייקוביץ', pos:'DF'},
-    {id:'serbia_df4', en:'Srdjan Babic', he:'סרדאן באביץ', pos:'DF'},
-    {id:'serbia_df5', en:'Nemanja Stojic', he:'נמניה סטויץ', pos:'DF'},
-    // Midfielders
-    {id:'serbia_cm1', en:'Dusan Tadic', he:'דושאן טאדיץ', pos:'CM'},
-    {id:'serbia_cm2', en:'Sergej Milinkovic-Savic', he:'סרגיי מילינקוביץ-סאביץ', pos:'CM'},
-    {id:'serbia_cm3', en:'Sasa Lukic', he:'סאשה לוקיץ', pos:'CM'},
-    {id:'serbia_cm4', en:'Nemanja Gudelj', he:'נמניה גודל', pos:'CM'},
-    {id:'serbia_cm5', en:'Ivan Ilic', he:'איבאן איליץ', pos:'CM'},
-    {id:'serbia_cm6', en:'Lazar Samardzic', he:'לאזאר סמארדזיץ', pos:'CM'},
-    {id:'serbia_cm7', en:'Filip Kostic', he:'פיליפ קוסטיץ', pos:'CM'},
-    {id:'serbia_cm8', en:'Andrija Zivkovic', he:'אנדריה זיבקוביץ', pos:'CM'},
-    // Forwards
-    {id:'serbia_st1', en:'Aleksandar Mitrovic', he:'אלכסנדר מיטרוביץ', pos:'ST'},
-    {id:'serbia_st2', en:'Dusan Vlahovic', he:'דושאן ולאחוביץ', pos:'ST'},
-    {id:'serbia_st3', en:'Luka Jovic', he:'לוקה יוביץ', pos:'ST'},
-    {id:'serbia_st4', en:'Petar Ratkov', he:'פטר ראטקוב', pos:'ST'},
-  ],
-  poland: [
-    // Goalkeepers
-    {id:'poland_gk1', en:'Wojciech Szczesny', he:'וויצך שצנסני', pos:'GK'},
-    {id:'poland_gk2', en:'Lukasz Skorupski', he:'לוקאש סקורופסקי', pos:'GK'},
-    {id:'poland_gk3', en:'Marcin Bulka', he:'מרצין בולקה', pos:'GK'},
-    // Defenders
-    {id:'poland_df1', en:'Jan Bednarek', he:'יאן בדנארק', pos:'DF'},
-    {id:'poland_df2', en:'Jakub Kiwior', he:'יאקוב קיוויור', pos:'DF'},
-    {id:'poland_df3', en:'Pawel Dawidowicz', he:'פאבל דווידוביץ', pos:'DF'},
-    {id:'poland_df4', en:'Bartosz Bereszynski', he:'ברתולומאיי ברשינסקי', pos:'DF'},
-    {id:'poland_df5', en:'Przemyslaw Frankowski', he:'פשמיסלאב פרנקובסקי', pos:'DF'},
-    {id:'poland_df6', en:'Nicola Zalewski', he:'ניקולה זאלבסקי', pos:'DF'},
-    {id:'poland_df7', en:'Sebastian Walukiewicz', he:'סבסטיאן ואלוקביץ', pos:'DF'},
-    // Midfielders
-    {id:'poland_cm1', en:'Piotr Zielinski', he:'פיוטר זלינסקי', pos:'CM'},
-    {id:'poland_cm2', en:'Jakub Moder', he:'יאקוב מודר', pos:'CM'},
-    {id:'poland_cm3', en:'Sebastian Szymanski', he:'סבסטיאן שימאנסקי', pos:'CM'},
-    {id:'poland_cm4', en:'Kacper Urbanski', he:'קצפר אורבנסקי', pos:'CM'},
-    {id:'poland_cm5', en:'Taras Romanczuk', he:'טאראס רומנצוק', pos:'CM'},
-    {id:'poland_cm6', en:'Jakub Piotrowski', he:'יאקוב פיוטרובסקי', pos:'CM'},
-    // Forwards
-    {id:'poland_st1', en:'Robert Lewandowski', he:'רוברט לבנדובסקי', pos:'ST'},
-    {id:'poland_st2', en:'Karol Swiderski', he:'קרול שבידרסקי', pos:'ST'},
-    {id:'poland_st3', en:'Krzysztof Piatek', he:'קשישטוף פיונטק', pos:'ST'},
-    {id:'poland_st4', en:'Adam Buksa', he:'אדם בוקסה', pos:'ST'},
-  ],
-  czech: [
-    // Goalkeepers
-    {id:'czech_gk1', en:'Jindrich Stanek', he:'יינדזיך סטאנק', pos:'GK'},
-    {id:'czech_gk2', en:'Matej Kovar', he:'מתי קובאר', pos:'GK'},
-    {id:'czech_gk3', en:'Vitezslav Jaros', he:'ויטסלאב יארוש', pos:'GK'},
-    // Defenders
-    {id:'czech_df1', en:'Vladimir Coufal', he:'ולדימיר צופאל', pos:'DF'},
-    {id:'czech_df2', en:'Tomas Holes', he:'טומאש הולש', pos:'DF'},
-    {id:'czech_df3', en:'David Zima', he:'דויד זימה', pos:'DF'},
-    {id:'czech_df4', en:'Ladislav Krejci', he:'לאדיסלב קרייצי', pos:'DF'},
-    {id:'czech_df5', en:'David Jurasek', he:'דויד יוראסק', pos:'DF'},
-    {id:'czech_df6', en:'David Doudera', he:'דויד דודרה', pos:'DF'},
-    {id:'czech_df7', en:'Martin Vitik', he:'מרטין ויטיק', pos:'DF'},
-    // Midfielders
-    {id:'czech_cm1', en:'Tomas Soucek', he:'טומאש סואוצק', pos:'CM'},
-    {id:'czech_cm2', en:'Lukas Provod', he:'לוקאש פרובוד', pos:'CM'},
-    {id:'czech_cm3', en:'Michal Sadilek', he:'מיכאל סאדילק', pos:'CM'},
-    {id:'czech_cm4', en:'Antonín Barak', he:'אנטונין באראק', pos:'CM'},
-    {id:'czech_cm5', en:'Lukas Cerv', he:'לוקאש צרב', pos:'CM'},
-    {id:'czech_cm6', en:'Ondrej Lingr', he:'אונדרי לינגר', pos:'CM'},
-    // Forwards
-    {id:'czech_st1', en:'Patrik Schick', he:'פטריק שיק', pos:'ST'},
-    {id:'czech_st2', en:'Adam Hlozek', he:'אדם הלוזק', pos:'ST'},
-    {id:'czech_st3', en:'Jan Kuchta', he:'יאן קוכטה', pos:'ST'},
-    {id:'czech_st4', en:'Tomas Chory', he:'טומאש חורי', pos:'ST'},
-  ],
-  romania: [
-    // Goalkeepers
-    {id:'romania_gk1', en:'Florin Nita', he:'פלורין ניצה', pos:'GK'},
-    {id:'romania_gk2', en:'Horațiu Moldovan', he:'הוראציו מולדובאן', pos:'GK'},
-    {id:'romania_gk3', en:'Ștefan Târnovanu', he:'שטפאן טרנובאנו', pos:'GK'},
-    // Defenders
-    {id:'romania_df1', en:'Radu Dragusin', he:'ראדו דראגושין', pos:'DF'},
-    {id:'romania_df2', en:'Andrei Burca', he:'אנדריי בורקה', pos:'DF'},
-    {id:'romania_df3', en:'Nicusor Bancu', he:'ניקושור באנקו', pos:'DF'},
-    {id:'romania_df4', en:'Andrei Ratiu', he:'אנדריי ראציו', pos:'DF'},
-    {id:'romania_df5', en:'Adrian Rus', he:'אדריאן רוס', pos:'DF'},
-    {id:'romania_df6', en:'Vasile Mogos', he:'ואסילה מוגוש', pos:'DF'},
-    // Midfielders
-    {id:'romania_cm1', en:'Nicolae Stanciu', he:'ניקולאה סטאנציו', pos:'CM'},
-    {id:'romania_cm2', en:'Răzvan Marin', he:'רזבאן מארין', pos:'CM'},
-    {id:'romania_cm3', en:'Marius Marin', he:'מריוס מארין', pos:'CM'},
-    {id:'romania_cm4', en:'Ianis Hagi', he:'יאניס חאגי', pos:'CM'},
-    {id:'romania_cm5', en:'Dennis Man', he:'דניס מאן', pos:'CM'},
-    {id:'romania_cm6', en:'Valentin Mihaila', he:'ולנטין מיחאילה', pos:'CM'},
-    {id:'romania_cm7', en:'Darius Olaru', he:'דריוס אולארו', pos:'CM'},
-    {id:'romania_cm8', en:'Deian Sorescu', he:'דאיאן סורסקו', pos:'CM'},
-    // Forwards
-    {id:'romania_st1', en:'Denis Dragus', he:'דניס דראגוש', pos:'ST'},
-    {id:'romania_st2', en:'George Puscas', he:'גורג פושקאש', pos:'ST'},
-    {id:'romania_st3', en:'Denis Alibec', he:'דניס אליבק', pos:'ST'},
-  ],
-  slovakia: [
-    // Goalkeepers
-    {id:'slovakia_gk1', en:'Martin Dubravka', he:'מרטין דובראבקה', pos:'GK'},
-    {id:'slovakia_gk2', en:'Marek Rodak', he:'מארק רודאק', pos:'GK'},
-    {id:'slovakia_gk3', en:'Henrich Ravas', he:'הנריך ראבאס', pos:'GK'},
-    // Defenders
-    {id:'slovakia_df1', en:'Milan Skriniar', he:'מילאן שקריניאר', pos:'DF'},
-    {id:'slovakia_df2', en:'David Hancko', he:'דויד האנצקו', pos:'DF'},
-    {id:'slovakia_df3', en:'Denis Vavro', he:'דניס ואברו', pos:'DF'},
-    {id:'slovakia_df4', en:'Peter Pekarik', he:'פטר פקאריק', pos:'DF'},
-    {id:'slovakia_df5', en:'Norbert Gyomber', he:'נורברט גיומבר', pos:'DF'},
-    {id:'slovakia_df6', en:'Adam Obert', he:'אדם אוברט', pos:'DF'},
-    // Midfielders
-    {id:'slovakia_cm1', en:'Stanislav Lobotka', he:'סטניסלאב לובוטקה', pos:'CM'},
-    {id:'slovakia_cm2', en:'Ondrej Duda', he:'אונדריי דודה', pos:'CM'},
-    {id:'slovakia_cm3', en:'Juraj Kucka', he:'יוראי קוצקה', pos:'CM'},
-    {id:'slovakia_cm4', en:'Tomas Suslov', he:'טומאש סוסלוב', pos:'CM'},
-    {id:'slovakia_cm5', en:'Lukas Haraslin', he:'לוקאש הראסלין', pos:'CM'},
-    {id:'slovakia_cm6', en:'Matus Bero', he:'מאתוש ברו', pos:'CM'},
-    {id:'slovakia_cm7', en:'Patrik Hrosovsky', he:'פטריק הרושובסקי', pos:'CM'},
-    // Forwards
-    {id:'slovakia_st1', en:'Robert Bozenik', he:'רוברט בוזניק', pos:'ST'},
-    {id:'slovakia_st2', en:'David Strelec', he:'דויד סטרלץ', pos:'ST'},
-    {id:'slovakia_st3', en:'Ivan Schranz', he:'איבאן שראנץ', pos:'ST'},
-    {id:'slovakia_st4', en:'Leo Sauer', he:'לאו זאואר', pos:'ST'},
-  ],
-  slovenia: [
-    // Goalkeepers
-    {id:'slovenia_gk1', en:'Jan Oblak', he:'יאן אובלאק', pos:'GK'},
-    {id:'slovenia_gk2', en:'Vid Belec', he:'ויד בלץ', pos:'GK'},
-    {id:'slovenia_gk3', en:'Igor Vekic', he:'איגור וקיץ', pos:'GK'},
-    // Defenders
-    {id:'slovenia_df1', en:'Jaka Bijol', he:'יאקה ביול', pos:'DF'},
-    {id:'slovenia_df2', en:'Zan Karnicnik', he:'זאן קרניצניק', pos:'DF'},
-    {id:'slovenia_df3', en:'Vanja Drkusic', he:'ואניה דרקושיץ', pos:'DF'},
-    {id:'slovenia_df4', en:'Jure Balkovec', he:'יורה באלקובץ', pos:'DF'},
-    {id:'slovenia_df5', en:'Erik Janza', he:'אריק יאנזה', pos:'DF'},
-    {id:'slovenia_df6', en:'Petar Stojanovic', he:'פטר סטויאנוביץ', pos:'DF'},
-    // Midfielders
-    {id:'slovenia_cm1', en:'Timi Max Elsnik', he:'טימי מקס אלשניק', pos:'CM'},
-    {id:'slovenia_cm2', en:'Adam Gnezda Cerin', he:'אדם גנזדה צרין', pos:'CM'},
-    {id:'slovenia_cm3', en:'Sandi Lovric', he:'סאנדי לובריץ', pos:'CM'},
-    {id:'slovenia_cm4', en:'Jon Gorenc Stankovic', he:'יון גורנץ סטאנקוביץ', pos:'CM'},
-    {id:'slovenia_cm5', en:'Benjamin Verbic', he:'בנגמין ורביץ', pos:'CM'},
-    {id:'slovenia_cm6', en:'Tomi Horvat', he:'טומי הורבאט', pos:'CM'},
-    // Forwards
-    {id:'slovenia_st1', en:'Benjamin Sesko', he:'בנגמין ששקו', pos:'ST'},
-    {id:'slovenia_st2', en:'Andraz Sporar', he:'אנדראז שפוראר', pos:'ST'},
-    {id:'slovenia_st3', en:'Zan Celar', he:'זאן צלאר', pos:'ST'},
-    {id:'slovenia_st4', en:'Josip Ilicic', he:'יוסיפ איליציץ', pos:'ST'},
-    {id:'slovenia_st5', en:'Zan Vipotnik', he:'זאן ויפוטניק', pos:'ST'},
-  ],
-  georgia: [
-    // Goalkeepers
-    {id:'georgia_gk1', en:'Giorgi Mamardashvili', he:'גיורגי מאמארדשווילי', pos:'GK'},
-    {id:'georgia_gk2', en:'Giorgi Loria', he:'גיורגי לוריה', pos:'GK'},
-    {id:'georgia_gk3', en:'Luka Gugeshashvili', he:'לוקה גוגשאשווילי', pos:'GK'},
-    // Defenders
-    {id:'georgia_df1', en:'Guram Kashia', he:'גוראם קאשיה', pos:'DF'},
-    {id:'georgia_df2', en:'Otar Kakabadze', he:'אותר קקבאדזה', pos:'DF'},
-    {id:'georgia_df3', en:'Lasha Dvali', he:'לאשה דבאלי', pos:'DF'},
-    {id:'georgia_df4', en:'Luka Lochoshvili', he:'לוקה לוצושווילי', pos:'DF'},
-    {id:'georgia_df5', en:'Solomon Kvirkvelia', he:'סולומון קבירקבלייה', pos:'DF'},
-    {id:'georgia_df6', en:'Giorgi Gocholeishvili', he:'גיורגי גוצולאישווילי', pos:'DF'},
-    // Midfielders
-    {id:'georgia_cm1', en:'Giorgi Kochorashvili', he:'גיורגי קוצוראשווילי', pos:'CM'},
-    {id:'georgia_cm2', en:'Otar Kiteishvili', he:'אותר קיטאישווילי', pos:'CM'},
-    {id:'georgia_cm3', en:'Nika Kvekveskiri', he:'ניקה קבקבסקירי', pos:'CM'},
-    {id:'georgia_cm4', en:'Anzor Mekvabishvili', he:'אנזור מקוואבישווילי', pos:'CM'},
-    {id:'georgia_cm5', en:'Giorgi Chakvetadze', he:'גיורגי צאקווטאדזה', pos:'CM'},
-    {id:'georgia_cm6', en:'Saba Lobzhanidze', he:'סאבה לובזאנידזה', pos:'CM'},
-    {id:'georgia_cm7', en:'Zuriko Davitashvili', he:'זוריקו דאוויטאשווילי', pos:'CM'},
-    // Forwards
-    {id:'georgia_st1', en:'Khvicha Kvaratskhelia', he:'חביצה קווארצחליה', pos:'ST'},
-    {id:'georgia_st2', en:'Georges Mikautadze', he:'זורז מיקאוטאדזה', pos:'ST'},
-    {id:'georgia_st3', en:'Budu Zivzivadze', he:'בודו זיבזיבאדזה', pos:'ST'},
-    {id:'georgia_st4', en:'Giorgi Kvilitaia', he:'גיורגי קוויליטאיה', pos:'ST'},
-  ],
-  albania: [
-    // Goalkeepers
-    {id:'albania_gk1', en:'Thomas Strakosha', he:'תומאס סטראקושה', pos:'GK'},
-    {id:'albania_gk2', en:'Erit Berisha', he:'אטריט ברישה', pos:'GK'},
-    {id:'albania_gk3', en:'Elhan Kastrati', he:'אלחאן קסטראטי', pos:'GK'},
-    // Defenders
-    {id:'albania_df1', en:'Elseid Hysaj', he:'אלסאיד היסאי', pos:'DF'},
-    {id:'albania_df2', en:'Berat Djimsiti', he:'בראט גימשיטי', pos:'DF'},
-    {id:'albania_df3', en:'Ardian Ismajli', he:'ארדיאן איסמאילי', pos:'DF'},
-    {id:'albania_df4', en:'Mario Mitaj', he:'מריו מיטאיי', pos:'DF'},
-    {id:'albania_df5', en:'Enea Mihaj', he:'אניאה מיחאי', pos:'DF'},
-    {id:'albania_df6', en:'Marash Kumbulla', he:'מראש קומבולה', pos:'DF'},
-    {id:'albania_df7', en:'Ivan Balliu', he:'איבאן באליו', pos:'DF'},
-    // Midfielders
-    {id:'albania_cm1', en:'Kristjan Asllani', he:'כריסטיאן אסלאני', pos:'CM'},
-    {id:'albania_cm2', en:'Ylber Ramadani', he:'אילבר רמדאני', pos:'CM'},
-    {id:'albania_cm3', en:'Nedim Bajrami', he:'נדים באיראמי', pos:'CM'},
-    {id:'albania_cm4', en:'Qazim Laci', he:'קאזים לאצי', pos:'CM'},
-    {id:'albania_cm5', en:'Klaus Gjasula', he:'קלאוס גאסולה', pos:'CM'},
-    {id:'albania_cm6', en:'Taulant Seferi', he:'טאולאנט ספרי', pos:'CM'},
-    // Forwards
-    {id:'albania_st1', en:'Armando Broja', he:'ארמנדו ברויה', pos:'ST'},
-    {id:'albania_st2', en:'Jasir Asani', he:'יאסיר אסאני', pos:'ST'},
-    {id:'albania_st3', en:'Mirlind Daku', he:'מירלינד דאקו', pos:'ST'},
-    {id:'albania_st4', en:'Rey Manaj', he:'ריי מנאי', pos:'ST'},
-  ],
+      {id:'serbia_gk1', en:'Goalkeeper (fill in real name)', he:'שוער (למלא שם אמיתי)', pos:'GK'},
+      {id:'serbia_df1', en:'Defender (fill in real name)', he:'מגן (למלא שם אמיתי)', pos:'DF'},
+      {id:'serbia_cm1', en:'Midfielder (fill in real name)', he:'קשר (למלא שם אמיתי)', pos:'CM'},
+      {id:'serbia_st1', en:'Striker (fill in real name)', he:'חלוץ (למלא שם אמיתי)', pos:'ST'},
+    ],
+    poland: [
+      {id:'poland_gk1', en:'Goalkeeper (fill in real name)', he:'שוער (למלא שם אמיתי)', pos:'GK'},
+      {id:'poland_df1', en:'Defender (fill in real name)', he:'מגן (למלא שם אמיתי)', pos:'DF'},
+      {id:'poland_cm1', en:'Midfielder (fill in real name)', he:'קשר (למלא שם אמיתי)', pos:'CM'},
+      {id:'poland_st1', en:'Striker (fill in real name)', he:'חלוץ (למלא שם אמיתי)', pos:'ST'},
+    ],
+    czech: [
+      {id:'czech_gk1', en:'Goalkeeper (fill in real name)', he:'שוער (למלא שם אמיתי)', pos:'GK'},
+      {id:'czech_df1', en:'Defender (fill in real name)', he:'מגן (למלא שם אמיתי)', pos:'DF'},
+      {id:'czech_cm1', en:'Midfielder (fill in real name)', he:'קשר (למלא שם אמיתי)', pos:'CM'},
+      {id:'czech_st1', en:'Striker (fill in real name)', he:'חלוץ (למלא שם אמיתי)', pos:'ST'},
+    ],
+    romania: [
+      {id:'romania_gk1', en:'Goalkeeper (fill in real name)', he:'שוער (למלא שם אמיתי)', pos:'GK'},
+      {id:'romania_df1', en:'Defender (fill in real name)', he:'מגן (למלא שם אמיתי)', pos:'DF'},
+      {id:'romania_cm1', en:'Midfielder (fill in real name)', he:'קשר (למלא שם אמיתי)', pos:'CM'},
+      {id:'romania_st1', en:'Striker (fill in real name)', he:'חלוץ (למלא שם אמיתי)', pos:'ST'},
+    ],
+    slovakia: [
+      {id:'slovakia_gk1', en:'Goalkeeper (fill in real name)', he:'שוער (למלא שם אמיתי)', pos:'GK'},
+      {id:'slovakia_df1', en:'Defender (fill in real name)', he:'מגן (למלא שם אמיתי)', pos:'DF'},
+      {id:'slovakia_cm1', en:'Midfielder (fill in real name)', he:'קשר (למלא שם אמיתי)', pos:'CM'},
+      {id:'slovakia_st1', en:'Striker (fill in real name)', he:'חלוץ (למלא שם אמיתי)', pos:'ST'},
+    ],
+    slovenia: [
+      {id:'slovenia_gk1', en:'Goalkeeper (fill in real name)', he:'שוער (למלא שם אמיתי)', pos:'GK'},
+      {id:'slovenia_df1', en:'Defender (fill in real name)', he:'מגן (למלא שם אמיתי)', pos:'DF'},
+      {id:'slovenia_cm1', en:'Midfielder (fill in real name)', he:'קשר (למלא שם אמיתי)', pos:'CM'},
+      {id:'slovenia_st1', en:'Striker (fill in real name)', he:'חלוץ (למלא שם אמיתי)', pos:'ST'},
+    ],
+    georgia: [
+      {id:'georgia_gk1', en:'Goalkeeper (fill in real name)', he:'שוער (למלא שם אמיתי)', pos:'GK'},
+      {id:'georgia_df1', en:'Defender (fill in real name)', he:'מגן (למלא שם אמיתי)', pos:'DF'},
+      {id:'georgia_cm1', en:'Midfielder (fill in real name)', he:'קשר (למלא שם אמיתי)', pos:'CM'},
+      {id:'georgia_st1', en:'Striker (fill in real name)', he:'חלוץ (למלא שם אמיתי)', pos:'ST'},
+    ],
+    albania: [
+      {id:'albania_gk1', en:'Goalkeeper (fill in real name)', he:'שוער (למלא שם אמיתי)', pos:'GK'},
+      {id:'albania_df1', en:'Defender (fill in real name)', he:'מגן (למלא שם אמיתי)', pos:'DF'},
+      {id:'albania_cm1', en:'Midfielder (fill in real name)', he:'קשר (למלא שם אמיתי)', pos:'CM'},
+      {id:'albania_st1', en:'Striker (fill in real name)', he:'חלוץ (למלא שם אמיתי)', pos:'ST'},
+    ],
   },
 
   // --- Scoring rules ---
@@ -997,6 +529,9 @@ const I18N = {
     tab_stats:'Stats', tab_hof:'Hall of Fame', tab_settings:'Settings', tab_admin:'Admin', rank:'Rank', player:'Player', points:'Points', form:'Form',
     leaderLabel:'Leader', signIn:'Sign in', signOut:'Sign out', exportImage:'Share', exactPctShort:'Exact %',
     movedUp:'Moved up since last game', movedDown:'Moved down since last game', noChange:'No change since last game',
+    formNoBet:'No prediction for this game',
+    sessionExpired:'Your sign-in expired — sign in again to save and to see your own predictions.',
+    actualResult:'Actual result', keyExactHit:'Exact position', keyPartialHit:'Reached the final four, wrong position',
     rulesTitle:'How scoring works', rulesGameTitle:'Match score bets', rulesPlayerTitle:'Top player of the game', joinWhatsapp:'Join the WhatsApp group',
     rulesStageTitle:'Group stage & knockout', ruleGroupPosition:'Exact team position at end of group stage (per team)',
     ruleGroupPositionNote:'Up to 4 teams × 2 pts = 8 pts per group.', ruleAdvancing:'Correct pick in the knockout stage',
@@ -1074,6 +609,9 @@ const I18N = {
     tab_stats:'סטטיסטיקות', tab_hof:'היכל התהילה', tab_settings:'הגדרות', tab_admin:'ניהול', rank:'דירוג', player:'שם', points:'נקודות', form:'פורמה',
     leaderLabel:'מוביל', signIn:'התחברות', signOut:'התנתקות', exportImage:'שיתוף', exactPctShort:'% מדויק',
     movedUp:'עלה מאז המשחק האחרון', movedDown:'ירד מאז המשחק האחרון', noChange:'ללא שינוי מאז המשחק האחרון',
+    formNoBet:'לא הימר על המשחק הזה',
+    sessionExpired:'תוקף ההתחברות פג — יש להתחבר מחדש כדי לשמור וכדי לראות את הניחושים שלכם.',
+    actualResult:'התוצאה בפועל', keyExactHit:'מיקום מדויק', keyPartialHit:'הגיעה לרביעייה הסופית, מיקום שגוי',
     rulesTitle:'איך מחשבים ניקוד', rulesGameTitle:'ניחושי תוצאות משחק', rulesPlayerTitle:'שחקן המשחק', joinWhatsapp:'הצטרפות לקבוצת הוואטסאפ',
     rulesStageTitle:'שלב הבתים ופלייאוף', ruleGroupPosition:'מיקום מדויק של נבחרת בסיום שלב הבתים (לכל נבחרת)',
     ruleGroupPositionNote:"עד 4 נבחרות × 2 נק' = 8 נק' לכל בית.", ruleAdvancing:'ניחוש נכון בשלב הפלייאוף',
@@ -1181,11 +719,19 @@ function t(key,...args){ const v = I18N[LANG][key]; return typeof v==='function'
    so the whole site re-renders correctly in either language
    without touching stored data.
    ========================================================= */
+/** Escapes text before it goes into an innerHTML string. Every value that came
+ *  from the Sheet (i.e. that a participant could have influenced) must pass
+ *  through here, otherwise a crafted value would execute as markup in everyone
+ *  else's browser. Code.gs validates on the way in; this is the second layer. */
+function esc(v){
+  return String(v == null ? '' : v).replace(/[&<>"']/g, c =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
 function teamName(teamId){
   const t = CONFIG.TEAMS[teamId];
-  if(!t) return teamId;
+  if(!t) return esc(teamId);
   const label = t[LANG] || t.en || teamId;
-  return t.flag ? `${t.flag} ${label}` : label;
+  return esc(t.flag ? `${t.flag} ${label}` : label);
 }
 function allPlayersFlat(){
   return Object.entries(CONFIG.ROSTERS).flatMap(([teamId, squad]) => squad.map(p => ({...p, teamId})));
@@ -1193,28 +739,49 @@ function allPlayersFlat(){
 function findPlayer(playerId){ return allPlayersFlat().find(p => p.id === playerId) || null; }
 function playerName(playerIdOrObj){
   const p = typeof playerIdOrObj === 'object' ? playerIdOrObj : findPlayer(playerIdOrObj);
-  if(!p) return playerIdOrObj;
-  return p[LANG] || p.en || p.id;
+  if(!p) return esc(playerIdOrObj);
+  return esc(p[LANG] || p.en || p.id);
 }
 /** Participant display name — Sheet stores name_en/name_he columns per person
  *  (filled in once by whoever manages the tournament); falls back gracefully
  *  if only one language was filled in. */
 function participantName(p){
-  return p['name_'+LANG] || p.name_en || p.name_he || p.name || p.email;
+  return esc(p['name_'+LANG] || p.name_en || p.name_he || p.name || p.email);
 }
 
 /* =========================================================
    ============  3. State  ===================================
    ========================================================= */
-const STATE = { user:null, participants:[], games:[], gameBets:[], generalBets:[], hof:[], gameEvents:[], groupResults:[], demo:false, loaded:false };
+const STATE = { user:null, participants:[], games:[], gameBets:[], generalBets:[], hof:[], gameEvents:[], groupResults:[], finalResults:[], demo:false, loaded:false };
 function isAdmin(){ return !!STATE.user && String(STATE.user.email||'').trim().toLowerCase() === ADMIN_EMAIL.toLowerCase(); }
 
 /* =========================================================
    ============  4. Data layer (Google Sheets)  ==============
    ========================================================= */
+/** Google ID tokens expire after about an hour. The server derives our identity
+ *  purely from this token, so once it's stale we can still read public data but
+ *  can neither write nor see our own private picks. Check it up front rather
+ *  than let the request fail silently — POSTs use no-cors and cannot report an
+ *  error back to us. */
+function tokenIsFresh(){
+  if(!STATE.user || !STATE.user.idToken) return false;
+  try{
+    const payload = JSON.parse(atob(STATE.user.idToken.split('.')[1]));
+    return (payload.exp * 1000) - Date.now() > 60000; // 1-minute safety margin
+  }catch(e){ return false; }
+}
+function authToken(){ return tokenIsFresh() ? STATE.user.idToken : ''; }
+/** Call before any write. If the session has gone stale, ask Google for a fresh
+ *  token (silent for a user still signed in to their browser) and abort. */
+function requireFreshToken(){
+  if(tokenIsFresh()) return STATE.user.idToken;
+  showToast('⚠️ ' + t('sessionExpired'), true);
+  if(window.google && google.accounts) google.accounts.id.prompt();
+  return '';
+}
+
 async function fetchTab(tabName){
-  const email = STATE.user ? STATE.user.email : '';
-  const url = `${CONFIG.APPS_SCRIPT_URL}?tab=${encodeURIComponent(tabName)}&email=${encodeURIComponent(email)}`;
+  const url = `${CONFIG.APPS_SCRIPT_URL}?tab=${encodeURIComponent(tabName)}&idToken=${encodeURIComponent(authToken())}`;
   const res = await fetch(url);
   return res.json();
 }
@@ -1229,12 +796,12 @@ async function postBet(payload){
 
 async function loadAllData(){
   try{
-    const [participants, games, gameBets, generalBets, hof, gameEvents, groupResults] = await Promise.all([
+    const [participants, games, gameBets, generalBets, hof, gameEvents, groupResults, finalResults] = await Promise.all([
       fetchTab('Participants'), fetchTab('Games'), fetchTab('GameBets'), fetchTab('GeneralBets'), fetchTab('HallOfFame'),
-      fetchTab('GameEvents'), fetchTab('GroupResults'),
+      fetchTab('GameEvents'), fetchTab('GroupResults'), fetchTab('FinalResults'),
     ]);
     if(!Array.isArray(participants) || (!participants.length && !games.length)) throw new Error('empty sheet / not configured');
-    Object.assign(STATE, { participants, games, gameBets, generalBets, hof, gameEvents, groupResults, demo:false });
+    Object.assign(STATE, { participants, games, gameBets, generalBets, hof, gameEvents, groupResults, finalResults, demo:false });
   }catch(e){
     if(!CONFIG.DEMO_MODE_FALLBACK) throw e;
     Object.assign(STATE, demoData());
@@ -1267,6 +834,10 @@ function demoData(){
   const groupResults = [
     {group:'A', pos1:'team_a1', pos2:'team_a2', pos3:'team_a3', pos4:'team_a4'},
   ];
+  const finalResults = [
+    {semifinalist1:'team_a1', semifinalist2:'team_b1', semifinalist3:'team_a2', semifinalist4:'team_b2',
+     champion:'team_a1', runnerUp:'team_b1', third:'', fourth:'', topScorer:'a1_st1', topAssist:'a1_cm1'},
+  ];
   const hof = [
     {year:2022, tournamentType:'worldcup', location_en:'Qatar', location_he:'קטאר',
      championTeam_en:'Argentina', championTeam_he:'ארגנטינה',
@@ -1275,7 +846,7 @@ function demoData(){
      championTeam_en:'Italy', championTeam_he:'איטליה',
      winnerName_en:'Roni Shani', winnerName_he:'רוני שני', runnerUp_en:'Itay Ben', runnerUp_he:'איתי בן'},
   ];
-  return { participants, games, gameBets:[], generalBets:[], hof, gameEvents, groupResults };
+  return { participants, games, gameBets:[], generalBets:[], hof, gameEvents, groupResults, finalResults };
 }
 
 /* =========================================================
@@ -1350,7 +921,11 @@ function renderAll(){
   renderShell();
   const main = document.getElementById('main');
   const renderers = { home:renderHome, rules:renderRules, tips:renderTips, teams:renderTeams, general:renderGeneral, games:renderGames, stats:renderStats, hof:renderHof, settings:renderSettings, admin:renderAdmin };
-  main.innerHTML = renderers[currentTab]();
+  // Signed in but the token has aged out: reads come back redacted, so your own
+  // saved picks look empty. Say so instead of letting it look like data loss.
+  const staleWarning = (STATE.user && !tokenIsFresh())
+    ? `<div class="lock-banner">⚠️ ${t('sessionExpired')}</div>` : '';
+  main.innerHTML = staleWarning + renderers[currentTab]();
   if(currentTab==='home'){
     animateFlaps();
     const eb = document.getElementById('exportImgBtn'); if(eb) eb.onclick = exportLeaderboardImage;
@@ -1436,8 +1011,8 @@ function renderHome(){
             <td class="rank-cell ${p.rank<=3?'top'+p.rank:''}">${medal(p.rank)}<span class="iso-num">${p.rank}</span> ${rankDeltaBadge(p.rankDelta)}</td>
             <td><div class="player-name-cell"><div class="avatar">${initials(p.displayName)}</div>${p.displayName}</div></td>
             <td><div class="form-dots">${formDots(p.form)}</div></td>
-            <td style="text-align:center; color:var(--text-dim); font-size:13px;"><span class="iso-num">${p.exactPct}%</span></td>
-            <td class="points-cell"><span class="iso-num">${p.totalPoints}</span></td>
+            <td style="text-align:center; color:var(--text-dim); font-size:13px;"><span class="iso-num">${esc(p.exactPct)}%</span></td>
+            <td class="points-cell"><span class="iso-num">${esc(p.totalPoints)}</span></td>
           </tr>`).join('')}
       </tbody>
     </table>
@@ -1480,7 +1055,15 @@ function rankDeltaBadge(delta){
   return `<span class="rank-delta same" title="${t('noChange')}">▬</span>`;
 }
 function initials(name){ return (name||'?').split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase(); }
-function formDots(form){ return (form||[]).map(pts => `<span class="form-dot ${playerPtsColor(+pts)}" title="${pts}"></span>`).join(''); }
+/** Form = the last 5 PLAYED games, same 5 for everyone (see recalculateAllScores
+ *  in Code.gs). A null entry means that participant never predicted that game —
+ *  worth 0 points, same as a loss, but shown grey to tell the two apart. */
+function formDots(form){
+  return (form||[]).map(pts => {
+    if(pts===null || pts===undefined || pts==='') return `<span class="form-dot grey" title="${t('formNoBet')}"></span>`;
+    return `<span class="form-dot ${playerPtsColor(+pts)}" title="${esc(pts)}"></span>`;
+  }).join('');
+}
 function animateFlaps(){ document.querySelectorAll('.flap-char').forEach((el,i) => setTimeout(()=>el.classList.add('flip'), i*90)); }
 
 /* ---- RULES ---- */
@@ -1802,7 +1385,7 @@ function renderSettings(){
 /* ---- ADMIN (hidden, visible only to ADMIN_EMAIL) ---- */
 function renderAdmin(){
   const allGames = [...STATE.games].sort((a,b) => new Date(b.kickoffISO) - new Date(a.kickoffISO));
-  const gameOptions = g => `<option value="${g.id}">${teamName(g.teamA)} – ${teamName(g.teamB)} (${g.id}, ${g.status})</option>`;
+  const gameOptions = g => `<option value="${esc(g.id)}">${teamName(g.teamA)} – ${teamName(g.teamB)} (${esc(g.id)}, ${esc(g.status)})</option>`;
   return `
   <div class="section-title">🔧 ${t('adminTitle')}</div>
   <div class="section-sub">${t('adminSub')}</div>
@@ -1888,9 +1471,11 @@ function wireAdmin(){
     e.preventDefault();
     const fd = new FormData(e.target);
     const msg = document.getElementById('adminResultMsg');
+    const idToken = requireFreshToken();
+    if(!idToken) return;
     msg.style.color = 'var(--text-dim)'; msg.textContent = t('saving');
     const payload = {
-      type:'adminSetResult', adminEmail: STATE.user.email, gameId: fd.get('gameId'),
+      type:'adminSetResult', idToken: idToken, gameId: fd.get('gameId'),
       scoreA: fd.get('scoreA'), scoreB: fd.get('scoreB'), status:'final',
       advancingTeam: fd.get('advancingTeam') || '',
     };
@@ -1905,28 +1490,46 @@ function wireAdmin(){
     renderAll();
   });
 
-  document.getElementById('adminEventForm').addEventListener('submit', async e => {
+  // Unlike the result form (an upsert), this one APPENDS a row — so a double
+  // click would silently record the same goal twice. Block re-entry until the
+  // in-flight submit finishes.
+  const eventForm = document.getElementById('adminEventForm');
+  let eventSubmitting = false;
+  eventForm.addEventListener('submit', async e => {
     e.preventDefault();
+    if(eventSubmitting) return;
+    const idToken = requireFreshToken();
+    if(!idToken) return;
+    eventSubmitting = true;
+    const submitBtn = eventForm.querySelector('button[type="submit"]');
+    if(submitBtn) submitBtn.disabled = true;
     const fd = new FormData(e.target);
     const opt = eventPlayerSelect.selectedOptions[0];
     const msg = document.getElementById('adminEventMsg');
     msg.style.color = 'var(--text-dim)'; msg.textContent = t('saving');
     const payload = {
-      type:'adminAddEvent', adminEmail: STATE.user.email, gameId: fd.get('gameId'),
+      type:'adminAddEvent', idToken: idToken, gameId: fd.get('gameId'),
       player: fd.get('playerId'), team: opt ? opt.dataset.team : '', position: opt ? opt.dataset.pos : '',
       eventType: fd.get('eventType'), count: fd.get('count') || 1,
     };
-    await postBet(payload);
-    await new Promise(r => setTimeout(r, 1200));
-    await loadAllData();
-    msg.style.color = 'var(--green)'; msg.textContent = t('saved'); showToast('✅ ' + t('saved'));
+    try{
+      await postBet(payload);
+      await new Promise(r => setTimeout(r, 1200));
+      await loadAllData();
+      msg.style.color = 'var(--green)'; msg.textContent = t('saved'); showToast('✅ ' + t('saved'));
+    } finally {
+      eventSubmitting = false;
+      if(submitBtn) submitBtn.disabled = false;
+    }
     renderAll();
   });
 
   document.getElementById('adminRecalcBtn').addEventListener('click', async () => {
     const msg = document.getElementById('adminRecalcMsg');
+    const idToken = requireFreshToken();
+    if(!idToken) return;
     msg.style.color = 'var(--text-dim)'; msg.textContent = t('adminRecalculating');
-    await postBet({ type:'adminRecalculate', adminEmail: STATE.user.email });
+    await postBet({ type:'adminRecalculate', idToken: idToken });
     await new Promise(r => setTimeout(r, 2000)); // recalculation can take a moment across many rows
     await loadAllData();
     msg.style.color = 'var(--green)'; msg.textContent = t('adminRecalcDone');
@@ -2022,9 +1625,36 @@ function renderGeneral(){
  * the API simply keeps sending back redacted rows until the real moment.
  */
 let generalRevealGroupTab = null;
+/** The single FinalResults row, or null while it's still blank. It gets filled
+ *  in twice — semifinalists after the quarters, exact order after the final —
+ *  so either half may legitimately be missing. See SETUP.md. */
+function actualFinalResults(){
+  const row = (STATE.finalResults || [])[0];
+  return (row && (row.champion || row.semifinalist1)) ? row : null;
+}
+/** The real finishing order of one group, once GroupResults has been filled in. */
+function actualGroupOrder(group){
+  const row = (STATE.groupResults || []).find(r => String(r.group) === String(group));
+  return (row && row.pos1) ? [row.pos1, row.pos2, row.pos3, row.pos4] : null;
+}
+/** Mirrors how scoreGeneralPodium() in Code.gs actually pays out:
+ *  'cell-hit'     = exact finishing position (worth podiumPosition points)
+ *  'cell-partial' = reached the real final four, wrong position (overlap bonus) */
+function podiumCellClass(teamId, i, actual){
+  if(!teamId || !actual) return '';
+  // With no 3rd-place match there's no official order between the two losing
+  // semifinalists, so positions 3/4 can't be "exactly right".
+  const positionScoreable = i < 2 || CONFIG.HAS_THIRD_PLACE_MATCH;
+  const exact = [actual.champion, actual.runnerUp, actual.third, actual.fourth];
+  if(positionScoreable && exact[i] && String(exact[i]) === String(teamId)) return 'cell-hit';
+  const finalFour = [actual.semifinalist1, actual.semifinalist2, actual.semifinalist3, actual.semifinalist4]
+    .filter(Boolean).map(String);
+  return finalFour.includes(String(teamId)) ? 'cell-partial' : '';
+}
 function renderGeneralReveal(){
   const revealed = STATE.generalBets.filter(b => b.rank1);
   const stickyBase = `position:sticky; ${LANG==='he'?'right':'left'}:0; background:var(--surface); z-index:1;`;
+  const stickyActual = `position:sticky; ${LANG==='he'?'right':'left'}:0; background:var(--surface-3); z-index:1;`;
   if(!revealed.length){
     return `
     <div class="section-title">${t('generalTitle')}</div>
@@ -2034,10 +1664,17 @@ function renderGeneralReveal(){
   }
   const rows = revealed.map(b => {
     const participant = STATE.participants.find(pp => normEmail(pp.email) === normEmail(b.email));
-    return { name: participant ? participantName(participant) : b.email, b };
+    return { name: participant ? participantName(participant) : esc(b.email), b };
   });
   const groupKeys = Object.keys(CONFIG.GROUPS);
   if(!generalRevealGroupTab || !groupKeys.includes(generalRevealGroupTab)) generalRevealGroupTab = groupKeys[0];
+  const actual = actualFinalResults();
+  const actualGroup = actualGroupOrder(generalRevealGroupTab);
+  const legend = `
+  <div class="reveal-key">
+    <span><span class="swatch" style="background:var(--green-dim);"></span>${t('keyExactHit')}</span>
+    <span><span class="swatch" style="background:var(--amber-dim);"></span>${t('keyPartialHit')}</span>
+  </div>`;
 
   return `
   <div class="section-title">${t('generalTitle')}</div>
@@ -2057,21 +1694,33 @@ function renderGeneralReveal(){
           <th>${t('topScorer')}</th><th>${t('topAssist')}</th>
         </tr></thead>
         <tbody>
+          ${actual ? `<tr class="actual-row">
+            <td style="${stickyActual} font-weight:800;">🏆 ${t('actualResult')}</td>
+            <td>${actual.champion?teamName(actual.champion):'—'}</td>
+            <td>${actual.runnerUp?teamName(actual.runnerUp):'—'}</td>
+            <td>${actual.third?teamName(actual.third):'—'}</td>
+            <td>${actual.fourth?teamName(actual.fourth):'—'}</td>
+            <td>${actual.topScorer?playerName(actual.topScorer):'—'}</td>
+            <td>${actual.topAssist?playerName(actual.topAssist):'—'}</td>
+          </tr>` : ''}
           ${rows.map(({name,b}) => {
             const scorer = findPlayer(b.topScorer), assister = findPlayer(b.topAssist);
+            const scorerHit = actual && actual.topScorer && String(actual.topScorer)===String(b.topScorer);
+            const assistHit = actual && actual.topAssist && String(actual.topAssist)===String(b.topAssist);
             return `<tr>
               <td style="${stickyBase} font-weight:700;">${name}</td>
-              <td>${b.rank1?teamName(b.rank1):'—'}</td>
-              <td>${b.rank2?teamName(b.rank2):'—'}</td>
-              <td>${b.rank3?teamName(b.rank3):'—'}</td>
-              <td>${b.rank4?teamName(b.rank4):'—'}</td>
-              <td>${scorer?playerName(scorer):'—'}</td>
-              <td>${assister?playerName(assister):'—'}</td>
+              ${[1,2,3,4].map(n => {
+                const teamId = b['rank'+n];
+                return `<td class="${podiumCellClass(teamId, n-1, actual)}">${teamId?teamName(teamId):'—'}</td>`;
+              }).join('')}
+              <td class="${scorerHit?'cell-hit':''}">${scorer?playerName(scorer):'—'}</td>
+              <td class="${assistHit?'cell-hit':''}">${assister?playerName(assister):'—'}</td>
             </tr>`;
           }).join('')}
         </tbody>
       </table>
     </div>
+    ${actual ? legend : ''}
   </div>
 
   <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; margin-top:20px;">
@@ -2088,17 +1737,26 @@ function renderGeneralReveal(){
           <th style="${stickyBase}">${t('player')}</th><th>${t('groupPos1')}</th><th>${t('rank2')}</th><th>${t('rank3')}</th><th>${t('rank4')}</th>
         </tr></thead>
         <tbody>
+          ${actualGroup ? `<tr class="actual-row">
+            <td style="${stickyActual} font-weight:800;">🏆 ${t('actualResult')}</td>
+            ${[0,1,2,3].map(i => `<td>${actualGroup[i] ? teamName(actualGroup[i]) : '—'}</td>`).join('')}
+          </tr>` : ''}
           ${rows.map(({name,b}) => {
             const groups = safeParse(b.groupsJSON, null);
             const order = groups && groups[generalRevealGroupTab] ? groups[generalRevealGroupTab] : null;
             return `<tr>
               <td style="${stickyBase} font-weight:700;">${name}</td>
-              ${[0,1,2,3].map(i => `<td>${order && order[i] ? teamName(order[i]) : '—'}</td>`).join('')}
+              ${[0,1,2,3].map(i => {
+                const teamId = order && order[i];
+                const hit = actualGroup && teamId && String(actualGroup[i]) === String(teamId);
+                return `<td class="${hit?'cell-hit':''}">${teamId ? teamName(teamId) : '—'}</td>`;
+              }).join('')}
             </tr>`;
           }).join('')}
         </tbody>
       </table>
     </div>
+    ${actualGroup ? legend : ''}
   </div>
   ${demoBanner()}`;
 }
@@ -2133,11 +1791,12 @@ function wireGeneralForm(){
       groupsJSON[list.dataset.group] = [...list.querySelectorAll('.drag-item')].map(li => li.dataset.team);
     });
     const payload = {
-      type:'generalBet', email: STATE.user.email,
+      type:'generalBet', idToken: requireFreshToken(),
       rank1: fd.get('rank1'), rank2: fd.get('rank2'), rank3: fd.get('rank3'), rank4: fd.get('rank4'),
       topScorer: fd.get('topScorer'), topAssist: fd.get('topAssist'),
-      groupsJSON: JSON.stringify(groupsJSON), timestamp: new Date().toISOString(),
+      groupsJSON: JSON.stringify(groupsJSON),
     };
+    if(!payload.idToken) return;
     const msg = document.getElementById('generalMsg');
     const saveBtn = document.getElementById('generalSaveBtn');
     msg.style.color = 'var(--text-dim)'; msg.textContent = t('saving'); saveBtn.disabled = true;
@@ -2145,7 +1804,8 @@ function wireGeneralForm(){
     // Optimistic: assume the write succeeded (it almost always does) and update
     // the UI immediately instead of waiting on a verification round-trip.
     const idx = STATE.generalBets.findIndex(b => normEmail(b.email)===normEmail(STATE.user.email));
-    const optimisticRow = { email: STATE.user.email, ...payload };
+    const { idToken:_tok, type:_type, ...betFields } = payload;
+    const optimisticRow = { email: STATE.user.email, ...betFields };
     if(idx>=0) STATE.generalBets[idx] = {...STATE.generalBets[idx], ...optimisticRow};
     else STATE.generalBets.push(optimisticRow);
     showToast('✅ ' + t('saved'));
@@ -2254,15 +1914,15 @@ function renderGameCard(g){
   return `
   <div class="game-card">
     <div class="game-meta">
-      <span>${t('group')} ${g.group||'—'} · ${fmtDate(g.kickoffISO)}</span>
+      <span>${t('group')} ${esc(g.group||'—')} · ${fmtDate(g.kickoffISO)}</span>
       <span class="status-pill status-scheduled">${t('statusScheduled')}</span>
     </div>
     <div class="game-teams">
       <div class="team-name">${teamName(g.teamA)}</div>
       <div class="score-inputs">
-        <input type="number" min="0" max="20" data-role="scoreA" value="${bet?bet.betA:''}" required>
+        <input type="number" min="0" max="20" data-role="scoreA" value="${bet?esc(bet.betA):''}" required>
         <span class="score-sep">:</span>
-        <input type="number" min="0" max="20" data-role="scoreB" value="${bet?bet.betB:''}" required>
+        <input type="number" min="0" max="20" data-role="scoreB" value="${bet?esc(bet.betB):''}" required>
       </div>
       <div class="team-name">${teamName(g.teamB)}</div>
     </div>
@@ -2385,7 +2045,7 @@ function renderOneXTwoPie(g, bets){
 function resolveEventPlayerDisplay(ev){
   const p = findPlayer(ev.player);
   if(p) return { name: playerName(p), team: teamName(p.teamId) };
-  return { name: ev.player, team: ev.team ? teamName(ev.team) : '' };
+  return { name: esc(ev.player), team: ev.team ? teamName(ev.team) : '' };
 }
 function eventBreakdownText(events){
   const labels = { goal:t('evGoal'), assist:t('evAssist'), ownGoal:t('evOwnGoal'), redCard:t('evRedCard'), missedPenalty:t('evMissedPenalty'), cleanSheet:t('evCleanSheet'), penaltySave:t('evPenaltySave') };
@@ -2399,7 +2059,7 @@ function renderClosedGameCard(g){
   return `
   <div class="game-card">
     <div class="game-meta">
-      <span>${t('group')} ${g.group||'—'} · ${fmtDate(g.kickoffISO)}</span>
+      <span>${t('group')} ${esc(g.group||'—')} · ${fmtDate(g.kickoffISO)}</span>
       <span class="status-pill status-locked">${t('statusClosed')}</span>
     </div>
     <div class="game-teams" style="margin-bottom:10px;">
@@ -2417,13 +2077,13 @@ function renderClosedGameCard(g){
       <tbody>
         ${bets.map(b => {
           const participant = STATE.participants.find(pp => normEmail(pp.email)===normEmail(b.email));
-          const name = participant ? participantName(participant) : b.email;
+          const name = participant ? participantName(participant) : esc(b.email);
           const tp = findPlayer(b.betTopPlayer);
           const isDouble = isDoubleFlag(b.betDouble);
           return `<tr>
             <td>${name}${isDouble ? ` <span class="rule-value" style="background:var(--amber-dim); color:var(--amber);" title="${t('doubleLabel')}">🔥×2</span>` : ''}</td>
-            <td class="mono"><span class="iso-num">${b.betA ?? '—'}:${b.betB ?? '—'}</span></td>
-            <td>${tp ? playerName(tp) : (b.betTopPlayer || '—')}</td>
+            <td class="mono"><span class="iso-num">${esc(b.betA ?? '—')}:${esc(b.betB ?? '—')}</span></td>
+            <td>${tp ? playerName(tp) : esc(b.betTopPlayer || '—')}</td>
             ${isKnockout(g) ? `<td>${b.betAdvancing ? teamName(b.betAdvancing) : '—'}</td>` : ''}
           </tr>`;
         }).join('')}
@@ -2447,12 +2107,12 @@ function renderPlayedGameCard(g){
       </div>
     </div>
     <div class="game-meta">
-      <span>${t('group')} ${g.group||'—'} · ${fmtDate(g.kickoffISO)}</span>
+      <span>${t('group')} ${esc(g.group||'—')} · ${fmtDate(g.kickoffISO)}</span>
       <span class="status-pill status-${isFinal?'final':'locked'}">${isFinal?t('statusFinal'):t('statusLocked')}</span>
     </div>
     <div class="game-teams" style="margin-bottom:${isKnockout(g)&&g.advancingTeam?'2px':'10px'};">
       <div class="team-name">${teamName(g.teamA)}</div>
-      <div class="mono" style="font-size:22px; font-weight:700;"><span class="iso-num">${isFinal ? `${g.scoreA} : ${g.scoreB}` : '– : –'}</span></div>
+      <div class="mono" style="font-size:22px; font-weight:700;"><span class="iso-num">${isFinal ? `${esc(g.scoreA)} : ${esc(g.scoreB)}` : '– : –'}</span></div>
       <div class="team-name">${teamName(g.teamB)}</div>
     </div>
     ${isKnockout(g) && g.advancingTeam ? `<div class="section-sub" style="text-align:center; margin-bottom:10px;">🏆 ${teamName(g.advancingTeam)}</div>` : ''}
@@ -2468,16 +2128,16 @@ function renderPlayedGameCard(g){
       <tbody>
         ${bets.map(b => {
           const participant = STATE.participants.find(pp => normEmail(pp.email)===normEmail(b.email));
-          const name = participant ? participantName(participant) : b.email;
+          const name = participant ? participantName(participant) : esc(b.email);
           const pts = (b.pointsEarned!==undefined && b.pointsEarned!=='') ? b.pointsEarned : null;
           const tp = findPlayer(b.betTopPlayer);
           const isDouble = isDoubleFlag(b.betDouble);
           return `<tr>
             <td>${name}${isDouble ? ` <span class="rule-value" style="background:var(--amber-dim); color:var(--amber);" title="${t('doubleLabel')}">🔥×2</span>` : ''}</td>
-            <td class="mono"><span class="iso-num">${b.betA ?? '—'}:${b.betB ?? '—'}</span></td>
-            <td>${tp ? playerName(tp) : (b.betTopPlayer || '—')}</td>
+            <td class="mono"><span class="iso-num">${esc(b.betA ?? '—')}:${esc(b.betB ?? '—')}</span></td>
+            <td>${tp ? playerName(tp) : esc(b.betTopPlayer || '—')}</td>
             ${isKnockout(g) ? `<td>${b.betAdvancing ? teamName(b.betAdvancing) : '—'}</td>` : ''}
-            <td class="points-cell"><span class="iso-num">${pts!==null ? pts : '—'}</span></td>
+            <td class="points-cell"><span class="iso-num">${pts!==null ? esc(pts) : '—'}</span></td>
           </tr>`;
         }).join('')}
       </tbody>
@@ -2546,20 +2206,24 @@ function wireGamesForm(){
         showToast('⚠️ ' + t('doubleUsedElsewhere'), true);
         return;
       }
+      // The server identifies us from this signed token alone — no email field,
+      // so there is nothing to tamper with. Timestamps come from the server clock.
+      const idToken = requireFreshToken();
+      if(!idToken) return;
       const payload = {
-        type:'gameBet', email: STATE.user.email, gameId: btn.dataset.id,
+        type:'gameBet', idToken: idToken, gameId: btn.dataset.id,
         betA: scoreAInput.value,
         betB: scoreBInput.value,
         betTopPlayer: topPlayerSelect.value,
         betAdvancing: advSelect ? advSelect.value : '',
         betDouble: wantsDouble ? '1' : '',
-        timestamp: new Date().toISOString(),
       };
       btn.textContent = '⏳'; btn.disabled = true;
       await postBet(payload);
       // Optimistic: assume the write succeeded and update the UI immediately.
       const idx = STATE.gameBets.findIndex(b => normEmail(b.email)===normEmail(STATE.user.email) && String(b.gameId)===String(payload.gameId));
-      const optimisticRow = { email: STATE.user.email, ...payload };
+      const { idToken:_tok, type:_type, ...betFields } = payload;
+      const optimisticRow = { email: STATE.user.email, ...betFields };
       if(idx>=0) STATE.gameBets[idx] = {...STATE.gameBets[idx], ...optimisticRow};
       else STATE.gameBets.push(optimisticRow);
       showToast('✅ ' + t('saved'));
@@ -2781,12 +2445,12 @@ function renderHof(){
       const typeLabel = isEuro ? t('euro') : t('worldcup');
       return `
       <div class="hof-item">
-        <div class="hof-year iso-num">${h.year}</div>
+        <div class="hof-year iso-num">${esc(h.year)}</div>
         <div class="hof-trophy">🏆</div>
         <div>
-          <div class="hof-name">${winner}</div>
-          <div class="hof-sub">${typeLabel} · ${location} · ${t('hofChampionTeam')}: ${champion}</div>
-          <div class="hof-sub">${t('runnerUpLabel')}: ${runnerUp}</div>
+          <div class="hof-name">${esc(winner)}</div>
+          <div class="hof-sub">${typeLabel} · ${esc(location)} · ${t('hofChampionTeam')}: ${esc(champion)}</div>
+          <div class="hof-sub">${t('runnerUpLabel')}: ${esc(runnerUp)}</div>
         </div>
       </div>`;
     }).join('')}
@@ -2800,10 +2464,14 @@ function renderHof(){
 function initGoogleSignIn(){
   if(!window.google || !google.accounts){ setTimeout(initGoogleSignIn, 300); return; }
   google.accounts.id.initialize({
-    client_id: '431204508277-nm33th0fs73s81cpn09ngmmalmbvgso1.apps.googleusercontent.com', // see SETUP.md
+    client_id: GOOGLE_CLIENT_ID, // must match Code.gs's GOOGLE_CLIENT_ID — see SETUP.md
     callback: handleCredentialResponse,
+    auto_select: true, // lets a returning user be re-issued a token without clicking
   });
   renderAuthArea();
+  // A restored session whose token has aged out can still read public data, but
+  // can't write or see its own picks — ask Google to quietly re-issue one.
+  if(STATE.user && !tokenIsFresh()) google.accounts.id.prompt();
 }
 function handleCredentialResponse(resp){
   const payload = JSON.parse(atob(resp.credential.split('.')[1]));
@@ -2815,7 +2483,7 @@ function signOut(){ STATE.user = null; localStorage.removeItem('md_user'); rende
 function renderAuthArea(){
   const wrap = document.getElementById('gsi-btn-wrap');
   if(STATE.user){
-    wrap.innerHTML = `<div class="user-chip"><img src="${STATE.user.picture||''}" onerror="this.style.display='none'"><span class="name">${STATE.user.name}</span><span class="signout" id="signOutBtn" title="${t('signOut')}">⏻</span></div>`;
+    wrap.innerHTML = `<div class="user-chip"><img src="${esc(STATE.user.picture||'')}" onerror="this.style.display='none'"><span class="name">${esc(STATE.user.name)}</span><span class="signout" id="signOutBtn" title="${t('signOut')}">⏻</span></div>`;
     document.getElementById('signOutBtn').onclick = signOut;
   } else {
     wrap.innerHTML = '';
