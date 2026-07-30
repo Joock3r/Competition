@@ -1024,7 +1024,7 @@ const I18N = {
     save:'Save predictions', saved:'Saved — you can edit until the deadline.', choose:'Choose…',
     saving:'Saving…', saveFailed:'Save failed — check the Apps Script deployment (see SETUP.md troubleshooting).',
     sessionExpired:'Your session expired — please sign in again.',
-    gamesTitle:'Games', gamesSub:'Predict the score and pick your top player before kickoff.',
+    gamesTitle:'Games', gamesSub:'Predict the score before kickoff.',
     yourScore:'Your score', topPlayerOfGame:'Top player', kickoff:'Kickoff', group:'Group',
     statusScheduled:'Open', statusLocked:'Locked', statusFinal:'Final', earned:'earned',
     noOpenGames:'No open games right now.', playedGamesTitle:'Played games', playedGamesSub:"Results, everyone's bets, and match events.",
@@ -1044,12 +1044,11 @@ const I18N = {
     worldcup:'World Cup', euro:'Euro', hofChampionTeam:'Champion', runnerUpLabel:'Runner-up',
     loading:'Loading…', demoNote:'Showing sample data — connect your Google Sheet in CONFIG to go live.',
     noGames:'No games yet.', emailFirst:'Sign in to place your predictions.', noParticipants:'No participants yet — add rows to the Participants tab in the Sheet.', noHof:'No past champions yet.',
-    scoreRequired:'Enter a score for both teams.', playerRequired:'Pick a top player before saving.',
+    scoreRequired:'Enter a score for both teams.',
     doubleLabel:'Use my double points on this game', doubleUsedElsewhere:'Your double points are already placed on another game.',
     tipsTitle:'Tips', tipsSub:'A few pointers before you lock in your predictions.',
     tipsGamesTitle:'Filling in match results', tipsGamesList:"Check each team's recent form and head-to-head history before committing to a scoreline.\nConsider injuries, suspensions, and rotation in matches that no longer affect the standings.\nThe outcome (win/draw/loss) is worth points even without the exact score — a safe outcome pick beats a risky exact guess.",
     tipsGeneralTitle:'The General form', tipsGeneralList:"The overlap bonus rewards getting any of your 4 picks into the real final four, even in the wrong order — don't be afraid to include a strong dark horse.\nGroup order predictions score per exact position, so ranking the obvious favorite 1st in every group is usually safer than guessing upsets.\nRevisit your picks before the deadline if squads or the draw change.",
-    tipsPlayerTitle:'Picking the top player of the game', tipsPlayerList:"Scoring rewards goals and assists from defenders and goalkeepers far more than strikers (5 / 2 / 1 / 0.5 by position) — an unlikely scorer is worth more if it happens.\nA clean-sheet or penalty-save pick on a strong defensive goalkeeper can be a safer bet than chasing a striker's goal.\nRemember: it only counts if the player actually plays in the match.",
     tipsBracketTitle:'Qualification odds calculators', tipsBracketSub:"Use these to check each team's real qualification odds before locking in your predictions.",
     teamsTitle:'Teams', teamsSub:'Every squad, with each player\'s tournament totals so far.', posHeader:'Pos', noRosterYet:'No roster added for this team yet.',
     settingsTitle:'Settings', settingsSub:'Add Matchday to your home screen for quick, full-screen access — no browser address bar.',
@@ -1102,7 +1101,7 @@ const I18N = {
     save:'שמירת ניחושים', saved:'נשמר — ניתן לערוך עד למועד הסגירה.', choose:'בחירה…',
     saving:'שומר…', saveFailed:'השמירה נכשלה — בדוק את פריסת ה-Apps Script (ראה פתרון בעיות ב-SETUP.md).',
     sessionExpired:'החיבור שלך פג — יש להתחבר מחדש.',
-    gamesTitle:'משחקים', gamesSub:'נחשו את התוצאה ובחרו את שחקן המשחק לפני הבעיטה הראשונה.',
+    gamesTitle:'משחקים', gamesSub:'נחשו את התוצאה לפני הבעיטה הראשונה.',
     yourScore:'הניחוש שלך', topPlayerOfGame:'שחקן המשחק', kickoff:'שעת התחלה', group:'בית',
     statusScheduled:'פתוח', statusLocked:'נעול', statusFinal:'הסתיים', earned:'נצברו',
     noOpenGames:'אין משחקים פתוחים כרגע.', playedGamesTitle:'משחקים ששוחקו', playedGamesSub:'תוצאות, ההימורים של כולם, ואירועי המשחק.',
@@ -1122,12 +1121,11 @@ const I18N = {
     worldcup:'מונדיאל', euro:'יורו', hofChampionTeam:'אלופת הטורניר', runnerUpLabel:'מקום שני',
     loading:'טוען…', demoNote:'מוצגים נתוני דוגמה — חברו את הגיליון שלכם ב-CONFIG כדי לעלות לאוויר.',
     noGames:'אין משחקים עדיין.', emailFirst:'התחברו כדי להזין ניחושים.', noParticipants:'עדיין אין משתתפים — הוסיפו שורות לטאב Participants בגיליון.', noHof:'עדיין אין אלופים קודמים.',
-    scoreRequired:'יש להזין תוצאה לשתי הקבוצות.', playerRequired:'יש לבחור שחקן משחק לפני השמירה.',
+    scoreRequired:'יש להזין תוצאה לשתי הקבוצות.',
     doubleLabel:'השתמש בדאבל ניקוד למשחק זה', doubleUsedElsewhere:'הדאבל שלך כבר מוצב על משחק אחר.',
     tipsTitle:'המלצות', tipsSub:'כמה טיפים לפני שנועלים ניחושים.',
     tipsGamesTitle:'מילוי תוצאות משחקים', tipsGamesList:'תבדקו את הפורמה האחרונה של שתי הקבוצות ואת ההיסטוריה ביניהן לפני שקובעים תוצאה.\nשימו לב לפציעות, השעיות, ורוטציה במשחקים שכבר לא משנים כלום מבחינה טורנירית.\nגם בלי לקלוע לתוצאה המדויקת, ניחוש נכון של התוצאה (ניצחון/תיקו/הפסד) כבר שווה נקודות — עדיף ניחוש בטוח על פני הימור מדויק מסוכן.',
     tipsGeneralTitle:'הטופס הכללי', tipsGeneralList:'בונוס ההתאמה מזכה גם אם הקבוצה שבחרתם הגיעה לחצי הגמר במיקום אחר ממה שניחשתם — אל תפחדו לכלול קבוצת חושך חזקה בין הארבע.\nניחושי סדר הבתים מנוקדים לפי מיקום מדויק, אז דירוג המועדפת הברורה במקום הראשון בכל בית בדרך כלל בטוח יותר מניחוש הפתעות.\nכדאי לחזור ולבדוק את החבירות לפני מועד הנעילה.',
-    tipsPlayerTitle:'בחירת שחקן המשחק', tipsPlayerList:'הניקוד מתגמל שערים ובישולים של מגנים ושוערים הרבה יותר משל חלוצים (5 / 2 / 1 / 0.5 לפי תפקיד) — שער לא צפוי שווה יותר אם הוא קורה.\nבחירת שוער חזק בהגנה עם סיכוי לשער נקי או עצירת פנדל יכולה להיות הימור בטוח יותר מרדיפה אחרי שער של חלוץ.\nזכרו: זה נספר רק אם השחקן באמת שיחק במשחק.',
     tipsBracketTitle:'מחשבוני סיכויי העפלה', tipsBracketSub:'השתמשו בהם כדי לבדוק את סיכויי ההעפלה האמיתיים של כל נבחרת לפני שאתם נועלים ניחושים.',
     teamsTitle:'נבחרות', teamsSub:'כל הסגלים, עם הסטטיסטיקה המצטברת של כל שחקן בטורניר עד כה.', posHeader:'תפקיד', noRosterYet:'עדיין לא הוזן סגל לקבוצה הזו.',
     settingsTitle:'הגדרות', settingsSub:'הוסיפו את מאצדיי למסך הבית לגישה מהירה, במסך מלא — בלי סרגל כתובת של הדפדפן.',
@@ -1187,7 +1185,9 @@ function teamName(teamId){
   const t = CONFIG.TEAMS[teamId];
   if(!t) return teamId;
   const label = t[LANG] || t.en || teamId;
-  return t.flag ? `${t.flag} ${label}` : label;
+  // Isolate the flag as its own LTR run — some flags (e.g. England/Scotland's
+  // tag-sequence flags) otherwise get bidi-reordered to the wrong side in RTL.
+  return t.flag ? `\u2066${t.flag}\u2069 ${label}` : label;
 }
 function allPlayersFlat(){
   return Object.entries(CONFIG.ROSTERS).flatMap(([teamId, squad]) => squad.map(p => ({...p, teamId})));
@@ -1612,10 +1612,6 @@ function renderTips(){
     </div>
   </div>
   <div class="card">
-    <div class="card-title">🎯 ${t('tipsPlayerTitle')}</div>
-    <ul style="padding-inline-start:18px; font-size:13.5px; color:var(--text-dim); margin:0;">${tipList('tipsPlayerList')}</ul>
-  </div>
-  <div class="card">
     <div class="card-title">📊 ${t('tipsBracketTitle')}</div>
     <div class="section-sub" style="margin-bottom:14px;">${t('tipsBracketSub')}</div>
     <div style="display:flex; flex-direction:column; gap:8px;">
@@ -1806,7 +1802,12 @@ function renderSettings(){
 
 /* ---- ADMIN (hidden, visible only to ADMIN_EMAIL) ---- */
 function renderAdmin(){
-  const allGames = [...STATE.games].sort((a,b) => new Date(b.kickoffISO) - new Date(a.kickoffISO));
+  // Only future games, or games whose kickoff was within the last 24h — keeps
+  // the admin dropdowns short so old games don't need to be scrolled past.
+  const ADMIN_GAME_WINDOW_MS = 24*3600*1000;
+  const allGames = [...STATE.games]
+    .filter(g => new Date(g.kickoffISO).getTime() + ADMIN_GAME_WINDOW_MS > Date.now())
+    .sort((a,b) => new Date(b.kickoffISO) - new Date(a.kickoffISO));
   const gameOptions = g => `<option value="${g.id}">${teamName(g.teamA)} – ${teamName(g.teamB)} (${g.id}, ${g.status})</option>`;
   return `
   <div class="section-title">🔧 ${t('adminTitle')}</div>
@@ -1817,13 +1818,13 @@ function renderAdmin(){
     <form id="adminResultForm">
       <div class="field">
         <label>${t('adminSelectGame')}</label>
-        <select name="gameId" required>${allGames.map(gameOptions).join('')}</select>
+        <select name="gameId" id="adminResultGame" required>${allGames.map(gameOptions).join('')}</select>
       </div>
       <div class="podium-grid" style="grid-template-columns:1fr 1fr;">
         <div class="field"><label>${t('adminScoreA')}</label><input type="number" name="scoreA" min="0" max="20" required></div>
         <div class="field"><label>${t('adminScoreB')}</label><input type="number" name="scoreB" min="0" max="20" required></div>
       </div>
-      <div class="field">
+      <div class="field" id="adminAdvancingField">
         <label>${t('adminAdvancingTeam')}</label>
         <select name="advancingTeam"><option value="">${t('choose')}</option>
           ${Object.keys(CONFIG.TEAMS).map(id => `<option value="${id}">${teamName(id)}</option>`).join('')}
@@ -1884,6 +1885,14 @@ function adminRosterOptions(gameId){
 }
 
 function wireAdmin(){
+  const resultGameSelect = document.getElementById('adminResultGame');
+  const advancingField = document.getElementById('adminAdvancingField');
+  const refreshAdvancingVisibility = () => {
+    const g = STATE.games.find(gm => String(gm.id) === String(resultGameSelect.value));
+    advancingField.style.display = (g && isKnockout(g)) ? '' : 'none';
+  };
+  if(resultGameSelect){ refreshAdvancingVisibility(); resultGameSelect.addEventListener('change', refreshAdvancingVisibility); }
+
   const eventGameSelect = document.getElementById('adminEventGame');
   const eventPlayerSelect = document.getElementById('adminEventPlayer');
   const refreshPlayers = () => { eventPlayerSelect.innerHTML = adminRosterOptions(eventGameSelect.value); };
@@ -2256,10 +2265,6 @@ function renderGames(){
 
 function renderGameCard(g){
   const bet = betFor(g.id);
-  const roster = [
-    ...(CONFIG.ROSTERS[g.teamA]||[]).map(p => ({...p, teamId:g.teamA})),
-    ...(CONFIG.ROSTERS[g.teamB]||[]).map(p => ({...p, teamId:g.teamB})),
-  ];
   return `
   <div class="game-card">
     <div class="game-meta">
@@ -2276,16 +2281,6 @@ function renderGameCard(g){
       <div class="team-name">${teamName(g.teamB)}</div>
     </div>
     ${SHOW_TIMER ? `<div class="section-sub" style="text-align:center; margin-bottom:10px;">⏱ ${t('timerLabel')} <span class="countdown-timer" data-until="${g.kickoffISO}">--:--:--</span></div>` : ''}
-    <div class="field" style="margin-bottom:8px;">
-      <label>${t('topPlayerOfGame')}</label>
-      <div style="display:flex; gap:8px; align-items:center;">
-        <select data-role="topPlayer" style="flex:1;" required>
-          <option value="">${t('choose')}</option>
-          ${roster.map(p => `<option value="${p.id}" ${bet && bet.betTopPlayer===p.id?'selected':''}>${playerName(p)} (${p.pos}) — ${teamName(p.teamId)}</option>`).join('')}
-        </select>
-        <button class="icon-btn" data-role="saveGame" data-id="${g.id}" title="${t('save')}" style="flex-shrink:0; font-size:18px; padding:8px 13px; line-height:1;">💾</button>
-      </div>
-    </div>
     ${isKnockout(g) ? `
     <div class="field" style="margin-bottom:8px;">
       <label>${advancingFieldLabel(g)}</label>
@@ -2298,11 +2293,14 @@ function renderGameCard(g){
     ${(() => {
       const usedElsewhere = myDoubleGameId() && myDoubleGameId() !== String(g.id);
       const checked = bet && isDoubleFlag(bet.betDouble);
-      return `<label class="double-label" style="display:flex; align-items:center; gap:8px; font-size:12.5px; color:${usedElsewhere?'var(--text-faint)':'var(--text-dim)'}; margin-top:4px; ${usedElsewhere?'opacity:.6;':'cursor:pointer;'}">
+      return `<label class="double-label" style="display:flex; align-items:center; gap:8px; font-size:12.5px; color:${usedElsewhere?'var(--text-faint)':'var(--text-dim)'}; margin-top:4px; margin-bottom:12px; ${usedElsewhere?'opacity:.6;':'cursor:pointer;'}">
         <input type="checkbox" data-role="double" data-saved-locked="${usedElsewhere?'1':''}" ${checked?'checked':''} ${usedElsewhere?'disabled':''} style="width:16px; height:16px; accent-color:var(--amber);">
         🔥 ${t('doubleLabel')}${usedElsewhere ? ` — ${t('doubleUsedElsewhere')}` : ''}
       </label>`;
     })()}
+    <div style="display:flex; justify-content:flex-end;">
+      <button class="icon-btn" data-role="saveGame" data-id="${g.id}" title="${t('save')}" style="font-size:18px; padding:8px 13px; line-height:1;">💾</button>
+    </div>
   </div>`;
 }
 
@@ -2538,17 +2536,11 @@ function wireGamesForm(){
       const card = btn.closest('.game-card');
       const scoreAInput = card.querySelector('[data-role="scoreA"]');
       const scoreBInput = card.querySelector('[data-role="scoreB"]');
-      const topPlayerSelect = card.querySelector('[data-role="topPlayer"]');
       const advSelect = card.querySelector('[data-role="advancing"]');
       const doubleCheckbox = card.querySelector('[data-role="double"]');
       if(scoreAInput.value==='' || scoreBInput.value===''){
         showToast('⚠️ ' + t('scoreRequired'), true);
         (scoreAInput.value===''? scoreAInput : scoreBInput).focus();
-        return;
-      }
-      if(!topPlayerSelect.value){
-        showToast('⚠️ ' + t('playerRequired'), true);
-        topPlayerSelect.focus();
         return;
       }
       const wantsDouble = doubleCheckbox && doubleCheckbox.checked;
@@ -2560,7 +2552,6 @@ function wireGamesForm(){
         type:'gameBet', email: STATE.user.email, gameId: btn.dataset.id,
         betA: scoreAInput.value,
         betB: scoreBInput.value,
-        betTopPlayer: topPlayerSelect.value,
         betAdvancing: advSelect ? advSelect.value : '',
         betDouble: wantsDouble ? '1' : '',
         timestamp: new Date().toISOString(),
