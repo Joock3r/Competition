@@ -182,12 +182,15 @@ html[dir="rtl"] .group-editor h4{font-family:var(--font-he); letter-spacing:norm
 .saved-banner{background:var(--green-dim); border:1px solid var(--green); color:var(--text); padding:10px 14px; border-radius:8px; font-size:13.5px; margin-bottom:16px;}
 
 /* ---------- Games ---------- */
-.game-card{border:1px solid var(--border); border-radius:var(--radius-lg); padding:16px; margin-bottom:12px; background:var(--surface);}
-.game-meta{display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; font-size:11.5px; color:var(--text-faint); text-transform:uppercase; letter-spacing:.4px;}
-.game-teams{display:flex; align-items:center; justify-content:center; gap:18px; margin-bottom:14px;}
-.team-name{font-weight:800; font-size:15px; flex:1; text-align:center;}
-.score-inputs{display:flex; align-items:center; gap:10px; direction:ltr;}
-.score-inputs input{width:52px; text-align:center; font-family:var(--font-mono); font-size:20px; font-weight:700; background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:8px 4px; color:var(--amber);}
+.games-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+.games-grid > .card{grid-column:1 / -1;}
+@media(max-width:720px){.games-grid{grid-template-columns:1fr;}}
+.game-card{border:1px solid var(--border); border-radius:var(--radius-lg); padding:12px; margin-bottom:0; background:var(--surface);}
+.game-meta{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; font-size:10.5px; color:var(--text-faint); text-transform:uppercase; letter-spacing:.4px;}
+.game-teams{display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:10px;}
+.team-name{font-weight:800; font-size:13px; flex:1; text-align:center;}
+.score-inputs{display:flex; align-items:center; gap:6px; direction:ltr;}
+.score-inputs input{width:42px; text-align:center; font-family:var(--font-mono); font-size:16px; font-weight:700; background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:6px 4px; color:var(--amber);}
 .score-sep{font-family:var(--font-mono); font-weight:700; color:var(--text-faint);}
 .status-pill{font-size:10px; font-weight:800; padding:3px 8px; border-radius:20px; text-transform:uppercase;}
 .status-scheduled{background:var(--surface-3); color:var(--text-dim);}
@@ -1051,7 +1054,7 @@ const I18N = {
     tipsGeneralTitle:'The General form', tipsGeneralList:"The overlap bonus rewards getting any of your 4 picks into the real final four, even in the wrong order — don't be afraid to include a strong dark horse.\nGroup order predictions score per exact position, so ranking the obvious favorite 1st in every group is usually safer than guessing upsets.\nRevisit your picks before the deadline if squads or the draw change.",
     tipsBracketTitle:'Qualification odds calculators', tipsBracketSub:"Use these to check each team's real qualification odds before locking in your predictions.",
     teamsTitle:'Teams', teamsSub:'Every squad, with each player\'s tournament totals so far.', posHeader:'Pos', noRosterYet:'No roster added for this team yet.',
-    settingsTitle:'Settings', settingsSub:'Add Matchday to your home screen for quick, full-screen access — no browser address bar.',
+    settingsTitle:'Install as App', settingsSub:'Add Matchday to your home screen for quick, full-screen access — no browser address bar.',
     installIOSTitle:'iPhone / iPad (Safari)',
     installIOS1:'Open this site in Safari (not Chrome — Add to Home Screen only works from Safari on iOS).',
     installIOS2:'Tap the Share button (the square with an arrow pointing up) in the toolbar.',
@@ -1128,7 +1131,7 @@ const I18N = {
     tipsGeneralTitle:'הטופס הכללי', tipsGeneralList:'בונוס ההתאמה מזכה גם אם הקבוצה שבחרתם הגיעה לחצי הגמר במיקום אחר ממה שניחשתם — אל תפחדו לכלול קבוצת חושך חזקה בין הארבע.\nניחושי סדר הבתים מנוקדים לפי מיקום מדויק, אז דירוג המועדפת הברורה במקום הראשון בכל בית בדרך כלל בטוח יותר מניחוש הפתעות.\nכדאי לחזור ולבדוק את החבירות לפני מועד הנעילה.',
     tipsBracketTitle:'מחשבוני סיכויי העפלה', tipsBracketSub:'השתמשו בהם כדי לבדוק את סיכויי ההעפלה האמיתיים של כל נבחרת לפני שאתם נועלים ניחושים.',
     teamsTitle:'נבחרות', teamsSub:'כל הסגלים, עם הסטטיסטיקה המצטברת של כל שחקן בטורניר עד כה.', posHeader:'תפקיד', noRosterYet:'עדיין לא הוזן סגל לקבוצה הזו.',
-    settingsTitle:'הגדרות', settingsSub:'הוסיפו את מאצדיי למסך הבית לגישה מהירה, במסך מלא — בלי סרגל כתובת של הדפדפן.',
+    settingsTitle:'התקנה כאפליקציה', settingsSub:'הוסיפו את מאצדיי למסך הבית לגישה מהירה, במסך מלא — בלי סרגל כתובת של הדפדפן.',
     installIOSTitle:'אייפון / אייפד (ספארי)',
     installIOS1:'פתחו את האתר בספארי (לא כרום — "הוספה למסך הבית" עובד רק מספארי ב-iOS).',
     installIOS2:'הקישו על כפתור השיתוף (הריבוע עם החץ כלפי מעלה) בסרגל הכלים.',
@@ -2262,7 +2265,7 @@ function renderGames(){
     <button class="filter-chip ${openGamesFilter==='unfilled'?'active':''}" data-filter="unfilled">${t('filterUnfilled')} (${unfilledCount})</button>
     <button class="filter-chip ${openGamesFilter==='filled'?'active':''}" data-filter="filled">${t('filterFilled')} (${filledCount})</button>
   </div>` : ''}
-  ${body}
+  <div class="games-grid">${body}</div>
   ${demoBanner()}`;
 }
 
