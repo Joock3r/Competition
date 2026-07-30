@@ -2106,8 +2106,11 @@ function isGeneralLocked(){ return new Date() > new Date(CONFIG.GENERAL_DEADLINE
 function renderGeneral(){
   const locked = isGeneralLocked();
   const existing = currentGeneralBet();
-  const allTeams = Object.values(CONFIG.GROUPS).flat();
-  const allPlayers = allPlayersFlat();
+  const teamLabel = id => CONFIG.TEAMS[id][LANG] || CONFIG.TEAMS[id].en || id;
+  const allTeams = Object.values(CONFIG.GROUPS).flat()
+    .sort((a,b) => teamLabel(a).localeCompare(teamLabel(b), LANG==='he'?'he':'en'));
+  const allPlayers = allPlayersFlat()
+    .sort((a,b) => teamLabel(a.teamId).localeCompare(teamLabel(b.teamId), LANG==='he'?'he':'en'));
   const existingGroups = existing ? safeParse(existing.groupsJSON, null) : null;
   const myParticipant = STATE.user ? STATE.participants.find(p => normEmail(p.email) === normEmail(STATE.user.email)) : null;
 
