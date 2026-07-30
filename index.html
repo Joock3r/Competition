@@ -1240,6 +1240,10 @@ function teamNameNoFlag(teamId){
 function teamNameOrTBDNoFlag(teamId){
   return (teamId && CONFIG.TEAMS[teamId]) ? teamNameNoFlag(teamId) : t('tbd');
 }
+/** Real flag image + team name, for HTML contexts (labels, list rows) that aren't a native <option>/<optgroup>. */
+function teamFlagAndName(teamId){
+  return `${flagBadgeHTML(teamId)} ${teamNameOrTBDNoFlag(teamId)}`.trim();
+}
 /** Human-readable knockout stage label (Round of 16 / Quarter-final / etc.) — see Code.gs for the exact `stage` codes used in the Games sheet. */
 function stageLabel(g){
   const labels = { r16:t('stageR16'), qf:t('stageQf'), sf:t('stageSf'), '3rd':t('stage3rd'), final:t('stageFinal') };
@@ -1414,7 +1418,16 @@ function renderShell(){
   document.querySelectorAll('.tab-btn').forEach(b => b.onclick = () => {
     currentTab = b.dataset.tab;
     renderAll();
-    loadAllData().then(renderAll); // re-sync with the server on every tab switch
+    // Re-sync with the server on every tab switch, but if the General form is
+    // showing, snapshot whatever the user has picked so far (right before the
+    // fetch resolves, since they may keep clicking during the round-trip) and
+    // reapply it on top of the freshly rendered form — otherwise this silent
+    // background refresh can wipe out a selection made while it was in flight.
+    loadAllData().then(() => {
+      const snapshot = currentTab==='general' ? captureGeneralFormState() : null;
+      renderAll();
+      restoreGeneralFormState(snapshot);
+    });
   });
 }
 
@@ -1923,12 +1936,15 @@ function renderAdmin(){
         <select name="gameId" id="adminResultGame" required>${allGames.map(gameOptions).join('')}</select>
       </div>
       <div class="podium-grid" style="grid-template-columns:1fr 1fr;">
-        <div class="field"><label id="adminScoreALabel">${t('adminScoreFor', allGames[0] ? teamNameOrTBDNoFlag(allGames[0].teamA) : '')}</label><select name="scoreA" id="adminScoreA" required>${scoreOptions()}</select></div>
-        <div class="field"><label id="adminScoreBLabel">${t('adminScoreFor', allGames[0] ? teamNameOrTBDNoFlag(allGames[0].teamB) : '')}</label><select name="scoreB" id="adminScoreB" required>${scoreOptions()}</select></div>
+        <div class="field"><label id="adminScoreALabel">${t('adminScoreFor', allGames[0] ? teamFlagAndName(allGames[0].teamA) : '')}</label><select name="scoreA" id="adminScoreA" required>${scoreOptions()}</select></div>
+        <div class="field"><label id="adminScoreBLabel">${t('adminScoreFor', allGames[0] ? teamFlagAndName(allGames[0].teamB) : '')}</label><select name="scoreB" id="adminScoreB" required>${scoreOptions()}</select></div>
       </div>
       <div class="field" id="adminAdvancingField">
         <label>${t('adminAdvancingTeam')}</label>
-        <select name="advancingTeam" id="adminAdvancingSelect"><option value="">${t('choose')}</option></select>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span class="select-flag" data-flag-for="adminAdvancingSelect" style="font-size:19px; line-height:1; width:1.3em; text-align:center; flex-shrink:0;"></span>
+          <select name="advancingTeam" id="adminAdvancingSelect" style="flex:1;"><option value="">${t('choose')}</option></select>
+        </div>
       </div>
       <button class="btn" type="submit">${t('adminSaveResult')}</button>
       <div id="adminResultMsg" style="margin-top:8px; font-size:13px;"></div>
@@ -1944,7 +1960,10 @@ function renderAdmin(){
       </div>
       <div class="field">
         <label>${t('adminSelectPlayer')}</label>
-        <select name="playerId" id="adminEventPlayer" required></select>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span class="select-flag" data-flag-for="adminEventPlayer" style="font-size:19px; line-height:1; width:1.3em; text-align:center; flex-shrink:0;"></span>
+          <select name="playerId" id="adminEventPlayer" required style="flex:1;"></select>
+        </div>
       </div>
       <div class="podium-grid" style="grid-template-columns:1fr 1fr;">
         <div class="field">
@@ -2003,21 +2022,30 @@ function wireAdmin(){
   const advancingSelect = document.getElementById('adminAdvancingSelect');
   const scoreALabel = document.getElementById('adminScoreALabel');
   const scoreBLabel = document.getElementById('adminScoreBLabel');
+  const advancingFlag = document.querySelector('[data-flag-for="adminAdvancingSelect"]');
   const refreshAdvancingVisibility = () => {
     const g = STATE.games.find(gm => String(gm.id) === String(resultGameSelect.value));
-    scoreALabel.textContent = t('adminScoreFor', g ? teamNameOrTBDNoFlag(g.teamA) : '');
-    scoreBLabel.textContent = t('adminScoreFor', g ? teamNameOrTBDNoFlag(g.teamB) : '');
+    scoreALabel.innerHTML = t('adminScoreFor', g ? teamFlagAndName(g.teamA) : '');
+    scoreBLabel.innerHTML = t('adminScoreFor', g ? teamFlagAndName(g.teamB) : '');
     const knockout = g && isKnockout(g);
     advancingField.style.display = knockout ? '' : 'none';
     advancingSelect.innerHTML = `<option value="">${t('choose')}</option>` +
       (knockout ? [g.teamA, g.teamB].map(id => `<option value="${id}">${teamNameOrTBDNoFlag(id)}</option>`).join('') : '');
+    if(advancingFlag) advancingFlag.innerHTML = '';
   };
   if(resultGameSelect){ refreshAdvancingVisibility(); resultGameSelect.addEventListener('change', refreshAdvancingVisibility); }
+  if(advancingSelect && advancingFlag) advancingSelect.addEventListener('change', () => { advancingFlag.innerHTML = flagBadgeHTML(advancingSelect.value); });
 
   const eventGameSelect = document.getElementById('adminEventGame');
   const eventPlayerSelect = document.getElementById('adminEventPlayer');
-  const refreshPlayers = () => { eventPlayerSelect.innerHTML = adminRosterOptions(eventGameSelect.value); };
+  const eventPlayerFlag = document.querySelector('[data-flag-for="adminEventPlayer"]');
+  const refreshEventPlayerFlag = () => {
+    const opt = eventPlayerSelect.selectedOptions[0];
+    if(eventPlayerFlag) eventPlayerFlag.innerHTML = opt ? flagBadgeHTML(opt.dataset.team) : '';
+  };
+  const refreshPlayers = () => { eventPlayerSelect.innerHTML = adminRosterOptions(eventGameSelect.value); refreshEventPlayerFlag(); };
   if(eventGameSelect){ refreshPlayers(); eventGameSelect.addEventListener('change', refreshPlayers); }
+  if(eventPlayerSelect){ eventPlayerSelect.addEventListener('change', refreshEventPlayerFlag); }
 
   const viewEventsSelect = document.getElementById('adminViewEventsGame');
   const eventsListEl = document.getElementById('adminEventsList');
@@ -2366,6 +2394,40 @@ function wireGeneralForm(){
     });
   });
 }
+/** Snapshot of in-progress (unsaved) General-form edits — field values plus each
+ *  group's drag-reordered team order — taken right before a background re-render. */
+function captureGeneralFormState(){
+  const form = document.getElementById('generalForm');
+  if(!form) return null;
+  const values = {};
+  form.querySelectorAll('input[name], select[name]').forEach(el => { values[el.name] = el.value; });
+  const groups = {};
+  form.querySelectorAll('.drag-list[data-group]').forEach(list => {
+    groups[list.dataset.group] = Array.from(list.querySelectorAll('.drag-item')).map(li => li.dataset.team);
+  });
+  return { values, groups };
+}
+/** Reapplies a captureGeneralFormState() snapshot onto a freshly re-rendered form. */
+function restoreGeneralFormState(snapshot){
+  if(!snapshot) return;
+  const form = document.getElementById('generalForm');
+  if(!form) return;
+  Object.entries(snapshot.values).forEach(([name, value]) => {
+    const el = form.querySelector(`[name="${name}"]`);
+    if(!el || el.value === value) return;
+    el.value = value;
+    el.dispatchEvent(new Event('change')); // keeps the adjacent flag badge in sync
+  });
+  Object.entries(snapshot.groups).forEach(([g, order]) => {
+    const list = form.querySelector(`.drag-list[data-group="${g}"]`);
+    if(!list || !order.length) return;
+    order.forEach(teamId => {
+      const li = list.querySelector(`[data-team="${teamId}"]`);
+      if(li) list.appendChild(li);
+    });
+    renumberGroup(list);
+  });
+}
 function renumberGroup(list){ list.querySelectorAll('.drag-item').forEach((li,i) => li.querySelector('.drag-pos').textContent = i+1); }
 function fmtDate(iso){
   const s = new Date(iso).toLocaleString(LANG==='he'?'he-IL':'en-GB', {dateStyle:'medium', timeStyle:'short'});
@@ -2588,8 +2650,8 @@ function renderOneXTwoPie(g, bets){
 }
 function resolveEventPlayerDisplay(ev){
   const p = findPlayer(ev.player);
-  if(p) return { name: playerName(p), team: teamName(p.teamId) };
-  return { name: ev.player, team: ev.team ? teamName(ev.team) : '' };
+  if(p) return { name: playerName(p), team: teamNameHTML(p.teamId) };
+  return { name: ev.player, team: ev.team ? teamNameHTML(ev.team) : '' };
 }
 function eventBreakdownText(events){
   const labels = { goal:t('evGoal'), assist:t('evAssist'), ownGoal:t('evOwnGoal'), redCard:t('evRedCard'), missedPenalty:t('evMissedPenalty'), cleanSheet:t('evCleanSheet'), penaltySave:t('evPenaltySave') };
