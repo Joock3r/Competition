@@ -15,6 +15,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Manrope:wght@400;500;700;800&family=Heebo:wght@400;500;700;800&display=swap" rel="stylesheet">
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script type="module" defer>
+  import { polyfillCountryFlagEmojis } from "https://cdn.skypack.dev/country-flag-emoji-polyfill";
+  polyfillCountryFlagEmojis();
+</script>
 <style>
 /* =========================================================
    DESIGN TOKENS
@@ -28,7 +32,7 @@
   --amber:#ffb020; --amber-dim:#8a611c; --green:#4c9a6a; --green-dim:#2c4636;
   --red:#e2564f; --red-dim:#4a2723; --blue:#5b8fd6;
   --radius:10px; --radius-lg:16px;
-  --font-en:'Manrope',sans-serif; --font-he:'Heebo',sans-serif; --font-mono:'Space Mono',monospace;
+  --font-en:'Twemoji Country Flags','Manrope',sans-serif; --font-he:'Twemoji Country Flags','Heebo',sans-serif; --font-mono:'Space Mono',monospace;
   --shadow: 0 8px 24px rgba(0,0,0,.35);
 }
 html[data-theme="light"]{
