@@ -1874,14 +1874,14 @@ function renderAdmin(){
   </div>`;
 }
 
-function adminRosterOptions(gameId){
+function adminRosterOptions(gameId, selectedId){
   const g = STATE.games.find(gm => String(gm.id) === String(gameId));
   if(!g) return '';
   const roster = [
     ...(CONFIG.ROSTERS[g.teamA]||[]).map(p => ({...p, teamId:g.teamA})),
     ...(CONFIG.ROSTERS[g.teamB]||[]).map(p => ({...p, teamId:g.teamB})),
   ];
-  return roster.map(p => `<option value="${p.id}" data-team="${p.teamId}" data-pos="${p.pos}">${playerName(p)} (${p.pos}) — ${teamName(p.teamId)}</option>`).join('');
+  return roster.map(p => `<option value="${p.id}" data-team="${p.teamId}" data-pos="${p.pos}" ${selectedId && String(selectedId)===String(p.id)?'selected':''}>${playerName(p)} (${p.pos}) — ${teamName(p.teamId)}</option>`).join('');
 }
 
 function wireAdmin(){
@@ -2281,6 +2281,13 @@ function renderGameCard(g){
       <div class="team-name">${teamName(g.teamB)}</div>
     </div>
     ${SHOW_TIMER ? `<div class="section-sub" style="text-align:center; margin-bottom:10px;">⏱ ${t('timerLabel')} <span class="countdown-timer" data-until="${g.kickoffISO}">--:--:--</span></div>` : ''}
+    <div class="field" style="margin-bottom:8px;">
+      <label>${t('topPlayerOfGame')}</label>
+      <select data-role="topPlayer">
+        <option value="">${t('choose')}</option>
+        ${adminRosterOptions(g.id, bet ? bet.betTopPlayer : '')}
+      </select>
+    </div>
     ${isKnockout(g) ? `
     <div class="field" style="margin-bottom:8px;">
       <label>${advancingFieldLabel(g)}</label>
@@ -2537,6 +2544,7 @@ function wireGamesForm(){
       const scoreAInput = card.querySelector('[data-role="scoreA"]');
       const scoreBInput = card.querySelector('[data-role="scoreB"]');
       const advSelect = card.querySelector('[data-role="advancing"]');
+      const topPlayerSelect = card.querySelector('[data-role="topPlayer"]');
       const doubleCheckbox = card.querySelector('[data-role="double"]');
       if(scoreAInput.value==='' || scoreBInput.value===''){
         showToast('⚠️ ' + t('scoreRequired'), true);
@@ -2552,6 +2560,7 @@ function wireGamesForm(){
         type:'gameBet', email: STATE.user.email, gameId: btn.dataset.id,
         betA: scoreAInput.value,
         betB: scoreBInput.value,
+        betTopPlayer: topPlayerSelect ? topPlayerSelect.value : '',
         betAdvancing: advSelect ? advSelect.value : '',
         betDouble: wantsDouble ? '1' : '',
         timestamp: new Date().toISOString(),
