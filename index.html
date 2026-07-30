@@ -1236,6 +1236,10 @@ function teamNameNoFlag(teamId){
   if(!tm) return teamId;
   return tm[LANG] || tm.en || teamId;
 }
+/** Same as teamNameOrTBD(), but flag-free — for <option>/<optgroup> text (admin selects etc.). */
+function teamNameOrTBDNoFlag(teamId){
+  return (teamId && CONFIG.TEAMS[teamId]) ? teamNameNoFlag(teamId) : t('tbd');
+}
 /** Human-readable knockout stage label (Round of 16 / Quarter-final / etc.) — see Code.gs for the exact `stage` codes used in the Games sheet. */
 function stageLabel(g){
   const labels = { r16:t('stageR16'), qf:t('stageQf'), sf:t('stageSf'), '3rd':t('stage3rd'), final:t('stageFinal') };
@@ -1897,7 +1901,7 @@ function renderAdmin(){
   const ADMIN_GAME_WINDOW_MS = 24*3600*1000;
   const allGames = [...STATE.games]
     .filter(g => g.status === 'scheduled' && new Date(g.kickoffISO).getTime() + ADMIN_GAME_WINDOW_MS > Date.now());
-  const gameOptions = g => `<option value="${g.id}">${t('adminSelectGame')} ${String(g.id).replace(/^G/i,'')} - ${teamNameOrTBD(g.teamA)} - ${teamNameOrTBD(g.teamB)}</option>`;
+  const gameOptions = g => `<option value="${g.id}">${t('adminSelectGame')} ${String(g.id).replace(/^G/i,'')} - ${teamNameOrTBDNoFlag(g.teamA)} - ${teamNameOrTBDNoFlag(g.teamB)}</option>`;
   return `
   <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
     <div>
@@ -1919,8 +1923,8 @@ function renderAdmin(){
         <select name="gameId" id="adminResultGame" required>${allGames.map(gameOptions).join('')}</select>
       </div>
       <div class="podium-grid" style="grid-template-columns:1fr 1fr;">
-        <div class="field"><label id="adminScoreALabel">${t('adminScoreFor', allGames[0] ? teamNameOrTBD(allGames[0].teamA) : '')}</label><select name="scoreA" id="adminScoreA" required>${scoreOptions()}</select></div>
-        <div class="field"><label id="adminScoreBLabel">${t('adminScoreFor', allGames[0] ? teamNameOrTBD(allGames[0].teamB) : '')}</label><select name="scoreB" id="adminScoreB" required>${scoreOptions()}</select></div>
+        <div class="field"><label id="adminScoreALabel">${t('adminScoreFor', allGames[0] ? teamNameOrTBDNoFlag(allGames[0].teamA) : '')}</label><select name="scoreA" id="adminScoreA" required>${scoreOptions()}</select></div>
+        <div class="field"><label id="adminScoreBLabel">${t('adminScoreFor', allGames[0] ? teamNameOrTBDNoFlag(allGames[0].teamB) : '')}</label><select name="scoreB" id="adminScoreB" required>${scoreOptions()}</select></div>
       </div>
       <div class="field" id="adminAdvancingField">
         <label>${t('adminAdvancingTeam')}</label>
@@ -1969,7 +1973,7 @@ function renderAdmin(){
       <label>${t('adminSelectGame')}</label>
       <select id="adminViewEventsGame">
         <option value="">${t('choose')}</option>
-        ${[...STATE.games].sort((a,b) => new Date(a.kickoffISO) - new Date(b.kickoffISO)).map(g => `<option value="${g.id}" ${adminEventsSelectedGame===String(g.id)?'selected':''}>${t('adminSelectGame')} ${String(g.id).replace(/^G/i,'')} - ${teamNameOrTBD(g.teamA)} - ${teamNameOrTBD(g.teamB)}</option>`).join('')}
+        ${[...STATE.games].sort((a,b) => new Date(a.kickoffISO) - new Date(b.kickoffISO)).map(g => `<option value="${g.id}" ${adminEventsSelectedGame===String(g.id)?'selected':''}>${t('adminSelectGame')} ${String(g.id).replace(/^G/i,'')} - ${teamNameOrTBDNoFlag(g.teamA)} - ${teamNameOrTBDNoFlag(g.teamB)}</option>`).join('')}
       </select>
     </div>
     <div id="adminEventsList">${adminEventsListHTML(adminEventsSelectedGame)}</div>
@@ -1989,7 +1993,7 @@ function adminRosterOptions(gameId, selectedId){
     const options = (CONFIG.ROSTERS[teamId]||[]).map(p =>
       `<option value="${p.id}" data-team="${teamId}" data-pos="${p.pos}" ${selectedId && String(selectedId)===String(p.id)?'selected':''}>${playerName(p)} (${p.pos})</option>`
     ).join('');
-    return `<optgroup label="${teamName(teamId)}">${options}</optgroup>`;
+    return `<optgroup label="${teamNameNoFlag(teamId)}">${options}</optgroup>`;
   }).join('');
 }
 
@@ -2001,12 +2005,12 @@ function wireAdmin(){
   const scoreBLabel = document.getElementById('adminScoreBLabel');
   const refreshAdvancingVisibility = () => {
     const g = STATE.games.find(gm => String(gm.id) === String(resultGameSelect.value));
-    scoreALabel.textContent = t('adminScoreFor', g ? teamNameOrTBD(g.teamA) : '');
-    scoreBLabel.textContent = t('adminScoreFor', g ? teamNameOrTBD(g.teamB) : '');
+    scoreALabel.textContent = t('adminScoreFor', g ? teamNameOrTBDNoFlag(g.teamA) : '');
+    scoreBLabel.textContent = t('adminScoreFor', g ? teamNameOrTBDNoFlag(g.teamB) : '');
     const knockout = g && isKnockout(g);
     advancingField.style.display = knockout ? '' : 'none';
     advancingSelect.innerHTML = `<option value="">${t('choose')}</option>` +
-      (knockout ? [g.teamA, g.teamB].map(id => `<option value="${id}">${teamNameOrTBD(id)}</option>`).join('') : '');
+      (knockout ? [g.teamA, g.teamB].map(id => `<option value="${id}">${teamNameOrTBDNoFlag(id)}</option>`).join('') : '');
   };
   if(resultGameSelect){ refreshAdvancingVisibility(); resultGameSelect.addEventListener('change', refreshAdvancingVisibility); }
 
