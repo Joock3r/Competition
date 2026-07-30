@@ -316,13 +316,13 @@ const CONFIG = {
   //     display text — so switching language never breaks a saved prediction. ---
   TEAMS: {
     germany: { en:'Germany', he:'גרמניה', flag:'🇩🇪' }, france: { en:'France', he:'צרפת', flag:'🇫🇷' },
-    england: { en:'England', he:'אנגליה', flag:'🇬🇧' }, spain: { en:'Spain', he:'ספרד', flag:'🇪🇸' },
+    england: { en:'England', he:'אנגליה', flag:'🇬🇧', flagImg:'https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.5.0/flags/4x3/gb-eng.svg' }, spain: { en:'Spain', he:'ספרד', flag:'🇪🇸' },
     italy: { en:'Italy', he:'איטליה', flag:'🇮🇹' }, portugal: { en:'Portugal', he:'פורטוגל', flag:'🇵🇹' },
     netherlands: { en:'Netherlands', he:'הולנד', flag:'🇳🇱' }, belgium: { en:'Belgium', he:'בלגיה', flag:'🇧🇪' },
     croatia: { en:'Croatia', he:'קרואטיה', flag:'🇭🇷' }, switzerland: { en:'Switzerland', he:'שוויץ', flag:'🇨🇭' },
     denmark: { en:'Denmark', he:'דנמרק', flag:'🇩🇰' }, austria: { en:'Austria', he:'אוסטריה', flag:'🇦🇹' },
     turkey: { en:'Turkey', he:'טורקיה', flag:'🇹🇷' }, ukraine: { en:'Ukraine', he:'אוקראינה', flag:'🇺🇦' },
-    scotland: { en:'Scotland', he:'סקוטלנד', flag:'🇬🇧' }, hungary: { en:'Hungary', he:'הונגריה', flag:'🇭🇺' },
+    scotland: { en:'Scotland', he:'סקוטלנד', flag:'🇬🇧', flagImg:'https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.5.0/flags/4x3/gb-sct.svg' }, hungary: { en:'Hungary', he:'הונגריה', flag:'🇭🇺' },
     serbia: { en:'Serbia', he:'סרביה', flag:'🇷🇸' }, poland: { en:'Poland', he:'פולין', flag:'🇵🇱' },
     czech: { en:'Czech', he:"צ'כיה", flag:'🇨🇿' }, romania: { en:'Romania', he:'רומניה', flag:'🇷🇴' },
     slovakia: { en:'Slovakia', he:'סלובקיה', flag:'🇸🇰' }, slovenia: { en:'Slovenia', he:'סלובניה', flag:'🇸🇮' },
@@ -1204,6 +1204,19 @@ function teamName(teamId){
 function teamNameOrTBD(teamId){
   return (teamId && CONFIG.TEAMS[teamId]) ? teamName(teamId) : t('tbd');
 }
+/** Rich-HTML team name — same as teamName(), but uses a real flag image for
+ *  teams whose flag emoji can't be rendered reliably (England/Scotland).
+ *  Only safe for HTML contexts (never inside <option>/<optgroup>, which can't show images). */
+function teamNameHTML(teamId){
+  const tm = CONFIG.TEAMS[teamId];
+  if(!tm) return t('tbd');
+  if(!tm.flagImg) return teamName(teamId);
+  const label = tm[LANG] || tm.en || teamId;
+  return `<img src="${tm.flagImg}" alt="" style="width:1.1em; height:auto; vertical-align:-0.15em; border-radius:2px;"> ${label}`;
+}
+function teamNameOrTBDHTML(teamId){
+  return (teamId && CONFIG.TEAMS[teamId]) ? teamNameHTML(teamId) : t('tbd');
+}
 /** Human-readable knockout stage label (Round of 16 / Quarter-final / etc.) — see Code.gs for the exact `stage` codes used in the Games sheet. */
 function stageLabel(g){
   const labels = { r16:t('stageR16'), qf:t('stageQf'), sf:t('stageSf'), '3rd':t('stage3rd'), final:t('stageFinal') };
@@ -1715,7 +1728,7 @@ function renderTeamRosterCard(teamId){
   const th = (key, label, extraStyle='') => `<th data-sort-key="${key}" data-sort-team="${teamId}" style="cursor:pointer; user-select:none; white-space:nowrap; ${extraStyle}">${label}${arrow(key)}</th>`;
   return `
   <div class="card">
-    <div class="card-title" style="font-size:15px; text-transform:none; letter-spacing:normal; margin-bottom:12px;">${teamName(teamId)}</div>
+    <div class="card-title" style="font-size:15px; text-transform:none; letter-spacing:normal; margin-bottom:12px;">${teamNameHTML(teamId)}</div>
     ${roster.length ? `
     <div style="overflow-x:auto;">
       <table class="leaderboard" style="min-width:720px;">
@@ -1822,13 +1835,13 @@ function wireTeams(){
 /* ---- SETTINGS ---- */
 /* ---- ADMIN (hidden, visible only to ADMIN_EMAIL) ---- */
 function renderAdmin(){
-  // Only future games, or games whose kickoff was within the last 24h — keeps
-  // the admin dropdowns short so old games don't need to be scrolled past.
+  // Only future games, or games whose kickoff was within the last 24h, and only
+  // still-scheduled ones — keeps the admin dropdowns short and free of games
+  // that have already been finalized.
   const ADMIN_GAME_WINDOW_MS = 24*3600*1000;
   const allGames = [...STATE.games]
-    .filter(g => new Date(g.kickoffISO).getTime() + ADMIN_GAME_WINDOW_MS > Date.now())
-    .reverse(); // descending = reverse of the Games sheet's row order
-  const gameOptions = g => `<option value="${g.id}">${teamNameOrTBD(g.teamA)} – ${teamNameOrTBD(g.teamB)} (${g.id}, ${g.status})</option>`;
+    .filter(g => g.status === 'scheduled' && new Date(g.kickoffISO).getTime() + ADMIN_GAME_WINDOW_MS > Date.now());
+  const gameOptions = g => `<option value="${g.id}">${t('adminSelectGame')} ${g.id} - ${teamNameOrTBD(g.teamA)} - ${teamNameOrTBD(g.teamB)}</option>`;
   return `
   <div class="section-title">🔧 ${t('adminTitle')}</div>
   <div class="section-sub">${t('adminSub')}</div>
@@ -1847,9 +1860,7 @@ function renderAdmin(){
       </div>
       <div class="field" id="adminAdvancingField">
         <label>${t('adminAdvancingTeam')}</label>
-        <select name="advancingTeam"><option value="">${t('choose')}</option>
-          ${Object.keys(CONFIG.TEAMS).map(id => `<option value="${id}">${teamName(id)}</option>`).join('')}
-        </select>
+        <select name="advancingTeam" id="adminAdvancingSelect"><option value="">${t('choose')}</option></select>
       </div>
       <button class="btn" type="submit">${t('adminSaveResult')}</button>
       <div id="adminResultMsg" style="margin-top:8px; font-size:13px;"></div>
@@ -1918,9 +1929,13 @@ function adminRosterOptions(gameId, selectedId){
 function wireAdmin(){
   const resultGameSelect = document.getElementById('adminResultGame');
   const advancingField = document.getElementById('adminAdvancingField');
+  const advancingSelect = document.getElementById('adminAdvancingSelect');
   const refreshAdvancingVisibility = () => {
     const g = STATE.games.find(gm => String(gm.id) === String(resultGameSelect.value));
-    advancingField.style.display = (g && isKnockout(g)) ? '' : 'none';
+    const knockout = g && isKnockout(g);
+    advancingField.style.display = knockout ? '' : 'none';
+    advancingSelect.innerHTML = `<option value="">${t('choose')}</option>` +
+      (knockout ? [g.teamA, g.teamB].map(id => `<option value="${id}">${teamNameOrTBD(id)}</option>`).join('') : '');
   };
   if(resultGameSelect){ refreshAdvancingVisibility(); resultGameSelect.addEventListener('change', refreshAdvancingVisibility); }
 
@@ -2307,13 +2322,13 @@ function renderGameCard(g){
       </div>
     </div>
     <div class="game-teams">
-      <div class="team-name">${teamNameOrTBD(g.teamA)}</div>
+      <div class="team-name">${teamNameOrTBDHTML(g.teamA)}</div>
       <div class="score-inputs">
         <input type="number" min="0" max="20" data-role="scoreA" value="${bet?bet.betA:''}" required>
         <span class="score-sep">:</span>
         <input type="number" min="0" max="20" data-role="scoreB" value="${bet?bet.betB:''}" required>
       </div>
-      <div class="team-name">${teamNameOrTBD(g.teamB)}</div>
+      <div class="team-name">${teamNameOrTBDHTML(g.teamB)}</div>
     </div>
     ${SHOW_TIMER ? `<div class="section-sub" style="text-align:center; margin-bottom:10px;">⏱ ${t('timerLabel')} <span class="countdown-timer" data-until="${g.kickoffISO}">--:--:--</span></div>` : ''}
     <div class="field" style="margin-bottom:8px;">
@@ -2449,9 +2464,9 @@ function renderClosedGameCard(g){
       <span class="status-pill status-locked">${t('statusClosed')}</span>
     </div>
     <div class="game-teams" style="margin-bottom:10px;">
-      <div class="team-name">${teamNameOrTBD(g.teamA)}</div>
+      <div class="team-name">${teamNameOrTBDHTML(g.teamA)}</div>
       <div class="mono" style="font-size:16px; color:var(--text-faint);">${t('awaitingResult')}</div>
-      <div class="team-name">${teamNameOrTBD(g.teamB)}</div>
+      <div class="team-name">${teamNameOrTBDHTML(g.teamB)}</div>
     </div>
     <div class="card-title" style="margin-bottom:8px;">${t('everyoneBets')}</div>
     ${bets.length ? `
@@ -2470,7 +2485,7 @@ function renderClosedGameCard(g){
             <td>${name}${isDouble ? ` <span class="rule-value" style="background:var(--amber-dim); color:var(--amber);" title="${t('doubleLabel')}">🔥×2</span>` : ''}</td>
             <td class="mono"><span class="iso-num">${b.betA ?? '—'}:${b.betB ?? '—'}</span></td>
             <td>${tp ? playerName(tp) : (b.betTopPlayer || '—')}</td>
-            ${isKnockout(g) ? `<td>${b.betAdvancing ? teamName(b.betAdvancing) : '—'}</td>` : ''}
+            ${isKnockout(g) ? `<td>${b.betAdvancing ? teamNameHTML(b.betAdvancing) : '—'}</td>` : ''}
           </tr>`;
         }).join('')}
       </tbody>
@@ -2497,11 +2512,11 @@ function renderPlayedGameCard(g){
       <span class="status-pill status-${isFinal?'final':'locked'}">${isFinal?t('statusFinal'):t('statusLocked')}</span>
     </div>
     <div class="game-teams" style="margin-bottom:${isKnockout(g)&&g.advancingTeam?'2px':'10px'};">
-      <div class="team-name">${teamNameOrTBD(g.teamA)}</div>
+      <div class="team-name">${teamNameOrTBDHTML(g.teamA)}</div>
       <div class="mono" style="font-size:22px; font-weight:700;"><span class="iso-num">${isFinal ? `${g.scoreA} : ${g.scoreB}` : '– : –'}</span></div>
-      <div class="team-name">${teamNameOrTBD(g.teamB)}</div>
+      <div class="team-name">${teamNameOrTBDHTML(g.teamB)}</div>
     </div>
-    ${isKnockout(g) && g.advancingTeam ? `<div class="section-sub" style="text-align:center; margin-bottom:10px;">🏆 ${teamName(g.advancingTeam)}</div>` : ''}
+    ${isKnockout(g) && g.advancingTeam ? `<div class="section-sub" style="text-align:center; margin-bottom:10px;">🏆 ${teamNameHTML(g.advancingTeam)}</div>` : ''}
 
     <div class="card-title" style="margin-bottom:8px;">${t('everyoneBets')}</div>
     ${bets.length ? `
@@ -2522,7 +2537,7 @@ function renderPlayedGameCard(g){
             <td>${name}${isDouble ? ` <span class="rule-value" style="background:var(--amber-dim); color:var(--amber);" title="${t('doubleLabel')}">🔥×2</span>` : ''}</td>
             <td class="mono"><span class="iso-num">${b.betA ?? '—'}:${b.betB ?? '—'}</span></td>
             <td>${tp ? playerName(tp) : (b.betTopPlayer || '—')}</td>
-            ${isKnockout(g) ? `<td>${b.betAdvancing ? teamName(b.betAdvancing) : '—'}</td>` : ''}
+            ${isKnockout(g) ? `<td>${b.betAdvancing ? teamNameHTML(b.betAdvancing) : '—'}</td>` : ''}
             <td class="points-cell"><span class="iso-num">${pts!==null ? pts : '—'}</span></td>
           </tr>`;
         }).join('')}
