@@ -1302,7 +1302,7 @@ function computeGameScore(betA, betB, actualA, actualB){
 /* =========================================================
    ============  6. Rendering  ================================
    ========================================================= */
-const TABS = ['home','rules','tips','teams','general','games','stats','hof','settings','admin'];
+const TABS = ['home','rules','tips','teams','general','games','stats','hof','admin'];
 let currentTab = 'home';
 
 function showToast(message, isError){
@@ -1354,7 +1354,7 @@ function renderAll(){
   if(currentTab==='admin' && !isAdmin()) currentTab = 'home';
   renderShell();
   const main = document.getElementById('main');
-  const renderers = { home:renderHome, rules:renderRules, tips:renderTips, teams:renderTeams, general:renderGeneral, games:renderGames, stats:renderStats, hof:renderHof, settings:renderSettings, admin:renderAdmin };
+  const renderers = { home:renderHome, rules:renderRules, tips:renderTips, teams:renderTeams, general:renderGeneral, games:renderGames, stats:renderStats, hof:renderHof, admin:renderAdmin };
   main.innerHTML = renderers[currentTab]();
   if(currentTab==='home'){
     animateFlaps();
@@ -1617,6 +1617,31 @@ function renderTips(){
     <div style="display:flex; flex-direction:column; gap:8px;">
       ${CONFIG.BRACKET_LINKS.map((link,i) => `<a href="${link.url}" target="_blank" rel="noopener" class="btn btn-ghost" style="text-decoration:none; text-align:center;">🔗 ${link[LANG] || link.en}</a>`).join('')}
     </div>
+  </div>
+  <div class="section-title" style="margin-top:24px;">${t('settingsTitle')}</div>
+  <div class="section-sub">${t('settingsSub')}</div>
+  <div class="rules-grid">
+    <div class="card">
+      <div class="card-title">📱 ${t('installIOSTitle')}</div>
+      <ol style="padding-inline-start:20px; font-size:13.5px; color:var(--text-dim); margin:0;">
+        <li style="margin-bottom:10px;">${t('installIOS1')}</li>
+        <li style="margin-bottom:10px;">${t('installIOS2')}</li>
+        <li style="margin-bottom:10px;">${t('installIOS3')}</li>
+        <li>${t('installIOS4')}</li>
+      </ol>
+    </div>
+    <div class="card">
+      <div class="card-title">🤖 ${t('installAndroidTitle')}</div>
+      <ol style="padding-inline-start:20px; font-size:13.5px; color:var(--text-dim); margin:0;">
+        <li style="margin-bottom:10px;">${t('installAndroid1')}</li>
+        <li style="margin-bottom:10px;">${t('installAndroid2')}</li>
+        <li>${t('installAndroid3')}</li>
+      </ol>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">${t('settingsNoteTitle')}</div>
+    <div class="section-sub" style="margin-bottom:0;">${t('settingsNoteText')}</div>
   </div>`;
 }
 
@@ -1771,35 +1796,6 @@ function wireTeams(){
 }
 
 /* ---- SETTINGS ---- */
-function renderSettings(){
-  return `
-  <div class="section-title">${t('settingsTitle')}</div>
-  <div class="section-sub">${t('settingsSub')}</div>
-  <div class="rules-grid">
-    <div class="card">
-      <div class="card-title">📱 ${t('installIOSTitle')}</div>
-      <ol style="padding-inline-start:20px; font-size:13.5px; color:var(--text-dim); margin:0;">
-        <li style="margin-bottom:10px;">${t('installIOS1')}</li>
-        <li style="margin-bottom:10px;">${t('installIOS2')}</li>
-        <li style="margin-bottom:10px;">${t('installIOS3')}</li>
-        <li>${t('installIOS4')}</li>
-      </ol>
-    </div>
-    <div class="card">
-      <div class="card-title">🤖 ${t('installAndroidTitle')}</div>
-      <ol style="padding-inline-start:20px; font-size:13.5px; color:var(--text-dim); margin:0;">
-        <li style="margin-bottom:10px;">${t('installAndroid1')}</li>
-        <li style="margin-bottom:10px;">${t('installAndroid2')}</li>
-        <li>${t('installAndroid3')}</li>
-      </ol>
-    </div>
-  </div>
-  <div class="card">
-    <div class="card-title">${t('settingsNoteTitle')}</div>
-    <div class="section-sub" style="margin-bottom:0;">${t('settingsNoteText')}</div>
-  </div>`;
-}
-
 /* ---- ADMIN (hidden, visible only to ADMIN_EMAIL) ---- */
 function renderAdmin(){
   // Only future games, or games whose kickoff was within the last 24h — keeps
@@ -1877,11 +1873,18 @@ function renderAdmin(){
 function adminRosterOptions(gameId, selectedId){
   const g = STATE.games.find(gm => String(gm.id) === String(gameId));
   if(!g) return '';
-  const roster = [
-    ...(CONFIG.ROSTERS[g.teamA]||[]).map(p => ({...p, teamId:g.teamA})),
-    ...(CONFIG.ROSTERS[g.teamB]||[]).map(p => ({...p, teamId:g.teamB})),
-  ];
-  return roster.map(p => `<option value="${p.id}" data-team="${p.teamId}" data-pos="${p.pos}" ${selectedId && String(selectedId)===String(p.id)?'selected':''}>${playerName(p)} (${p.pos}) — ${teamName(p.teamId)}</option>`).join('');
+  // Alphabetical (by displayed team name) so the team order is stable and predictable, not fixture-order.
+  const teamIds = [g.teamA, g.teamB].sort((a,b) => {
+    const na = CONFIG.TEAMS[a][LANG] || CONFIG.TEAMS[a].en || a;
+    const nb = CONFIG.TEAMS[b][LANG] || CONFIG.TEAMS[b].en || b;
+    return na.localeCompare(nb, LANG==='he' ? 'he' : 'en');
+  });
+  return teamIds.map(teamId => {
+    const options = (CONFIG.ROSTERS[teamId]||[]).map(p =>
+      `<option value="${p.id}" data-team="${teamId}" data-pos="${p.pos}" ${selectedId && String(selectedId)===String(p.id)?'selected':''}>${playerName(p)} (${p.pos})</option>`
+    ).join('');
+    return `<optgroup label="${teamName(teamId)}">${options}</optgroup>`;
+  }).join('');
 }
 
 function wireAdmin(){
