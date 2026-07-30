@@ -1361,12 +1361,16 @@ function showToast(message, isError){
  *  few seconds (cold start) to actually commit a write. Merges the fresh
  *  rows into STATE[stateKey] each time. Returns true as soon as checkFn()
  *  finds the just-saved data, false if it never shows up in time. */
-async function pollUntilSaved(tabName, stateKey, checkFn, attempts=5, delayMs=1500){
+async function pollUntilSaved(tabName, stateKey, checkFn, attempts=5, delayMs=1500, reapplyOptimistic){
   for(let i=0; i<attempts; i++){
     await new Promise(r => setTimeout(r, delayMs));
     try{
       const rows = await fetchTab(tabName);
-      if(Array.isArray(rows)) STATE[stateKey] = rows;
+      // The sheet read can lag behind the write that was just submitted (Apps
+      // Script cold starts, etc.), so re-apply our own optimistic row on top —
+      // otherwise this refresh can transiently wipe out the very change we're
+      // still confirming (e.g. the "double points" flag) before the next render.
+      if(Array.isArray(rows)){ STATE[stateKey] = rows; if(reapplyOptimistic) reapplyOptimistic(); }
     }catch(e){ /* transient network hiccup — just try again next loop */ }
     if(checkFn()) return true;
   }
@@ -1843,8 +1847,13 @@ function renderAdmin(){
     .filter(g => g.status === 'scheduled' && new Date(g.kickoffISO).getTime() + ADMIN_GAME_WINDOW_MS > Date.now());
   const gameOptions = g => `<option value="${g.id}">${t('adminSelectGame')} ${g.id} - ${teamNameOrTBD(g.teamA)} - ${teamNameOrTBD(g.teamB)}</option>`;
   return `
-  <div class="section-title">🔧 ${t('adminTitle')}</div>
-  <div class="section-sub">${t('adminSub')}</div>
+  <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+    <div>
+      <div class="section-title" style="margin-bottom:4px;">🔧 ${t('adminTitle')}</div>
+      <div class="section-sub">${t('adminSub')}</div>
+    </div>
+    <button class="btn btn-ghost" id="adminRecalcBtn">${t('adminRecalcBtn')}</button>
+  </div>
 
   <div class="rules-grid">
   <div class="card">
@@ -1900,10 +1909,7 @@ function renderAdmin(){
   </div>
 
   <div class="card">
-    <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px;">
-      <div class="card-title" style="margin-bottom:0;">${t('adminRecalcTitle')}</div>
-      <button class="btn btn-ghost" id="adminRecalcBtn">${t('adminRecalcBtn')}</button>
-    </div>
+    <div class="card-title">${t('adminRecalcTitle')}</div>
     <div class="section-sub">${t('adminRecalcSub')}</div>
     <div id="adminRecalcMsg" style="margin-top:8px; font-size:13px;"></div>
   </div>`;
@@ -2067,7 +2073,7 @@ function renderGeneral(){
           return `<div class="group-editor" data-group="${g}">
             <h4>${t('group')} ${g}</h4>
             <ul class="drag-list" data-group="${g}">
-              ${order.map((teamId,i) => `<li class="drag-item" draggable="true" data-team="${teamId}"><span class="drag-pos iso-num">${i+1}</span><span class="drag-handle">⠿</span>${teamName(teamId)}</li>`).join('')}
+              ${order.map((teamId,i) => `<li class="drag-item" draggable="true" data-team="${teamId}"><span class="drag-pos iso-num">${i+1}</span><span class="drag-handle">⠿</span>${teamNameHTML(teamId)}</li>`).join('')}
             </ul>
           </div>`;
         }).join('')}
@@ -2124,10 +2130,10 @@ function renderGeneralReveal(){
             const scorer = findPlayer(b.topScorer), assister = findPlayer(b.topAssist);
             return `<tr>
               <td style="${stickyBase} font-weight:700;">${name}</td>
-              <td>${b.rank1?teamName(b.rank1):'—'}</td>
-              <td>${b.rank2?teamName(b.rank2):'—'}</td>
-              <td>${b.rank3?teamName(b.rank3):'—'}</td>
-              <td>${b.rank4?teamName(b.rank4):'—'}</td>
+              <td>${b.rank1?teamNameHTML(b.rank1):'—'}</td>
+              <td>${b.rank2?teamNameHTML(b.rank2):'—'}</td>
+              <td>${b.rank3?teamNameHTML(b.rank3):'—'}</td>
+              <td>${b.rank4?teamNameHTML(b.rank4):'—'}</td>
               <td>${scorer?playerName(scorer):'—'}</td>
               <td>${assister?playerName(assister):'—'}</td>
             </tr>`;
@@ -2156,7 +2162,7 @@ function renderGeneralReveal(){
             const order = groups && groups[generalRevealGroupTab] ? groups[generalRevealGroupTab] : null;
             return `<tr>
               <td style="${stickyBase} font-weight:700;">${name}</td>
-              ${[0,1,2,3].map(i => `<td>${order && order[i] ? teamName(order[i]) : '—'}</td>`).join('')}
+              ${[0,1,2,3].map(i => `<td>${order && order[i] ? teamNameHTML(order[i]) : '—'}</td>`).join('')}
             </tr>`;
           }).join('')}
         </tbody>
@@ -2208,16 +2214,19 @@ function wireGeneralForm(){
     await postBet(payload);
     // Optimistic: assume the write succeeded (it almost always does) and update
     // the UI immediately instead of waiting on a verification round-trip.
-    const idx = STATE.generalBets.findIndex(b => normEmail(b.email)===normEmail(STATE.user.email));
     const optimisticRow = { email: STATE.user.email, ...payload };
-    if(idx>=0) STATE.generalBets[idx] = {...STATE.generalBets[idx], ...optimisticRow};
-    else STATE.generalBets.push(optimisticRow);
+    const applyOptimisticGeneralBet = () => {
+      const idx = STATE.generalBets.findIndex(b => normEmail(b.email)===normEmail(STATE.user.email));
+      if(idx>=0) STATE.generalBets[idx] = {...STATE.generalBets[idx], ...optimisticRow};
+      else STATE.generalBets.push(optimisticRow);
+    };
+    applyOptimisticGeneralBet();
     showToast('✅ ' + t('saved'));
     renderAll();
     // Quietly confirm in the background; only surface anything if it actually failed.
     pollUntilSaved('GeneralBets', 'generalBets', () =>
       STATE.generalBets.find(b => normEmail(b.email)===normEmail(STATE.user.email) && b.rank1===payload.rank1 && b.topScorer===payload.topScorer),
-      4, 1200
+      4, 1200, applyOptimisticGeneralBet
     ).then(landed => {
       if(!landed){ showToast('⚠️ ' + t('saveFailed'), true); loadAllData().then(renderAll); }
     });
@@ -2615,17 +2624,21 @@ function wireGamesForm(){
       btn.textContent = '⏳'; btn.disabled = true;
       await postBet(payload);
       // Optimistic: assume the write succeeded and update the UI immediately.
-      const idx = STATE.gameBets.findIndex(b => normEmail(b.email)===normEmail(STATE.user.email) && String(b.gameId)===String(payload.gameId));
       const optimisticRow = { email: STATE.user.email, ...payload };
-      if(idx>=0) STATE.gameBets[idx] = {...STATE.gameBets[idx], ...optimisticRow};
-      else STATE.gameBets.push(optimisticRow);
+      const applyOptimisticGameBet = () => {
+        const idx = STATE.gameBets.findIndex(b => normEmail(b.email)===normEmail(STATE.user.email) && String(b.gameId)===String(payload.gameId));
+        if(idx>=0) STATE.gameBets[idx] = {...STATE.gameBets[idx], ...optimisticRow};
+        else STATE.gameBets.push(optimisticRow);
+      };
+      applyOptimisticGameBet();
       showToast('✅ ' + t('saved'));
       renderAll();
       // Quietly confirm in the background; only surface anything if it actually failed.
       pollUntilSaved('GameBets', 'gameBets', () =>
         STATE.gameBets.find(b => normEmail(b.email)===normEmail(STATE.user.email) && String(b.gameId)===String(payload.gameId)
-          && String(b.betA)===String(payload.betA) && String(b.betB)===String(payload.betB)),
-        4, 1200
+          && String(b.betA)===String(payload.betA) && String(b.betB)===String(payload.betB)
+          && isDoubleFlag(b.betDouble)===isDoubleFlag(payload.betDouble)),
+        4, 1200, applyOptimisticGameBet
       ).then(landed => {
         if(!landed){ showToast('⚠️ ' + t('saveFailed'), true); loadAllData().then(renderAll); }
       });
