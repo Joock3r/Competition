@@ -67,7 +67,8 @@ html[dir="rtl"] .brand{font-family:var(--font-he); letter-spacing:normal;}
 }
 .icon-btn:hover{border-color:var(--border-strong);}
 .icon-btn.active{background:var(--amber); color:#1a1408; border-color:var(--amber);}
-.countdown-timer{font-family:var(--font-mono); font-size:12px; font-weight:700; color:var(--text-dim);}
+.countdown-timer{font-family:var(--font-en); font-size:12px; font-weight:700; color:var(--text-dim);}
+html[dir="rtl"] .countdown-timer{font-family:var(--font-he);}
 .countdown-timer.urgent{color:var(--red);}
 #gsi-btn-wrap{display:flex; align-items:center; min-width:0;}
 .user-chip{display:flex; align-items:center; gap:6px; background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:4px 10px 4px 4px; min-width:0;}
@@ -1052,7 +1053,7 @@ const I18N = {
     worldcup:'World Cup', euro:'Euro', hofChampionTeam:'Champion', runnerUpLabel:'Runner-up',
     loading:'Loading…', demoNote:'Showing sample data — connect your Google Sheet in CONFIG to go live.',
     noGames:'No games yet.', emailFirst:'Sign in to place your predictions.', noParticipants:'No participants yet — add rows to the Participants tab in the Sheet.', noHof:'No past champions yet.',
-    scoreRequired:'Enter a score for both teams.',
+    scoreRequired:'Enter a score for both teams.', topPlayerRequired:'Choose a top player for this game.',
     doubleLabel:'Use my double points on this game', doubleUsedElsewhere:'Your double points are already placed on another game.',
     tipsTitle:'Tips', tipsSub:'A few pointers before you lock in your predictions.',
     tipsGamesTitle:'Filling in match results', tipsGamesList:"Check each team's recent form and head-to-head history before committing to a scoreline.\nConsider injuries, suspensions, and rotation in matches that no longer affect the standings.\nThe outcome (win/draw/loss) is worth points even without the exact score — a safe outcome pick beats a risky exact guess.",
@@ -1071,9 +1072,11 @@ const I18N = {
     installAndroid3:'Tap "Add to Home screen" or "Install app", then confirm.',
     settingsNoteTitle:'Why bother?', settingsNoteText:'Once added, tapping the icon opens Matchday full-screen, like a real app — no address bar, no browser tabs, just the tournament.',
     adminTitle:'Admin', adminSub:'Quick data entry — writes straight to the Sheet. Only visible to you.',
-    adminResultTitle:'Set match result', adminSelectGame:'Game', adminScoreA:'Score (Team A)', adminScoreB:'Score (Team B)',
+    adminResultTitle:'Set match result', adminSelectGame:'Game', adminScoreFor:(name)=>`Score - ${name}`,
     adminAdvancingTeam:'Advancing team (knockout only)', adminSaveResult:'Save result',
     adminEventTitle:'Add match event', adminSelectPlayer:'Player', adminEventType:'Event type', adminCount:'Count', adminSaveEvent:'Add event',
+    adminManageEventsTitle:'Game events', adminNoEvents:'No events recorded for this game yet.',
+    adminDeleteEvent:'Delete event', adminConfirmDeleteEvent:'Delete this event? This cannot be undone.', adminEventDeleted:'Event deleted.',
     adminRecalcTitle:'Recalculate all scores', adminRecalcSub:'Run this after entering results/events so everyone\'s points update.',
     adminRecalcBtn:'Calculate score', adminRecalculating:'Recalculating…', adminRecalcDone:'Scores recalculated.',
     headToHead:'Head to head', closeHeadToHead:'Close comparison', teamA:'Team A', teamB:'Team B',
@@ -1130,7 +1133,7 @@ const I18N = {
     worldcup:'מונדיאל', euro:'יורו', hofChampionTeam:'אלופת הטורניר', runnerUpLabel:'מקום שני',
     loading:'טוען…', demoNote:'מוצגים נתוני דוגמה — חברו את הגיליון שלכם ב-CONFIG כדי לעלות לאוויר.',
     noGames:'אין משחקים עדיין.', emailFirst:'התחברו כדי להזין ניחושים.', noParticipants:'עדיין אין משתתפים — הוסיפו שורות לטאב Participants בגיליון.', noHof:'עדיין אין אלופים קודמים.',
-    scoreRequired:'יש להזין תוצאה לשתי הקבוצות.',
+    scoreRequired:'יש להזין תוצאה לשתי הקבוצות.', topPlayerRequired:'יש לבחור שחקן מצטיין למשחק זה.',
     doubleLabel:'השתמש בדאבל ניקוד למשחק זה', doubleUsedElsewhere:'הדאבל שלך כבר מוצב על משחק אחר.',
     tipsTitle:'המלצות', tipsSub:'כמה טיפים לפני שנועלים ניחושים.',
     tipsGamesTitle:'מילוי תוצאות משחקים', tipsGamesList:'תבדקו את הפורמה האחרונה של שתי הקבוצות ואת ההיסטוריה ביניהן לפני שקובעים תוצאה.\nשימו לב לפציעות, השעיות, ורוטציה במשחקים שכבר לא משנים כלום מבחינה טורנירית.\nגם בלי לקלוע לתוצאה המדויקת, ניחוש נכון של התוצאה (ניצחון/תיקו/הפסד) כבר שווה נקודות — עדיף ניחוש בטוח על פני הימור מדויק מסוכן.',
@@ -1149,9 +1152,11 @@ const I18N = {
     installAndroid3:'הקישו "הוספה למסך הבית" או "התקנת אפליקציה", ואשרו.',
     settingsNoteTitle:'למה זה שווה?', settingsNoteText:'אחרי ההוספה, לחיצה על האייקון פותחת את מאצדיי במסך מלא, כמו אפליקציה אמיתית — בלי סרגל כתובת, בלי כרטיסיות דפדפן, רק הטורניר.',
     adminTitle:'ניהול', adminSub:'הזנת נתונים מהירה — נכתב ישירות לגיליון. גלוי רק לך.',
-    adminResultTitle:'קביעת תוצאת משחק', adminSelectGame:'משחק', adminScoreA:'תוצאה (קבוצה A)', adminScoreB:'תוצאה (קבוצה B)',
+    adminResultTitle:'קביעת תוצאת משחק', adminSelectGame:'משחק', adminScoreFor:(name)=>`תוצאה - ${name}`,
     adminAdvancingTeam:'נבחרת מעפילה (פלייאוף בלבד)', adminSaveResult:'שמירת תוצאה',
     adminEventTitle:'הוספת אירוע משחק', adminSelectPlayer:'שחקן', adminEventType:'סוג אירוע', adminCount:'כמות', adminSaveEvent:'הוספת אירוע',
+    adminManageEventsTitle:'אירועי משחק', adminNoEvents:'עדיין לא נרשמו אירועים למשחק זה.',
+    adminDeleteEvent:'מחיקת אירוע', adminConfirmDeleteEvent:'למחוק את האירוע? לא ניתן לשחזר.', adminEventDeleted:'האירוע נמחק.',
     adminRecalcTitle:'חישוב מחדש של כל הניקוד', adminRecalcSub:'הריצו את זה אחרי הזנת תוצאות/אירועים כדי שהניקוד של כולם יתעדכן.',
     adminRecalcBtn:'חשב ניקוד', adminRecalculating:'מחשב מחדש…', adminRecalcDone:'הניקוד חושב מחדש.',
     headToHead:'ראש בראש', closeHeadToHead:'סגירת השוואה', teamA:'נבחרת A', teamB:'נבחרת B',
@@ -1216,6 +1221,13 @@ function teamNameHTML(teamId){
 }
 function teamNameOrTBDHTML(teamId){
   return (teamId && CONFIG.TEAMS[teamId]) ? teamNameHTML(teamId) : t('tbd');
+}
+/** Flag-only badge, meant to sit next to a native <select> so the chosen
+ *  team's real flag still shows even though <option> text can't hold images. */
+function flagBadgeHTML(teamId){
+  const tm = CONFIG.TEAMS[teamId];
+  if(!tm) return '';
+  return tm.flagImg ? `<img src="${tm.flagImg}" alt="" style="width:1.2em; height:auto; vertical-align:-0.15em; border-radius:2px;">` : (tm.flag || '');
 }
 /** Human-readable knockout stage label (Round of 16 / Quarter-final / etc.) — see Code.gs for the exact `stage` codes used in the Games sheet. */
 function stageLabel(g){
@@ -1838,6 +1850,35 @@ function wireTeams(){
 
 /* ---- SETTINGS ---- */
 /* ---- ADMIN (hidden, visible only to ADMIN_EMAIL) ---- */
+let adminEventsSelectedGame = '';
+function adminEventTypeLabel(eventType){
+  const labels = { goal:t('evGoal'), assist:t('evAssist'), ownGoal:t('evOwnGoal'), redCard:t('evRedCard'), missedPenalty:t('evMissedPenalty'), cleanSheet:t('evCleanSheet'), penaltySave:t('evPenaltySave') };
+  return labels[eventType] || eventType;
+}
+/** List of already-recorded events for one game, each with a delete button —
+ *  `_row` (added server-side on GET) is the actual GameEvents sheet row, since
+ *  that tab has no unique id column to key deletes off of otherwise. */
+function adminEventsListHTML(gameId){
+  if(!gameId) return '';
+  const events = STATE.gameEvents.filter(ev => String(ev.gameId) === String(gameId));
+  if(!events.length) return `<div class="empty-state" style="padding:14px;">${t('adminNoEvents')}</div>`;
+  return events.map(ev => {
+    const disp = resolveEventPlayerDisplay(ev);
+    const count = +ev.count || 1;
+    return `<div style="display:flex; align-items:center; justify-content:space-between; gap:10px; padding:7px 0; border-bottom:1px solid var(--border);">
+      <div>
+        <div style="font-weight:700; font-size:13.5px;">${disp.name}<span style="color:var(--text-faint); font-weight:500;"> — ${disp.team}</span></div>
+        <div style="font-size:11.5px; color:var(--text-dim);">${adminEventTypeLabel(ev.eventType)}${count>1 ? ` ×${count}` : ''}</div>
+      </div>
+      <button type="button" class="icon-btn" data-role="adminDeleteEvent" data-row="${ev._row}" data-game="${ev.gameId}" title="${t('adminDeleteEvent')}" style="font-size:13px; padding:5px 9px; color:var(--red);">🗑️</button>
+    </div>`;
+  }).join('');
+}
+/** 0-20 <option> list for the score selects — a <select> renders as a native scroll-wheel picker on mobile. */
+function scoreOptions(){
+  return `<option value="">${t('choose')}</option>` +
+    Array.from({length:21}, (_,i) => `<option value="${i}">${i}</option>`).join('');
+}
 function renderAdmin(){
   // Only future games, or games whose kickoff was within the last 24h, and only
   // still-scheduled ones — keeps the admin dropdowns short and free of games
@@ -1845,7 +1886,7 @@ function renderAdmin(){
   const ADMIN_GAME_WINDOW_MS = 24*3600*1000;
   const allGames = [...STATE.games]
     .filter(g => g.status === 'scheduled' && new Date(g.kickoffISO).getTime() + ADMIN_GAME_WINDOW_MS > Date.now());
-  const gameOptions = g => `<option value="${g.id}">${t('adminSelectGame')} ${g.id} - ${teamNameOrTBD(g.teamA)} - ${teamNameOrTBD(g.teamB)}</option>`;
+  const gameOptions = g => `<option value="${g.id}">${t('adminSelectGame')} ${String(g.id).replace(/^G/i,'')} - ${teamNameOrTBD(g.teamA)} - ${teamNameOrTBD(g.teamB)}</option>`;
   return `
   <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
     <div>
@@ -1864,8 +1905,8 @@ function renderAdmin(){
         <select name="gameId" id="adminResultGame" required>${allGames.map(gameOptions).join('')}</select>
       </div>
       <div class="podium-grid" style="grid-template-columns:1fr 1fr;">
-        <div class="field"><label>${t('adminScoreA')}</label><input type="number" name="scoreA" min="0" max="20" required></div>
-        <div class="field"><label>${t('adminScoreB')}</label><input type="number" name="scoreB" min="0" max="20" required></div>
+        <div class="field"><label id="adminScoreALabel">${t('adminScoreFor', allGames[0] ? teamNameOrTBD(allGames[0].teamA) : '')}</label><select name="scoreA" id="adminScoreA" required>${scoreOptions()}</select></div>
+        <div class="field"><label id="adminScoreBLabel">${t('adminScoreFor', allGames[0] ? teamNameOrTBD(allGames[0].teamB) : '')}</label><select name="scoreB" id="adminScoreB" required>${scoreOptions()}</select></div>
       </div>
       <div class="field" id="adminAdvancingField">
         <label>${t('adminAdvancingTeam')}</label>
@@ -1909,6 +1950,18 @@ function renderAdmin(){
   </div>
 
   <div class="card">
+    <div class="card-title">${t('adminManageEventsTitle')}</div>
+    <div class="field">
+      <label>${t('adminSelectGame')}</label>
+      <select id="adminViewEventsGame">
+        <option value="">${t('choose')}</option>
+        ${[...STATE.games].sort((a,b) => new Date(a.kickoffISO) - new Date(b.kickoffISO)).map(g => `<option value="${g.id}" ${adminEventsSelectedGame===String(g.id)?'selected':''}>${t('adminSelectGame')} ${String(g.id).replace(/^G/i,'')} - ${teamNameOrTBD(g.teamA)} - ${teamNameOrTBD(g.teamB)}</option>`).join('')}
+      </select>
+    </div>
+    <div id="adminEventsList">${adminEventsListHTML(adminEventsSelectedGame)}</div>
+  </div>
+
+  <div class="card">
     <div class="card-title">${t('adminRecalcTitle')}</div>
     <div class="section-sub">${t('adminRecalcSub')}</div>
     <div id="adminRecalcMsg" style="margin-top:8px; font-size:13px;"></div>
@@ -1936,8 +1989,12 @@ function wireAdmin(){
   const resultGameSelect = document.getElementById('adminResultGame');
   const advancingField = document.getElementById('adminAdvancingField');
   const advancingSelect = document.getElementById('adminAdvancingSelect');
+  const scoreALabel = document.getElementById('adminScoreALabel');
+  const scoreBLabel = document.getElementById('adminScoreBLabel');
   const refreshAdvancingVisibility = () => {
     const g = STATE.games.find(gm => String(gm.id) === String(resultGameSelect.value));
+    scoreALabel.textContent = t('adminScoreFor', g ? teamNameOrTBD(g.teamA) : '');
+    scoreBLabel.textContent = t('adminScoreFor', g ? teamNameOrTBD(g.teamB) : '');
     const knockout = g && isKnockout(g);
     advancingField.style.display = knockout ? '' : 'none';
     advancingSelect.innerHTML = `<option value="">${t('choose')}</option>` +
@@ -1949,6 +2006,31 @@ function wireAdmin(){
   const eventPlayerSelect = document.getElementById('adminEventPlayer');
   const refreshPlayers = () => { eventPlayerSelect.innerHTML = adminRosterOptions(eventGameSelect.value); };
   if(eventGameSelect){ refreshPlayers(); eventGameSelect.addEventListener('change', refreshPlayers); }
+
+  const viewEventsSelect = document.getElementById('adminViewEventsGame');
+  const eventsListEl = document.getElementById('adminEventsList');
+  const wireEventDeleteButtons = () => {
+    eventsListEl.querySelectorAll('[data-role="adminDeleteEvent"]').forEach(delBtn => {
+      delBtn.addEventListener('click', async () => {
+        if(!requireFreshSession()){ showToast('⚠️ ' + t('sessionExpired'), true); renderAll(); return; }
+        if(!confirm(t('adminConfirmDeleteEvent'))) return;
+        delBtn.disabled = true; delBtn.textContent = '⏳';
+        await postBet({ type:'adminDeleteEvent', adminEmail: STATE.user.email, gameId: delBtn.dataset.game, rowIndex: delBtn.dataset.row });
+        await new Promise(r => setTimeout(r, 1000));
+        await loadAllData();
+        showToast('✅ ' + t('adminEventDeleted'));
+        renderAll();
+      });
+    });
+  };
+  if(viewEventsSelect){
+    wireEventDeleteButtons();
+    viewEventsSelect.addEventListener('change', () => {
+      adminEventsSelectedGame = viewEventsSelect.value;
+      eventsListEl.innerHTML = adminEventsListHTML(adminEventsSelectedGame);
+      wireEventDeleteButtons();
+    });
+  }
 
   document.getElementById('adminResultForm').addEventListener('submit', async e => {
     e.preventDefault();
@@ -2039,10 +2121,13 @@ function renderGeneral(){
         ${[1,2,3,4].map(n => `
           <div class="field">
             <label>${t('rank'+n)}</label>
-            <select name="rank${n}" required>
-              <option value="">${t('choose')}</option>
-              ${allTeams.map(teamId => `<option value="${teamId}" ${existing && existing['rank'+n]===teamId ? 'selected':''}>${teamName(teamId)}</option>`).join('')}
-            </select>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span class="select-flag" data-flag-for="rank${n}" style="font-size:19px; line-height:1; width:1.3em; text-align:center; flex-shrink:0;">${flagBadgeHTML(existing && existing['rank'+n])}</span>
+              <select name="rank${n}" required style="flex:1;" data-role="teamSelect">
+                <option value="">${t('choose')}</option>
+                ${allTeams.map(teamId => `<option value="${teamId}" ${existing && existing['rank'+n]===teamId ? 'selected':''}>${teamName(teamId)}</option>`).join('')}
+              </select>
+            </div>
           </div>`).join('')}
       </div>
     </div>
@@ -2050,17 +2135,23 @@ function renderGeneral(){
       <div class="podium-grid" style="grid-template-columns:1fr 1fr;">
         <div class="field">
           <label>${t('topScorer')}</label>
-          <select name="topScorer" required>
-            <option value="">${t('choose')}</option>
-            ${allPlayers.map(p => `<option value="${p.id}" ${existing && existing.topScorer===p.id?'selected':''}>${playerName(p)} — ${teamName(p.teamId)}</option>`).join('')}
-          </select>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span class="select-flag" data-flag-for="topScorer" style="font-size:19px; line-height:1; width:1.3em; text-align:center; flex-shrink:0;">${flagBadgeHTML(existing && findPlayer(existing.topScorer) ? findPlayer(existing.topScorer).teamId : null)}</span>
+            <select name="topScorer" required style="flex:1;" data-role="playerSelect">
+              <option value="">${t('choose')}</option>
+              ${allPlayers.map(p => `<option value="${p.id}" data-team="${p.teamId}" ${existing && existing.topScorer===p.id?'selected':''}>${playerName(p)} — ${teamName(p.teamId)}</option>`).join('')}
+            </select>
+          </div>
         </div>
         <div class="field">
           <label>${t('topAssist')}</label>
-          <select name="topAssist" required>
-            <option value="">${t('choose')}</option>
-            ${allPlayers.map(p => `<option value="${p.id}" ${existing && existing.topAssist===p.id?'selected':''}>${playerName(p)} — ${teamName(p.teamId)}</option>`).join('')}
-          </select>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span class="select-flag" data-flag-for="topAssist" style="font-size:19px; line-height:1; width:1.3em; text-align:center; flex-shrink:0;">${flagBadgeHTML(existing && findPlayer(existing.topAssist) ? findPlayer(existing.topAssist).teamId : null)}</span>
+            <select name="topAssist" required style="flex:1;" data-role="playerSelect">
+              <option value="">${t('choose')}</option>
+              ${allPlayers.map(p => `<option value="${p.id}" data-team="${p.teamId}" ${existing && existing.topAssist===p.id?'selected':''}>${playerName(p)} — ${teamName(p.teamId)}</option>`).join('')}
+            </select>
+          </div>
         </div>
       </div>
     </div>
@@ -2182,6 +2273,19 @@ function wireGeneralReveal(){
 
 function wireGeneralForm(){
   if(isGeneralLocked() || !STATE.user) return;
+  document.querySelectorAll('select[data-role="teamSelect"]').forEach(sel => {
+    sel.addEventListener('change', () => {
+      const badge = document.querySelector(`[data-flag-for="${sel.name}"]`);
+      if(badge) badge.innerHTML = flagBadgeHTML(sel.value);
+    });
+  });
+  document.querySelectorAll('select[data-role="playerSelect"]').forEach(sel => {
+    sel.addEventListener('change', () => {
+      const badge = document.querySelector(`[data-flag-for="${sel.name}"]`);
+      const opt = sel.selectedOptions[0];
+      if(badge) badge.innerHTML = opt ? flagBadgeHTML(opt.dataset.team) : '';
+    });
+  });
   document.querySelectorAll('.drag-list').forEach(list => {
     let dragEl = null;
     list.querySelectorAll('.drag-item').forEach(item => {
@@ -2605,6 +2709,11 @@ function wireGamesForm(){
       if(scoreAInput.value==='' || scoreBInput.value===''){
         showToast('⚠️ ' + t('scoreRequired'), true);
         (scoreAInput.value===''? scoreAInput : scoreBInput).focus();
+        return;
+      }
+      if(!topPlayerSelect || topPlayerSelect.value===''){
+        showToast('⚠️ ' + t('topPlayerRequired'), true);
+        if(topPlayerSelect) topPlayerSelect.focus();
         return;
       }
       const wantsDouble = doubleCheckbox && doubleCheckbox.checked;
