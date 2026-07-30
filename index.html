@@ -182,7 +182,7 @@ html[dir="rtl"] .group-editor h4{font-family:var(--font-he); letter-spacing:norm
 .saved-banner{background:var(--green-dim); border:1px solid var(--green); color:var(--text); padding:10px 14px; border-radius:8px; font-size:13.5px; margin-bottom:16px;}
 
 /* ---------- Games ---------- */
-.games-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+.games-grid{display:grid; grid-template-columns:repeat(3, 1fr); gap:12px;}
 .games-grid > .card{grid-column:1 / -1;}
 @media(max-width:720px){.games-grid{grid-template-columns:1fr;}}
 .game-card{border:1px solid var(--border); border-radius:var(--radius-lg); padding:12px; margin-bottom:0; background:var(--surface);}
@@ -2275,7 +2275,10 @@ function renderGameCard(g){
   <div class="game-card">
     <div class="game-meta">
       <span>${t('group')} ${g.group||'—'} · ${fmtDate(g.kickoffISO)}</span>
-      <span class="status-pill status-scheduled">${t('statusScheduled')}</span>
+      <div style="display:flex; align-items:center; gap:6px;">
+        <span class="status-pill status-scheduled">${t('statusScheduled')}</span>
+        <button class="icon-btn" data-role="saveGame" data-id="${g.id}" title="${t('save')}" style="font-size:13px; padding:3px 7px; line-height:1;">💾</button>
+      </div>
     </div>
     <div class="game-teams">
       <div class="team-name">${teamName(g.teamA)}</div>
@@ -2311,9 +2314,6 @@ function renderGameCard(g){
         🔥 ${t('doubleLabel')}${usedElsewhere ? ` — ${t('doubleUsedElsewhere')}` : ''}
       </label>`;
     })()}
-    <div style="display:flex; justify-content:flex-end;">
-      <button class="icon-btn" data-role="saveGame" data-id="${g.id}" title="${t('save')}" style="font-size:18px; padding:8px 13px; line-height:1;">💾</button>
-    </div>
   </div>`;
 }
 
