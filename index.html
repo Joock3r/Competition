@@ -127,6 +127,7 @@ html[dir="rtl"] .card-title{font-family:var(--font-he); letter-spacing:normal;}
 html[dir="rtl"] .leaderboard th{text-align:right;}
 .leaderboard td{padding:12px 10px; border-bottom:1px solid var(--border); font-size:14px; vertical-align:middle;}
 .leaderboard tr:hover td{background:var(--surface-2);}
+.participant-row{cursor:pointer;}
 .rank-cell{font-family:var(--font-mono); font-weight:700; width:36px; color:var(--text-dim);}
 .rank-delta{font-size:10px; font-weight:700; vertical-align:middle; unicode-bidi:isolate; direction:ltr; display:inline-block;}
 .rank-delta.up{color:var(--green);} .rank-delta.down{color:var(--red);} .rank-delta.same{color:var(--text-faint);}
@@ -1103,11 +1104,16 @@ const I18N = {
     adminRecalcBtn:'Calculate score', adminRecalculating:'Recalculating…', adminRecalcDone:'Scores recalculated.',
     headToHead:'Head to head', closeHeadToHead:'Close comparison', teamA:'Team A', teamB:'Team B',
     profileTitle:'My Profile', profileSub:'Your personal stats, predictions, and badges.',
+    profileTitleOther:(name)=>`${name}'s Profile`, profileSubOther:'Personal stats, predictions, and badges.',
+    backToLeaderboard:'← Back to leaderboard',
     statGamesBet:'Games predicted', statExactCount:'Exact scores', statOutcomeCount:'Correct outcomes',
     statTopPlayerHits:'Top player hits', statAdvancingHits:'Advancing hits', statGeneralPoints:'General points',
     myBetsTitle:'My bets', myBetsSub:'Every game you predicted, with the result and points earned.', noBetsYet:'No predictions placed yet.',
+    myBetsTitleOther:(name)=>`${name}'s bets`, myBetsSubOther:'Every game predicted, with the result and points earned.',
     myGeneralTitle:'My general predictions', myBetResult:'Result', notPlayedYet:'Not played yet',
+    myGeneralTitleOther:(name)=>`${name}'s general predictions`,
     badgesTitle:'Badges', badgesSub:'Earned automatically from your predictions.', badgeColHeader:'Badges',
+    badgesSubOther:'Earned automatically from predictions.',
     consensusAdvancingTitle:'Who the group picked to advance', consensusTopPlayerTitle:'Most predicted top player',
     consensusRankTitle:(label)=>`Crowd picks — ${label}`,
     consensusTopScorerTitle:'Crowd picks — top scorer', consensusTopAssistTitle:'Crowd picks — top assister',
@@ -1194,11 +1200,16 @@ const I18N = {
     adminRecalcBtn:'חשב ניקוד', adminRecalculating:'מחשב מחדש…', adminRecalcDone:'הניקוד חושב מחדש.',
     headToHead:'ראש בראש', closeHeadToHead:'סגירת השוואה', teamA:'נבחרת A', teamB:'נבחרת B',
     profileTitle:'הפרופיל שלי', profileSub:'הסטטיסטיקות, הניחושים והעיטורים שלך.',
+    profileTitleOther:(name)=>`הפרופיל של ${name}`, profileSubOther:'סטטיסטיקות, ניחושים ועיטורים.',
+    backToLeaderboard:'→ חזרה לטבלה',
     statGamesBet:'משחקים שניחשת', statExactCount:'תוצאות מדויקות', statOutcomeCount:'תוצאות נכונות',
     statTopPlayerHits:'פגיעות בשחקן המשחק', statAdvancingHits:'העפלות שניחשת נכון', statGeneralPoints:'נקודות מהטופס הכללי',
     myBetsTitle:'הניחושים שלי', myBetsSub:'כל משחק שניחשת, עם התוצאה והנקודות שצברת.', noBetsYet:'עדיין לא הוגשו ניחושים.',
+    myBetsTitleOther:(name)=>`הניחושים של ${name}`, myBetsSubOther:'כל משחק שניחש, עם התוצאה והנקודות שנצברו.',
     myGeneralTitle:'הניחושים הכלליים שלי', myBetResult:'תוצאה', notPlayedYet:'טרם שוחק',
+    myGeneralTitleOther:(name)=>`הניחושים הכלליים של ${name}`,
     badgesTitle:'עיטורים', badgesSub:'מתקבלים אוטומטית לפי הניחושים שלך.', badgeColHeader:'עיטורים',
+    badgesSubOther:'מתקבלים אוטומטית לפי הניחושים.',
     consensusAdvancingTitle:'את מי הקבוצה ניחשה שיעפילו', consensusTopPlayerTitle:'שחקן המשחק הנבחר ביותר',
     consensusRankTitle:(label)=>`בחירת הקבוצה — ${label}`,
     consensusTopScorerTitle:'בחירת הקבוצה — מלך שערים', consensusTopAssistTitle:'בחירת הקבוצה — מלך בישולים',
@@ -1496,6 +1507,7 @@ function renderShell(){
   ).join('');
   document.querySelectorAll('.tab-btn').forEach(b => b.onclick = () => {
     currentTab = b.dataset.tab;
+    profileViewEmail = null;
     renderAll();
     // Re-sync with the server on every tab switch, but if the General form is
     // showing, snapshot whatever the user has picked so far (right before the
@@ -1521,6 +1533,7 @@ function renderAll(){
     const eb = document.getElementById('exportImgBtn'); if(eb) eb.onclick = exportLeaderboardImage;
     wireHome();
   }
+  if(currentTab==='profile') wireProfile();
   if(currentTab==='general'){ wireGeneralForm(); wireGeneralReveal(); }
   if(currentTab==='teams') wireTeams();
   if(currentTab==='admin') wireAdmin();
@@ -1691,7 +1704,7 @@ function renderHome(){
         <thead><tr><th style="${stickyRank}">${t('rank')}</th><th style="${stickyPlayer}">${t('player')}</th><th>${t('form')}</th><th style="text-align:center">${t('exactPctShort')}</th><th title="${t('badgesTitle')}">${t('badgeColHeader')}</th><th style="text-align:right">${t('points')}</th></tr></thead>
         <tbody>
           ${ranked.map(p => `
-            <tr>
+            <tr class="participant-row" data-email="${escapeHtml(p.email)}">
               <td class="rank-cell ${p.rank<=3?'top'+p.rank:''}" style="${stickyRank}">${medal(p.rank)}<span class="iso-num">${p.rank}</span> ${rankDeltaBadge(p.rankDelta)}</td>
               <td style="${stickyPlayer}"><div class="player-name-cell"><div class="avatar">${initials(p.displayName)}</div>${p.displayName}</div></td>
               <td><div class="form-dots">${formDots(p.form)}</div></td>
@@ -1758,33 +1771,47 @@ function wireHome(){
   const table = document.getElementById('homeLeaderboardTable');
   const rankCell = table && table.querySelector('.rank-cell');
   if(rankCell) table.style.setProperty('--rank-col-w', rankCell.getBoundingClientRect().width + 'px');
+  if(table) table.querySelectorAll('tr.participant-row').forEach(row => {
+    row.onclick = () => { profileViewEmail = row.dataset.email; currentTab = 'profile'; renderAll(); };
+  });
+}
+function wireProfile(){
+  const backBtn = document.getElementById('profileBackBtn');
+  if(backBtn) backBtn.onclick = () => { profileViewEmail = null; currentTab = 'home'; renderAll(); };
 }
 
 /* ---- PROFILE ---- */
+let profileViewEmail = null;
 function renderProfile(){
-  if(!STATE.user){
+  const targetEmail = profileViewEmail || (STATE.user && STATE.user.email);
+  if(!targetEmail){
     return `<div class="section-title">${t('profileTitle')}</div><div class="card"><div class="empty-state">${t('emailFirst')}</div></div>`;
   }
+  const isSelf = !!(STATE.user && normEmail(targetEmail)===normEmail(STATE.user.email));
   const ranked = rankedParticipants();
-  const me = ranked.find(p => normEmail(p.email)===normEmail(STATE.user.email));
+  const me = ranked.find(p => normEmail(p.email)===normEmail(targetEmail));
+  const pageTitle = isSelf ? t('profileTitle') : t('profileTitleOther', me ? me.displayName : '');
   if(!me){
-    return `<div class="section-title">${t('profileTitle')}</div><div class="card"><div class="empty-state">${STATE.loaded?t('noParticipants'):t('loading')}</div></div>`;
+    return `<div class="section-title">${pageTitle}</div><div class="card"><div class="empty-state">${STATE.loaded?t('noParticipants'):t('loading')}</div></div>`;
   }
   const { statsByEmail, badgesByEmail } = computeAllParticipantBadges();
   const myStats = statsByEmail[normEmail(me.email)];
   const myBadges = (badgesByEmail[normEmail(me.email)]||[]).map(b => b.id);
 
   const myGames = STATE.games
-    .filter(g => betFor(g.id))
+    .filter(g => gameBetForEmail(targetEmail, g.id))
     .sort((a,b) => new Date(b.kickoffISO) - new Date(a.kickoffISO));
 
-  const generalBet = currentGeneralBet();
+  const generalBet = generalBetForEmail(targetEmail);
   const scorer = generalBet ? findPlayer(generalBet.topScorer) : null;
   const assister = generalBet ? findPlayer(generalBet.topAssist) : null;
 
   return `
-  <div class="section-title">${t('profileTitle')}</div>
-  <div class="section-sub">${t('profileSub')}</div>
+  <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+    <div class="section-title" style="margin-bottom:0;">${pageTitle}</div>
+    ${!isSelf ? `<button class="icon-btn" id="profileBackBtn">${t('backToLeaderboard')}</button>` : ''}
+  </div>
+  <div class="section-sub">${isSelf ? t('profileSub') : t('profileSubOther')}</div>
   <div class="card">
     <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
       <div class="avatar" style="width:48px; height:48px; font-size:16px;">${initials(me.displayName)}</div>
@@ -1808,11 +1835,11 @@ function renderProfile(){
   </div>
   <div class="card">
     <div class="card-title">${t('badgesTitle')}</div>
-    <div class="section-sub" style="margin-bottom:14px;">${t('badgesSub')}</div>
+    <div class="section-sub" style="margin-bottom:14px;">${isSelf ? t('badgesSub') : t('badgesSubOther')}</div>
     ${renderBadgeGallery(myBadges)}
   </div>
   <div class="card">
-    <div class="card-title">${t('myGeneralTitle')}</div>
+    <div class="card-title">${isSelf ? t('myGeneralTitle') : t('myGeneralTitleOther', me.displayName)}</div>
     ${generalBet ? `
     <div class="podium-grid">
       ${[1,2,3,4].map(n => `<div class="field" style="margin-bottom:0;"><label>${t('rank'+n)}</label><div>${generalBet['rank'+n] ? teamNameHTML(generalBet['rank'+n]) : '—'}</div></div>`).join('')}
@@ -1823,14 +1850,14 @@ function renderProfile(){
     </div>` : `<div class="empty-state" style="padding:20px;">${t('noneYet')}</div>`}
   </div>
   <div class="card">
-    <div class="card-title">${t('myBetsTitle')}</div>
-    <div class="section-sub" style="margin-bottom:14px;">${t('myBetsSub')}</div>
+    <div class="card-title">${isSelf ? t('myBetsTitle') : t('myBetsTitleOther', me.displayName)}</div>
+    <div class="section-sub" style="margin-bottom:14px;">${isSelf ? t('myBetsSub') : t('myBetsSubOther')}</div>
     ${myGames.length ? `
     <table class="leaderboard">
       <thead><tr><th>${t('gamesTitle')}</th><th>${t('yourScore')}</th><th>${t('myBetResult')}</th><th style="text-align:${LANG==='he'?'left':'right'}">${t('points')}</th></tr></thead>
       <tbody>
         ${myGames.map(g => {
-          const b = betFor(g.id);
+          const b = gameBetForEmail(targetEmail, g.id);
           const isFinal = g.status==='final' && g.scoreA!=='' && g.scoreA!=null && g.scoreB!=='' && g.scoreB!=null;
           const pts = (b.pointsEarned!==undefined && b.pointsEarned!=='') ? b.pointsEarned : null;
           const isDouble = isDoubleFlag(b.betDouble);
@@ -2410,9 +2437,9 @@ function wireAdmin(){
 }
 
 function normEmail(e){ return (e||'').trim().toLowerCase(); }
+function generalBetForEmail(email){ return email ? (STATE.generalBets.find(b => normEmail(b.email)===normEmail(email)) || null) : null; }
 function currentGeneralBet(){
-  if(!STATE.user) return null;
-  return STATE.generalBets.find(b => normEmail(b.email) === normEmail(STATE.user.email)) || null;
+  return STATE.user ? generalBetForEmail(STATE.user.email) : null;
 }
 function isGeneralLocked(){ return new Date() > new Date(CONFIG.GENERAL_DEADLINE); }
 
@@ -2762,7 +2789,8 @@ function fmtDate(iso){
 }
 
 /* ---- GAMES ---- */
-function betFor(gameId){ return STATE.user ? STATE.gameBets.find(b => normEmail(b.email)===normEmail(STATE.user.email) && String(b.gameId)===String(gameId)) : null; }
+function gameBetForEmail(email, gameId){ return email ? STATE.gameBets.find(b => normEmail(b.email)===normEmail(email) && String(b.gameId)===String(gameId)) : null; }
+function betFor(gameId){ return STATE.user ? gameBetForEmail(STATE.user.email, gameId) : null; }
 function isDoubleFlag(v){ return v===true || v==='true' || v==='1' || v===1; }
 /** The gameId where the signed-in user currently has their one-time double
  *  points token placed, or null if it's still free to use. */
