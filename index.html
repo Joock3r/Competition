@@ -3559,8 +3559,14 @@ window.addEventListener('appinstalled', () => {
 });
 window.addEventListener('resize', () => { if(currentTab==='home') wireHome(); });
 
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
+}
+
 (function boot(){
-  const savedTheme = localStorage.getItem('md_theme') || 'dark';
+  // No explicit choice saved yet -> follow the OS/browser preference instead of always defaulting to dark.
+  const systemPrefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+  const savedTheme = localStorage.getItem('md_theme') || (systemPrefersLight ? 'light' : 'dark');
   if(savedTheme==='light') document.documentElement.setAttribute('data-theme','light');
   document.getElementById('themeToggle').textContent = savedTheme==='light' ? '☀️' : '🌙';
   document.getElementById('timerToggle').classList.toggle('active', SHOW_TIMER);
