@@ -1300,7 +1300,20 @@ async function postBet(payload){
   });
 }
 
-async function loadAllData(){
+// Rapid tab-switching used to fire a new loadAllData() on top of one already
+// in flight, piling up concurrent Apps Script executions until some started
+// failing — this de-dupes so overlapping calls just await the same request.
+let loadAllDataPromise = null;
+function loadAllData(){
+  if(loadAllDataPromise) return loadAllDataPromise;
+  loadAllDataPromise = loadAllDataImpl().finally(() => { loadAllDataPromise = null; });
+  return loadAllDataPromise;
+}
+async function loadAllDataImpl(){
+  // A background resync (e.g. from switching tabs) failing shouldn't nuke an
+  // already-working session into fake demo data — only fall back on the very
+  // first load, when there's no real data on screen yet to preserve.
+  const hadRealData = STATE.loaded && !STATE.demo && STATE.participants.length > 0;
   try{
     // Single request/single Apps Script execution for everything — firing 7
     // separate ones in parallel (one per tab) let Apps Script serialize them
@@ -1321,6 +1334,7 @@ async function loadAllData(){
     if(!Array.isArray(participants) || (!participants.length && !games.length)) throw new Error('empty sheet / not configured');
     Object.assign(STATE, { participants, games, gameBets, generalBets, hof, gameEvents, groupResults, demo:false });
   }catch(e){
+    if(hadRealData) return;
     if(!CONFIG.DEMO_MODE_FALLBACK) throw e;
     Object.assign(STATE, demoData());
     STATE.demo = true;
