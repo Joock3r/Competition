@@ -14,7 +14,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Manrope:wght@400;500;700;800&family=Heebo:wght@400;500;700;800&display=swap" rel="stylesheet">
 <script src="https://accounts.google.com/gsi/client" async defer></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
 <script type="module" defer>
   import { polyfillCountryFlagEmojis } from "https://cdn.skypack.dev/country-flag-emoji-polyfill";
   polyfillCountryFlagEmojis();
@@ -1302,10 +1302,11 @@ async function postBet(payload){
 
 async function loadAllData(){
   try{
-    const [participants, games, gameBets, generalBets, hof, gameEvents, groupResults] = await Promise.all([
-      fetchTab('Participants'), fetchTab('Games'), fetchTab('GameBets'), fetchTab('GeneralBets'), fetchTab('HallOfFame'),
-      fetchTab('GameEvents'), fetchTab('GroupResults'),
-    ]);
+    // Single request/single Apps Script execution for everything — firing 7
+    // separate ones in parallel (one per tab) let Apps Script serialize them
+    // against the same Sheet, so the last ones could queue behind all the
+    // others (each also independently re-verifying the same idToken).
+    const { participants, games, gameBets, generalBets, hof, gameEvents, groupResults } = await fetchTab('all');
     if(!Array.isArray(participants) || (!participants.length && !games.length)) throw new Error('empty sheet / not configured');
     Object.assign(STATE, { participants, games, gameBets, generalBets, hof, gameEvents, groupResults, demo:false });
   }catch(e){
