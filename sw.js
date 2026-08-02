@@ -1,4 +1,4 @@
-// Bump this on every deploy that changes the shell — old  caches are deleted on activate.
+// Bump this on every deploy that changes the shell — old caches are deleted on activate.
 const CACHE_NAME = 'matchday-shell-v1';
 const SHELL_ASSETS = [
   './index.html',
