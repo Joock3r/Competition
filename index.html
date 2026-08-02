@@ -1306,7 +1306,18 @@ async function loadAllData(){
     // separate ones in parallel (one per tab) let Apps Script serialize them
     // against the same Sheet, so the last ones could queue behind all the
     // others (each also independently re-verifying the same idToken).
-    const { participants, games, gameBets, generalBets, hof, gameEvents, groupResults } = await fetchTab('all');
+    let data = await fetchTab('all');
+    if(!data || data.error || !Array.isArray(data.participants)){
+      // Backend not yet redeployed with the "all" route (or some other hiccup
+      // with it) — fall back to the old per-tab requests instead of giving up
+      // and showing demo data.
+      const [participants, games, gameBets, generalBets, hof, gameEvents, groupResults] = await Promise.all([
+        fetchTab('Participants'), fetchTab('Games'), fetchTab('GameBets'), fetchTab('GeneralBets'),
+        fetchTab('HallOfFame'), fetchTab('GameEvents'), fetchTab('GroupResults'),
+      ]);
+      data = { participants, games, gameBets, generalBets, hof, gameEvents, groupResults };
+    }
+    const { participants, games, gameBets, generalBets, hof, gameEvents, groupResults } = data;
     if(!Array.isArray(participants) || (!participants.length && !games.length)) throw new Error('empty sheet / not configured');
     Object.assign(STATE, { participants, games, gameBets, generalBets, hof, gameEvents, groupResults, demo:false });
   }catch(e){
