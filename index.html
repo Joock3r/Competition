@@ -250,6 +250,36 @@ canvas{width:100%; height:280px; display:block;}
 .filter-chip.active{background:var(--surface-3); color:var(--text); border-color:var(--border-strong);}
 .whatsapp-btn{background:#25D366; color:#07321a; border-color:#25D366;}
 .whatsapp-btn:hover{filter:brightness(1.05);}
+
+/* ---------- Badges ---------- */
+.badges-cell{display:flex; gap:3px; flex-wrap:wrap; max-width:130px;}
+.badge-chip-sm{display:inline-flex; align-items:center; justify-content:center; font-size:15px; cursor:default;}
+.badge-chip{display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:10px; background:var(--surface-2); border:1px solid var(--border); margin-bottom:8px;}
+.badge-chip.locked{opacity:.4; filter:grayscale(1);}
+.badge-chip .badge-icon{font-size:22px; flex-shrink:0; width:30px; text-align:center;}
+.badge-chip .badge-name{font-weight:800; font-size:13.5px;}
+.badge-chip .badge-desc{font-size:12px; color:var(--text-dim);}
+
+/* ---------- Profile / stat grid ---------- */
+.stat-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(120px,1fr)); gap:10px;}
+.stat-tile{background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:12px; text-align:center;}
+.stat-tile .stat-value{font-family:var(--font-mono); font-weight:800; font-size:22px; color:var(--amber);}
+.stat-tile .stat-label{font-size:11px; color:var(--text-faint); text-transform:uppercase; letter-spacing:.4px; margin-top:4px;}
+
+/* ---------- Crowd consensus ---------- */
+.consensus-row{margin-bottom:10px;}
+.consensus-row-top{display:flex; justify-content:space-between; font-size:12.5px; margin-bottom:4px; gap:8px;}
+.consensus-bar-track{height:8px; border-radius:6px; background:var(--surface-3); overflow:hidden;}
+.consensus-bar-fill{height:100%; background:var(--amber); border-radius:6px;}
+
+/* ---------- Install banner ---------- */
+.install-banner{
+  position:fixed; left:16px; right:16px; bottom:16px; z-index:150; background:var(--surface-3);
+  border:1px solid var(--border-strong); border-radius:var(--radius-lg); padding:12px 14px;
+  display:none; align-items:center; gap:12px; box-shadow:var(--shadow); max-width:480px; margin:0 auto;
+}
+.install-banner .install-text{flex:1; font-size:13px; font-weight:600; min-width:0;}
+.install-banner .install-close{background:none; border:none; color:var(--text-faint); font-size:18px; line-height:1; padding:2px 4px; flex-shrink:0;}
 </style>
 </head>
 <body>
@@ -268,6 +298,13 @@ canvas{width:100%; height:280px; display:block;}
 </header>
 
 <main id="main"></main>
+
+<div class="install-banner" id="installBanner">
+  <span style="font-size:22px;">📲</span>
+  <div class="install-text" id="installBannerText"></div>
+  <button class="btn" id="installBannerBtn" style="padding:8px 14px; font-size:12.5px;"></button>
+  <button class="install-close" id="installBannerClose" aria-label="Dismiss">✕</button>
+</div>
 
 <script>
 /* =========================================================
@@ -1001,7 +1038,7 @@ const CONFIG = {
    ============  2. i18n  ====================================
    ========================================================= */
 const I18N = {
-  en:{ brandName:'MATCHDAY', tab_home:'Home', tab_rules:'Rules', tab_tips:'Tips', tab_teams:'Teams', tab_general:'General', tab_games:'Games',
+  en:{ brandName:'MATCHDAY', tab_home:'Home', tab_profile:'Profile', tab_rules:'Rules', tab_tips:'Tips', tab_teams:'Teams', tab_general:'General', tab_games:'Games',
     tab_stats:'Stats', tab_hof:'Hall of Fame', tab_settings:'Settings', tab_admin:'Admin', rank:'Rank', player:'Player', points:'Points', form:'Form',
     leaderLabel:'Leader', signIn:'Sign in', signOut:'Sign out', exportImage:'Share', exactPctShort:'Exact %',
     movedUp:'Moved up since last game', movedDown:'Moved down since last game', noChange:'No change since last game',
@@ -1080,8 +1117,19 @@ const I18N = {
     adminDeleteEvent:'Delete event', adminConfirmDeleteEvent:'Delete this event? This cannot be undone.', adminEventDeleted:'Event deleted.',
     adminRecalcBtn:'Calculate score', adminRecalculating:'Recalculating…', adminRecalcDone:'Scores recalculated.',
     headToHead:'Head to head', closeHeadToHead:'Close comparison', teamA:'Team A', teamB:'Team B',
+    profileTitle:'My Profile', profileSub:'Your personal stats, predictions, and badges.',
+    statGamesBet:'Games predicted', statExactCount:'Exact scores', statOutcomeCount:'Correct outcomes',
+    statTopPlayerHits:'Top player hits', statAdvancingHits:'Advancing hits', statGeneralPoints:'General points',
+    myBetsTitle:'My bets', myBetsSub:'Every game you predicted, with the result and points earned.', noBetsYet:'No predictions placed yet.',
+    myGeneralTitle:'My general predictions', myBetResult:'Result', notPlayedYet:'Not played yet',
+    badgesTitle:'Badges', badgesSub:'Earned automatically from your predictions.', badgeColHeader:'Badges',
+    consensusAdvancingTitle:'Who the group picked to advance', consensusTopPlayerTitle:'Most predicted top player',
+    consensusRankTitle:(label)=>`Crowd picks — ${label}`,
+    consensusTopScorerTitle:'Crowd picks — top scorer', consensusTopAssistTitle:'Crowd picks — top assister',
+    noConsensusYet:'No predictions to compare yet.',
+    installBannerText:'Install Matchday for quick, full-screen access.', installBannerBtn:'Install', installBannerCloseAria:'Dismiss',
   },
-  he:{ brandName:'מאצדיי', tab_home:'ראשי', tab_rules:'חוקים', tab_tips:'המלצות', tab_teams:'נבחרות', tab_general:'טופס כללי', tab_games:'משחקים',
+  he:{ brandName:'מאצדיי', tab_home:'ראשי', tab_profile:'הפרופיל שלי', tab_rules:'חוקים', tab_tips:'המלצות', tab_teams:'נבחרות', tab_general:'טופס כללי', tab_games:'משחקים',
     tab_stats:'סטטיסטיקות', tab_hof:'היכל התהילה', tab_settings:'הגדרות', tab_admin:'ניהול', rank:'דירוג', player:'שם', points:'נקודות', form:'פורמה',
     leaderLabel:'מוביל', signIn:'התחברות', signOut:'התנתקות', exportImage:'שיתוף', exactPctShort:'% מדויק',
     movedUp:'עלה מאז המשחק האחרון', movedDown:'ירד מאז המשחק האחרון', noChange:'ללא שינוי מאז המשחק האחרון',
@@ -1160,6 +1208,17 @@ const I18N = {
     adminDeleteEvent:'מחיקת אירוע', adminConfirmDeleteEvent:'למחוק את האירוע? לא ניתן לשחזר.', adminEventDeleted:'האירוע נמחק.',
     adminRecalcBtn:'חשב ניקוד', adminRecalculating:'מחשב מחדש…', adminRecalcDone:'הניקוד חושב מחדש.',
     headToHead:'ראש בראש', closeHeadToHead:'סגירת השוואה', teamA:'נבחרת A', teamB:'נבחרת B',
+    profileTitle:'הפרופיל שלי', profileSub:'הסטטיסטיקות, הניחושים והעיטורים שלך.',
+    statGamesBet:'משחקים שניחשת', statExactCount:'תוצאות מדויקות', statOutcomeCount:'תוצאות נכונות',
+    statTopPlayerHits:'פגיעות בשחקן המשחק', statAdvancingHits:'העפלות שניחשת נכון', statGeneralPoints:'נקודות מהטופס הכללי',
+    myBetsTitle:'הניחושים שלי', myBetsSub:'כל משחק שניחשת, עם התוצאה והנקודות שצברת.', noBetsYet:'עדיין לא הוגשו ניחושים.',
+    myGeneralTitle:'הניחושים הכלליים שלי', myBetResult:'תוצאה', notPlayedYet:'טרם שוחק',
+    badgesTitle:'עיטורים', badgesSub:'מתקבלים אוטומטית לפי הניחושים שלך.', badgeColHeader:'עיטורים',
+    consensusAdvancingTitle:'את מי הקבוצה ניחשה שיעפילו', consensusTopPlayerTitle:'שחקן המשחק הנבחר ביותר',
+    consensusRankTitle:(label)=>`בחירת הקבוצה — ${label}`,
+    consensusTopScorerTitle:'בחירת הקבוצה — מלך שערים', consensusTopAssistTitle:'בחירת הקבוצה — מלך בישולים',
+    noConsensusYet:'אין עדיין ניחושים להשוואה.',
+    installBannerText:'התקינו את מאצדיי לגישה מהירה במסך מלא.', installBannerBtn:'התקנה', installBannerCloseAria:'סגירה',
   }
 };
 let LANG = localStorage.getItem('md_lang') || 'en';
@@ -1405,7 +1464,7 @@ function computeGameScore(betA, betB, actualA, actualB){
 /* =========================================================
    ============  6. Rendering  ================================
    ========================================================= */
-const TABS = ['home','rules','tips','teams','general','games','stats','hof','admin'];
+const TABS = ['home','profile','rules','tips','teams','general','games','stats','hof','admin'];
 let currentTab = 'home';
 
 function showToast(message, isError){
@@ -1470,7 +1529,7 @@ function renderAll(){
   if(currentTab==='admin' && !isAdmin()) currentTab = 'home';
   renderShell();
   const main = document.getElementById('main');
-  const renderers = { home:renderHome, rules:renderRules, tips:renderTips, teams:renderTeams, general:renderGeneral, games:renderGames, stats:renderStats, hof:renderHof, admin:renderAdmin };
+  const renderers = { home:renderHome, profile:renderProfile, rules:renderRules, tips:renderTips, teams:renderTeams, general:renderGeneral, games:renderGames, stats:renderStats, hof:renderHof, admin:renderAdmin };
   main.innerHTML = renderers[currentTab]();
   if(currentTab==='home'){
     animateFlaps();
@@ -1520,6 +1579,93 @@ function rankedParticipants(){
 }
 function safeParse(s, fallback){ try{ return typeof s==='string' ? JSON.parse(s) : (s||fallback); }catch{ return fallback; } }
 
+/* ---- BADGES ----
+ * Each badge is computed purely from data already in STATE (no extra
+ * server calls). `check(stats)` receives one participant's stats object
+ * from computeParticipantStats() plus the cross-participant flags
+ * (isTopGeneral/isTopClimber) added by computeAllParticipantBadges(). */
+const BADGES = [
+  { id:'sharpshooter', icon:'🎯', name:{en:'Sharpshooter', he:'צלף'},
+    desc:{en:'3+ exact final scores predicted', he:'3+ ניחושי תוצאה מדויקת'}, check:s => s.exactCount >= 3 },
+  { id:'formReader', icon:'🥅', name:{en:'Form Reader', he:'קורא פורמה'},
+    desc:{en:'5+ correct match outcomes (win/draw/loss) predicted', he:'5+ ניחושי תוצאה נכונים (ניצחון/תיקו/הפסד)'}, check:s => s.outcomeCount >= 5 },
+  { id:'starScout', icon:'⭐', name:{en:'Star Scout', he:'מגלה כישרונות'},
+    desc:{en:'Picked a player who scored points in 3+ games', he:'בחר שחקן שצבר נקודות ב-3+ משחקים'}, check:s => s.topPlayerHits >= 3 },
+  { id:'bracketReader', icon:'🔮', name:{en:'Bracket Reader', he:'קורא תבנית'},
+    desc:{en:'2+ correct knockout advancing-team picks', he:'2+ ניחושי העפלה נכונים בשלב הפלייאוף'}, check:s => s.advancingHits >= 2 },
+  { id:'highRoller', icon:'🔥', name:{en:'High Roller', he:'ההימור הגדול'},
+    desc:{en:'Doubled points on a game, and it paid off', he:'הכפיל ניקוד במשחק — והרוויח'}, check:s => s.doublePaidOff },
+  { id:'generalGenius', icon:'🧠', name:{en:'General Genius', he:'גאון הטופס הכללי'},
+    desc:{en:'Highest score in the General predictions', he:'הניקוד הגבוה ביותר בטופס הכללי'}, check:s => s.isTopGeneral },
+  { id:'topOfTable', icon:'👑', name:{en:'Top of the Table', he:'מלך הטבלה'},
+    desc:{en:'Currently ranked #1 overall', he:'מדורג במקום הראשון כרגע'}, check:s => s.rank === 1 },
+  { id:'climbingFast', icon:'📈', name:{en:'Climbing Fast', he:'מטפס מהיר'},
+    desc:{en:'The biggest rank jump since the last game', he:'הקפיצה הגדולה ביותר בדירוג מאז המשחק האחרון'}, check:s => s.isTopClimber },
+];
+/** One participant's raw stats, derived from STATE — used both to decide
+ *  which badges they've earned and to power the Profile page's stat grid. */
+function computeParticipantStats(email, ranked){
+  const norm = normEmail(email);
+  const myGameBets = STATE.gameBets.filter(b => normEmail(b.email)===norm && b.betA!==undefined && b.betA!=='' && b.betA!=null);
+  let exactCount=0, outcomeCount=0, topPlayerHits=0, advancingHits=0, doublePaidOff=false;
+  myGameBets.forEach(b => {
+    const game = STATE.games.find(g => String(g.id)===String(b.gameId));
+    if(!game || String(game.status).trim()!=='final' || game.scoreA==null || game.scoreA==='') return;
+    const betA=+b.betA, betB=+b.betB, actualA=+game.scoreA, actualB=+game.scoreB;
+    if(betA===actualA && betB===actualB) exactCount++;
+    const outcome = (a,c) => a>c?'W':a<c?'L':'D';
+    if(outcome(betA,betB)===outcome(actualA,actualB)) outcomeCount++;
+    if(b.betTopPlayer){
+      const events = STATE.gameEvents.filter(ev => String(ev.gameId)===String(game.id) && ev.player===b.betTopPlayer);
+      if(events.length && computePlayerGamePoints(events) > 0) topPlayerHits++;
+    }
+    if(isKnockout(game) && b.betAdvancing && game.advancingTeam && String(b.betAdvancing)===String(game.advancingTeam)) advancingHits++;
+    if(isDoubleFlag(b.betDouble) && b.pointsEarned!=='' && b.pointsEarned!=null && +b.pointsEarned>0) doublePaidOff = true;
+  });
+  const rankedEntry = ranked.find(p => normEmail(p.email)===norm);
+  const participantRow = STATE.participants.find(p => normEmail(p.email)===norm);
+  return {
+    gamesBet: myGameBets.length, exactCount, outcomeCount, topPlayerHits, advancingHits, doublePaidOff,
+    rank: rankedEntry ? rankedEntry.rank : null, rankDelta: rankedEntry ? rankedEntry.rankDelta : null,
+    generalPoints: +((participantRow||{}).generalPoints) || 0,
+  };
+}
+/** Stats + earned badges for every participant, computed once per render.
+ *  Returns { statsByEmail, badgesByEmail } keyed by normalized email. */
+function computeAllParticipantBadges(){
+  const ranked = rankedParticipants();
+  const statsByEmail = {};
+  ranked.forEach(p => { statsByEmail[normEmail(p.email)] = computeParticipantStats(p.email, ranked); });
+  const allStats = Object.values(statsByEmail);
+  const maxGeneral = Math.max(0, ...allStats.map(s => s.generalPoints));
+  const maxRankDelta = Math.max(0, ...allStats.map(s => s.rankDelta || 0));
+  allStats.forEach(s => {
+    s.isTopGeneral = maxGeneral > 0 && s.generalPoints === maxGeneral;
+    s.isTopClimber = maxRankDelta > 0 && s.rankDelta === maxRankDelta;
+  });
+  const badgesByEmail = {};
+  Object.entries(statsByEmail).forEach(([email,s]) => { badgesByEmail[email] = BADGES.filter(b => b.check(s)); });
+  return { statsByEmail, badgesByEmail };
+}
+/** Small icon row for the leaderboard's Badges column — hover/tap shows the name. */
+function renderBadgeIcons(badges){
+  if(!badges || !badges.length) return `<span style="color:var(--text-faint);">—</span>`;
+  return badges.map(b => `<span class="badge-chip-sm" title="${escapeHtml(b.name[LANG]||b.name.en)} — ${escapeHtml(b.desc[LANG]||b.desc.en)}">${b.icon}</span>`).join('');
+}
+/** Full badge gallery (earned highlighted, not-yet-earned dimmed) — used on the Profile page. */
+function renderBadgeGallery(earnedIds){
+  return BADGES.map(b => {
+    const earned = earnedIds.includes(b.id);
+    return `<div class="badge-chip ${earned?'':'locked'}">
+      <div class="badge-icon">${b.icon}</div>
+      <div>
+        <div class="badge-name">${escapeHtml(b.name[LANG]||b.name.en)}</div>
+        <div class="badge-desc">${escapeHtml(b.desc[LANG]||b.desc.en)}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
 function renderHome(){
   const ranked = rankedParticipants();
   if(!ranked.length){
@@ -1528,6 +1674,7 @@ function renderHome(){
   }
   const leader = ranked[0];
   const flapChars = String(leader.totalPoints).padStart(3,'0').split('');
+  const { badgesByEmail } = computeAllParticipantBadges();
   return `
   <div class="card">
     <div class="card-title">${t('leaderLabel')}</div>
@@ -1550,7 +1697,7 @@ function renderHome(){
       </div>
     </div>
     <table class="leaderboard">
-      <thead><tr><th>${t('rank')}</th><th>${t('player')}</th><th>${t('form')}</th><th style="text-align:center">${t('exactPctShort')}</th><th style="text-align:right">${t('points')}</th></tr></thead>
+      <thead><tr><th>${t('rank')}</th><th>${t('player')}</th><th>${t('form')}</th><th style="text-align:center">${t('exactPctShort')}</th><th title="${t('badgesTitle')}">${t('badgeColHeader')}</th><th style="text-align:right">${t('points')}</th></tr></thead>
       <tbody>
         ${ranked.map(p => `
           <tr>
@@ -1558,6 +1705,7 @@ function renderHome(){
             <td><div class="player-name-cell"><div class="avatar">${initials(p.displayName)}</div>${p.displayName}</div></td>
             <td><div class="form-dots">${formDots(p.form)}</div></td>
             <td style="text-align:center; color:var(--text-dim); font-size:13px;"><span class="iso-num">${p.exactPct}%</span></td>
+            <td><div class="badges-cell">${renderBadgeIcons(badgesByEmail[normEmail(p.email)])}</div></td>
             <td class="points-cell"><span class="iso-num">${p.totalPoints}</span></td>
           </tr>`).join('')}
       </tbody>
@@ -1603,6 +1751,92 @@ function rankDeltaBadge(delta){
 function initials(name){ return (name||'?').split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase(); }
 function formDots(form){ return (form||[]).map(pts => `<span class="form-dot ${playerPtsColor(+pts)}" title="${pts}"></span>`).join(''); }
 function animateFlaps(){ document.querySelectorAll('.flap-char').forEach((el,i) => setTimeout(()=>el.classList.add('flip'), i*90)); }
+
+/* ---- PROFILE ---- */
+function renderProfile(){
+  if(!STATE.user){
+    return `<div class="section-title">${t('profileTitle')}</div><div class="card"><div class="empty-state">${t('emailFirst')}</div></div>`;
+  }
+  const ranked = rankedParticipants();
+  const me = ranked.find(p => normEmail(p.email)===normEmail(STATE.user.email));
+  if(!me){
+    return `<div class="section-title">${t('profileTitle')}</div><div class="card"><div class="empty-state">${STATE.loaded?t('noParticipants'):t('loading')}</div></div>`;
+  }
+  const { statsByEmail, badgesByEmail } = computeAllParticipantBadges();
+  const myStats = statsByEmail[normEmail(me.email)];
+  const myBadges = (badgesByEmail[normEmail(me.email)]||[]).map(b => b.id);
+
+  const myGames = STATE.games
+    .filter(g => betFor(g.id))
+    .sort((a,b) => new Date(b.kickoffISO) - new Date(a.kickoffISO));
+
+  const generalBet = currentGeneralBet();
+  const scorer = generalBet ? findPlayer(generalBet.topScorer) : null;
+  const assister = generalBet ? findPlayer(generalBet.topAssist) : null;
+
+  return `
+  <div class="section-title">${t('profileTitle')}</div>
+  <div class="section-sub">${t('profileSub')}</div>
+  <div class="card">
+    <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+      <div class="avatar" style="width:48px; height:48px; font-size:16px;">${initials(me.displayName)}</div>
+      <div>
+        <div style="font-size:19px; font-weight:800;">${me.displayName}</div>
+        <div class="section-sub" style="margin:2px 0 0;">${medal(me.rank)}<span class="iso-num">#${me.rank}</span> · <span class="iso-num">${me.totalPoints}</span> ${t('points')}</div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">${t('statGamesBet')}</div>
+    <div class="stat-grid">
+      <div class="stat-tile"><div class="stat-value iso-num">${myStats.gamesBet}</div><div class="stat-label">${t('statGamesBet')}</div></div>
+      <div class="stat-tile"><div class="stat-value iso-num">${me.exactPct}%</div><div class="stat-label">${t('exactPctShort')}</div></div>
+      <div class="stat-tile"><div class="stat-value iso-num">${myStats.exactCount}</div><div class="stat-label">${t('statExactCount')}</div></div>
+      <div class="stat-tile"><div class="stat-value iso-num">${myStats.outcomeCount}</div><div class="stat-label">${t('statOutcomeCount')}</div></div>
+      <div class="stat-tile"><div class="stat-value iso-num">${myStats.topPlayerHits}</div><div class="stat-label">${t('statTopPlayerHits')}</div></div>
+      <div class="stat-tile"><div class="stat-value iso-num">${myStats.advancingHits}</div><div class="stat-label">${t('statAdvancingHits')}</div></div>
+      <div class="stat-tile"><div class="stat-value iso-num">${myStats.generalPoints}</div><div class="stat-label">${t('statGeneralPoints')}</div></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">${t('badgesTitle')}</div>
+    <div class="section-sub" style="margin-bottom:14px;">${t('badgesSub')}</div>
+    ${renderBadgeGallery(myBadges)}
+  </div>
+  <div class="card">
+    <div class="card-title">${t('myGeneralTitle')}</div>
+    ${generalBet ? `
+    <div class="podium-grid">
+      ${[1,2,3,4].map(n => `<div class="field" style="margin-bottom:0;"><label>${t('rank'+n)}</label><div>${generalBet['rank'+n] ? teamNameHTML(generalBet['rank'+n]) : '—'}</div></div>`).join('')}
+    </div>
+    <div class="podium-grid" style="grid-template-columns:1fr 1fr; margin-top:14px;">
+      <div class="field" style="margin-bottom:0;"><label>${t('topScorer')}</label><div>${scorer ? playerName(scorer) : '—'}</div></div>
+      <div class="field" style="margin-bottom:0;"><label>${t('topAssist')}</label><div>${assister ? playerName(assister) : '—'}</div></div>
+    </div>` : `<div class="empty-state" style="padding:20px;">${t('noneYet')}</div>`}
+  </div>
+  <div class="card">
+    <div class="card-title">${t('myBetsTitle')}</div>
+    <div class="section-sub" style="margin-bottom:14px;">${t('myBetsSub')}</div>
+    ${myGames.length ? `
+    <table class="leaderboard">
+      <thead><tr><th>${t('gamesTitle')}</th><th>${t('yourScore')}</th><th>${t('myBetResult')}</th><th style="text-align:${LANG==='he'?'left':'right'}">${t('points')}</th></tr></thead>
+      <tbody>
+        ${myGames.map(g => {
+          const b = betFor(g.id);
+          const isFinal = g.status==='final' && g.scoreA!=='' && g.scoreA!=null && g.scoreB!=='' && g.scoreB!=null;
+          const pts = (b.pointsEarned!==undefined && b.pointsEarned!=='') ? b.pointsEarned : null;
+          const isDouble = isDoubleFlag(b.betDouble);
+          return `<tr>
+            <td>${teamNameOrTBDHTML(g.teamA)} <span class="iso-num" style="color:var(--text-faint);">vs</span> ${teamNameOrTBDHTML(g.teamB)}${isDouble ? ` <span class="rule-value" style="background:var(--amber-dim); color:var(--amber);" title="${t('doubleLabel')}">🔥×2</span>` : ''}</td>
+            <td class="mono"><span class="iso-num">${b.betA ?? '—'}:${b.betB ?? '—'}</span></td>
+            <td class="mono"><span class="iso-num">${isFinal ? `${g.scoreA}:${g.scoreB}` : t('notPlayedYet')}</span></td>
+            <td class="points-cell"><span class="iso-num">${pts!==null ? pts : '—'}</span></td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>` : `<div class="empty-state" style="padding:20px;">${t('noBetsYet')}</div>`}
+  </div>`;
+}
 
 /* ---- RULES ---- */
 function renderRules(){
@@ -2271,6 +2505,51 @@ function renderGeneral(){
  * the API simply keeps sending back redacted rows until the real moment.
  */
 let generalRevealGroupTab = null;
+/** Generic "what did most people pick" tally: counts each non-empty key from
+ *  keyFn across `items`, returns the top `limit` entries with their share. */
+function consensusTopEntries(items, keyFn, limit){
+  const counts = {};
+  let total = 0;
+  items.forEach(it => { const k = keyFn(it); if(k==null || k==='') return; counts[k]=(counts[k]||0)+1; total++; });
+  return { total, top: Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,limit).map(([key,n])=>({key,n,pct: total?Math.round(n/total*100):0})) };
+}
+/** Crowd consensus for General predictions: most-picked team per podium
+ *  position, and top-3 most-picked top scorer/assister — shown once revealed. */
+function renderGeneralConsensus(revealedBets){
+  const podiumRows = [1,2,3,4].map(n => {
+    const { top } = consensusTopEntries(revealedBets, b => b['rank'+n], 1);
+    return { label: t('rank'+n), pick: top[0] };
+  });
+  const scorerC = consensusTopEntries(revealedBets, b => b.topScorer, 3);
+  const assistC = consensusTopEntries(revealedBets, b => b.topAssist, 3);
+  const consensusBar = row => {
+    const p = findPlayer(row.key);
+    return `<div class="consensus-row">
+      <div class="consensus-row-top"><span>${p?playerName(p):row.key}</span><span class="iso-num" style="font-weight:700;">${row.pct}%</span></div>
+      <div class="consensus-bar-track"><div class="consensus-bar-fill" style="width:${row.pct}%;"></div></div>
+    </div>`;
+  };
+  return `
+  <div class="card-title" style="margin-top:20px;">${t('consensusRankTitle', t('podium'))}</div>
+  <div class="card">
+    <div class="stat-grid">
+      ${podiumRows.map(r => `<div class="stat-tile">
+        <div style="font-size:13px; font-weight:700;">${r.pick ? teamNameHTML(r.pick.key) : '—'}</div>
+        <div class="stat-label">${r.label}${r.pick ? ` · <span class="iso-num">${r.pick.pct}%</span>` : ''}</div>
+      </div>`).join('')}
+    </div>
+  </div>
+  <div class="rules-grid" style="margin-top:12px;">
+    <div class="card">
+      <div class="card-title">${t('consensusTopScorerTitle')}</div>
+      ${scorerC.top.length ? scorerC.top.map(consensusBar).join('') : `<div class="empty-state" style="padding:14px;">${t('noConsensusYet')}</div>`}
+    </div>
+    <div class="card">
+      <div class="card-title">${t('consensusTopAssistTitle')}</div>
+      ${assistC.top.length ? assistC.top.map(consensusBar).join('') : `<div class="empty-state" style="padding:14px;">${t('noConsensusYet')}</div>`}
+    </div>
+  </div>`;
+}
 function renderGeneralReveal(){
   const revealed = STATE.generalBets.filter(b => b.rank1);
   const stickyBase = `position:sticky; ${LANG==='he'?'right':'left'}:0; background:var(--surface); z-index:1;`;
@@ -2322,6 +2601,7 @@ function renderGeneralReveal(){
       </table>
     </div>
   </div>
+  ${renderGeneralConsensus(revealed)}
 
   <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; margin-top:20px;">
     <div class="card-title" style="margin-bottom:0;">${t('revealGroupsTitle')}</div>
@@ -2688,6 +2968,57 @@ function resolveEventPlayerDisplay(ev){
   if(p) return { name: playerName(p), team: teamNameHTML(p.teamId) };
   return { name: ev.player, team: ev.team ? teamNameHTML(ev.team) : '' };
 }
+
+/** "Crowd consensus" pie for knockout games: what share of the group predicted
+ *  each team to advance — shown once bets are locked/revealed, same as the 1X2 pie. */
+function renderAdvancingConsensus(g, bets){
+  if(!isKnockout(g)) return '';
+  let pickA=0, pickB=0;
+  bets.forEach(b => {
+    if(b.betAdvancing===g.teamA) pickA++; else if(b.betAdvancing===g.teamB) pickB++;
+  });
+  const total = pickA+pickB;
+  if(total===0) return '';
+  const pct = n => Math.round((n/total)*100);
+  const segs = [
+    { label: teamName(g.teamA), value: pickA, color:'#4c9a6a' },
+    { label: teamName(g.teamB), value: pickB, color:'#e2564f' },
+  ];
+  return `
+  <div class="card-title" style="margin-top:16px;">${t('consensusAdvancingTitle')}</div>
+  <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+    ${svgPieChart(segs, 88)}
+    <div style="display:flex; flex-direction:column; gap:6px; font-size:12.5px; min-width:0;">
+      ${segs.map(s => `<div style="display:flex; align-items:center; gap:6px;">
+        <span style="display:inline-block; width:10px; height:10px; border-radius:3px; background:${s.color}; flex-shrink:0;"></span>
+        <span>${s.label} — <span class="iso-num" style="font-weight:700;">${pct(s.value)}%</span> <span style="color:var(--text-faint);">(${s.value})</span></span>
+      </div>`).join('')}
+    </div>
+  </div>`;
+}
+/** Top 3 most-predicted "top player of the game" picks, with their share of the
+ *  group's bets — a horizontal bar per pick, shown once bets are locked/revealed. */
+function renderTopPlayerConsensus(bets){
+  const counts = {};
+  let total = 0;
+  bets.forEach(b => {
+    if(!b.betTopPlayer) return;
+    counts[b.betTopPlayer] = (counts[b.betTopPlayer]||0) + 1;
+    total++;
+  });
+  if(total===0) return '';
+  const top = Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,3)
+    .map(([playerId,n]) => ({ playerId, n, pct: Math.round((n/total)*100) }));
+  return `
+  <div class="card-title" style="margin-top:16px;">${t('consensusTopPlayerTitle')}</div>
+  ${top.map(row => {
+    const p = findPlayer(row.playerId);
+    return `<div class="consensus-row">
+      <div class="consensus-row-top"><span>${p ? playerName(p) : row.playerId}</span><span class="iso-num" style="font-weight:700;">${row.pct}%</span></div>
+      <div class="consensus-bar-track"><div class="consensus-bar-fill" style="width:${row.pct}%;"></div></div>
+    </div>`;
+  }).join('')}`;
+}
 function eventBreakdownText(events){
   const labels = { goal:t('evGoal'), assist:t('evAssist'), ownGoal:t('evOwnGoal'), redCard:t('evRedCard'), missedPenalty:t('evMissedPenalty'), cleanSheet:t('evCleanSheet'), penaltySave:t('evPenaltySave') };
   const counts = {};
@@ -2731,6 +3062,8 @@ function renderClosedGameCard(g){
       </tbody>
     </table>` : `<div class="empty-state" style="padding:20px;">${t('noneYet')}</div>`}
     ${bets.length ? renderOneXTwoPie(g, bets) : ''}
+    ${bets.length ? renderAdvancingConsensus(g, bets) : ''}
+    ${bets.length ? renderTopPlayerConsensus(bets) : ''}
   </div>`;
 }
 
@@ -2784,6 +3117,8 @@ function renderPlayedGameCard(g){
       </tbody>
     </table>` : `<div class="empty-state" style="padding:20px;">${t('noneYet')}</div>`}
     ${bets.length ? renderOneXTwoPie(g, bets) : ''}
+    ${bets.length ? renderAdvancingConsensus(g, bets) : ''}
+    ${bets.length ? renderTopPlayerConsensus(bets) : ''}
 
     <div class="card-title" style="margin-top:16px;">${t('matchEventsTitle')}</div>
     ${matchEvents.length ? matchEvents.map(p => {
@@ -3162,6 +3497,7 @@ document.getElementById('langToggle').onclick = () => {
   LANG = LANG==='en' ? 'he' : 'en';
   localStorage.setItem('md_lang', LANG);
   renderAll();
+  if(document.getElementById('installBanner').style.display !== 'none') showInstallBanner();
 };
 document.getElementById('timerToggle').onclick = () => {
   SHOW_TIMER = !SHOW_TIMER;
@@ -3177,6 +3513,39 @@ document.getElementById('themeToggle').onclick = () => {
   localStorage.setItem('md_theme', next);
   document.getElementById('themeToggle').textContent = next==='light' ? '☀️' : '🌙';
 };
+
+/* ---- "Add to Home Screen" install prompt (Android/Chrome; iOS has no such
+ *  API — those users still rely on the manual instructions in Tips). ---- */
+let deferredInstallPrompt = null;
+function isStandalone(){
+  return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+}
+function showInstallBanner(){
+  if(isStandalone() || localStorage.getItem('md_installDismissed')==='1') return;
+  document.getElementById('installBannerText').textContent = t('installBannerText');
+  document.getElementById('installBannerBtn').textContent = t('installBannerBtn');
+  document.getElementById('installBannerClose').setAttribute('aria-label', t('installBannerCloseAria'));
+  document.getElementById('installBanner').style.display = 'flex';
+}
+function hideInstallBanner(){ document.getElementById('installBanner').style.display = 'none'; }
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  showInstallBanner();
+});
+window.addEventListener('appinstalled', () => { deferredInstallPrompt = null; hideInstallBanner(); });
+document.getElementById('installBannerBtn').onclick = async () => {
+  if(!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  await deferredInstallPrompt.userChoice;
+  deferredInstallPrompt = null;
+  hideInstallBanner();
+};
+document.getElementById('installBannerClose').onclick = () => {
+  localStorage.setItem('md_installDismissed', '1');
+  hideInstallBanner();
+};
+
 (function boot(){
   const savedTheme = localStorage.getItem('md_theme') || 'dark';
   if(savedTheme==='light') document.documentElement.setAttribute('data-theme','light');
