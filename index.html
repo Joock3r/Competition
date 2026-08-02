@@ -1337,7 +1337,7 @@ function isAdmin(){ return !!STATE.user && String(STATE.user.email||'').trim().t
 /* =========================================================
    ============  4. Data layer (Google Sheets)  ==============
    ========================================================= */
-async function fetchTab(tabName, timeoutMs=12000){
+async function fetchTab(tabName, timeoutMs=18000){
   if(STATE.user && isIdTokenExpired(STATE.user.idToken)) clearExpiredSession();
   const idToken = STATE.user ? STATE.user.idToken : '';
   const url = `${CONFIG.APPS_SCRIPT_URL}?tab=${encodeURIComponent(tabName)}&idToken=${encodeURIComponent(idToken)}`;
@@ -1381,17 +1381,31 @@ async function loadAllDataImpl(){
     // Single request/single Apps Script execution for everything — firing 7
     // separate ones in parallel (one per tab) let Apps Script serialize them
     // against the same Sheet, so the last ones could queue behind all the
-    // others (each also independently re-verifying the same idToken).
+    // others (each also independently re-verifying the same idToken). After
+    // being idle a while the Apps Script container needs to cold-start, which
+    // can easily take longer than a single request should — so retry this
+    // route once before giving up on it, instead of dropping straight to the
+    // slower fallback (and the demo data beyond it) on one bad request.
     let data = null;
-    try{ data = await fetchTab('all'); }catch(_e){ /* falls through to the per-tab fetch below */ }
-    if(!data || data.error || !Array.isArray(data.participants)){
-      // Backend not yet redeployed with the "all" route (or some other hiccup
-      // with it) — fall back to the old per-tab requests instead of giving up
-      // and showing demo data.
-      const [participants, games, gameBets, generalBets, hof, gameEvents, groupResults] = await Promise.all([
-        fetchTab('Participants'), fetchTab('Games'), fetchTab('GameBets'), fetchTab('GeneralBets'),
-        fetchTab('HallOfFame'), fetchTab('GameEvents'), fetchTab('GroupResults'),
-      ]);
+    for(let attempt=0; attempt<2 && !data; attempt++){
+      try{ data = await fetchTab('all', 20000); }catch(_e){ /* try again, then fall through below */ }
+      if(data && (data.error || !Array.isArray(data.participants))) data = null;
+    }
+    if(!data){
+      // Backend not yet redeployed with the "all" route (or it kept failing)
+      // — fall back to the old per-tab requests instead of giving up and
+      // showing demo data. SEQUENTIALLY, not in parallel: firing all 7 at
+      // once is exactly what causes Apps Script to serialize/queue them in
+      // the first place, so racing them again here would just as easily fail
+      // the same way, especially right after the "all" route already timed
+      // out once — one at a time is slower but far more likely to land.
+      const participants = await fetchTab('Participants');
+      const games = await fetchTab('Games');
+      const gameBets = await fetchTab('GameBets');
+      const generalBets = await fetchTab('GeneralBets');
+      const hof = await fetchTab('HallOfFame');
+      const gameEvents = await fetchTab('GameEvents');
+      const groupResults = await fetchTab('GroupResults');
       data = { participants, games, gameBets, generalBets, hof, gameEvents, groupResults };
     }
     const { participants, games, gameBets, generalBets, hof, gameEvents, groupResults } = data;
@@ -1402,8 +1416,22 @@ async function loadAllDataImpl(){
     if(!CONFIG.DEMO_MODE_FALLBACK) throw e;
     Object.assign(STATE, demoData());
     STATE.demo = true;
+    // Don't get stuck showing fake data until the user happens to switch tabs
+    // or sign in again — keep quietly retrying in the background so a slow
+    // cold start resolves itself once the Apps Script container warms up.
+    scheduleDemoRetry();
   }
   STATE.loaded = true;
+}
+
+let demoRetryTimer = null;
+function scheduleDemoRetry(){
+  if(demoRetryTimer) return;
+  demoRetryTimer = setTimeout(() => {
+    demoRetryTimer = null;
+    if(!STATE.demo) return; // already recovered via some other path meanwhile
+    loadAllData().then(() => { if(!STATE.demo) renderAll(); });
+  }, 10000);
 }
 
 function demoData(){
