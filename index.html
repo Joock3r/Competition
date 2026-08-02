@@ -272,14 +272,6 @@ canvas{width:100%; height:280px; display:block;}
 .consensus-bar-track{height:8px; border-radius:6px; background:var(--surface-3); overflow:hidden;}
 .consensus-bar-fill{height:100%; background:var(--amber); border-radius:6px;}
 
-/* ---------- Install banner ---------- */
-.install-banner{
-  position:fixed; left:16px; right:16px; bottom:16px; z-index:150; background:var(--surface-3);
-  border:1px solid var(--border-strong); border-radius:var(--radius-lg); padding:12px 14px;
-  display:none; align-items:center; gap:12px; box-shadow:var(--shadow); max-width:480px; margin:0 auto;
-}
-.install-banner .install-text{flex:1; font-size:13px; font-weight:600; min-width:0;}
-.install-banner .install-close{background:none; border:none; color:var(--text-faint); font-size:18px; line-height:1; padding:2px 4px; flex-shrink:0;}
 </style>
 </head>
 <body>
@@ -298,13 +290,6 @@ canvas{width:100%; height:280px; display:block;}
 </header>
 
 <main id="main"></main>
-
-<div class="install-banner" id="installBanner">
-  <span style="font-size:22px;">📲</span>
-  <div class="install-text" id="installBannerText"></div>
-  <button class="btn" id="installBannerBtn" style="padding:8px 14px; font-size:12.5px;"></button>
-  <button class="install-close" id="installBannerClose" aria-label="Dismiss">✕</button>
-</div>
 
 <script>
 /* =========================================================
@@ -1127,7 +1112,7 @@ const I18N = {
     consensusRankTitle:(label)=>`Crowd picks — ${label}`,
     consensusTopScorerTitle:'Crowd picks — top scorer', consensusTopAssistTitle:'Crowd picks — top assister',
     noConsensusYet:'No predictions to compare yet.',
-    installBannerText:'Install Matchday for quick, full-screen access.', installBannerBtn:'Install', installBannerCloseAria:'Dismiss',
+    installNowBtn:'Install now', installedLabel:'Installed',
   },
   he:{ brandName:'מאצדיי', tab_home:'ראשי', tab_profile:'הפרופיל שלי', tab_rules:'חוקים', tab_tips:'המלצות', tab_teams:'נבחרות', tab_general:'טופס כללי', tab_games:'משחקים',
     tab_stats:'סטטיסטיקות', tab_hof:'היכל התהילה', tab_settings:'הגדרות', tab_admin:'ניהול', rank:'דירוג', player:'שם', points:'נקודות', form:'פורמה',
@@ -1218,7 +1203,7 @@ const I18N = {
     consensusRankTitle:(label)=>`בחירת הקבוצה — ${label}`,
     consensusTopScorerTitle:'בחירת הקבוצה — מלך שערים', consensusTopAssistTitle:'בחירת הקבוצה — מלך בישולים',
     noConsensusYet:'אין עדיין ניחושים להשוואה.',
-    installBannerText:'התקינו את מאצדיי לגישה מהירה במסך מלא.', installBannerBtn:'התקנה', installBannerCloseAria:'סגירה',
+    installNowBtn:'התקינו עכשיו', installedLabel:'מותקן',
   }
 };
 let LANG = localStorage.getItem('md_lang') || 'en';
@@ -1540,6 +1525,7 @@ function renderAll(){
   if(currentTab==='admin') wireAdmin();
   if(currentTab==='games') wireGamesForm();
   if(currentTab==='stats') drawStatsCharts();
+  if(currentTab==='tips') wireTips();
 }
 
 function demoBanner(){
@@ -1696,20 +1682,22 @@ function renderHome(){
         <button class="icon-btn" id="exportImgBtn" style="display:flex; align-items:center; gap:5px;">📤 ${t('exportImage')}</button>
       </div>
     </div>
-    <table class="leaderboard">
-      <thead><tr><th>${t('rank')}</th><th>${t('player')}</th><th>${t('form')}</th><th style="text-align:center">${t('exactPctShort')}</th><th title="${t('badgesTitle')}">${t('badgeColHeader')}</th><th style="text-align:right">${t('points')}</th></tr></thead>
-      <tbody>
-        ${ranked.map(p => `
-          <tr>
-            <td class="rank-cell ${p.rank<=3?'top'+p.rank:''}">${medal(p.rank)}<span class="iso-num">${p.rank}</span> ${rankDeltaBadge(p.rankDelta)}</td>
-            <td><div class="player-name-cell"><div class="avatar">${initials(p.displayName)}</div>${p.displayName}</div></td>
-            <td><div class="form-dots">${formDots(p.form)}</div></td>
-            <td style="text-align:center; color:var(--text-dim); font-size:13px;"><span class="iso-num">${p.exactPct}%</span></td>
-            <td><div class="badges-cell">${renderBadgeIcons(badgesByEmail[normEmail(p.email)])}</div></td>
-            <td class="points-cell"><span class="iso-num">${p.totalPoints}</span></td>
-          </tr>`).join('')}
-      </tbody>
-    </table>
+    <div style="overflow-x:auto;">
+      <table class="leaderboard" style="min-width:620px;">
+        <thead><tr><th>${t('rank')}</th><th>${t('player')}</th><th>${t('form')}</th><th style="text-align:center">${t('exactPctShort')}</th><th title="${t('badgesTitle')}">${t('badgeColHeader')}</th><th style="text-align:right">${t('points')}</th></tr></thead>
+        <tbody>
+          ${ranked.map(p => `
+            <tr>
+              <td class="rank-cell ${p.rank<=3?'top'+p.rank:''}">${medal(p.rank)}<span class="iso-num">${p.rank}</span> ${rankDeltaBadge(p.rankDelta)}</td>
+              <td><div class="player-name-cell"><div class="avatar">${initials(p.displayName)}</div>${p.displayName}</div></td>
+              <td><div class="form-dots">${formDots(p.form)}</div></td>
+              <td style="text-align:center; color:var(--text-dim); font-size:13px;"><span class="iso-num">${p.exactPct}%</span></td>
+              <td><div class="badges-cell">${renderBadgeIcons(badgesByEmail[normEmail(p.email)])}</div></td>
+              <td class="points-cell"><span class="iso-num">${p.totalPoints}</span></td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
     <div data-export-exclude>${demoBanner()}</div>
   </div>`;
 }
@@ -1720,12 +1708,19 @@ async function exportElementImage(targetId, filename, btn){
   if(!target || !window.html2canvas) return;
   const originalText = btn ? btn.textContent : null;
   if(btn){ btn.textContent = '…'; btn.disabled = true; }
+  // Un-clip scrollable table wrappers so the export captures the full table, not just the mobile-visible slice.
+  const scrollers = Array.from(target.querySelectorAll('[style*="overflow-x"]'));
+  const prevOverflows = scrollers.map(el => el.style.overflowX);
+  scrollers.forEach(el => { el.style.overflowX = 'visible'; });
   try{
     const canvas = await html2canvas(target, {
       backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--surface').trim(),
       scale: 2,
+      width: target.scrollWidth,
+      windowWidth: target.scrollWidth,
       ignoreElements: el => el.hasAttribute && el.hasAttribute('data-export-exclude'),
     });
+    scrollers.forEach((el,i) => { el.style.overflowX = prevOverflows[i]; });
     canvas.toBlob(async blob => {
       const file = new File([blob], filename, { type:'image/png' });
       if(navigator.canShare && navigator.canShare({ files:[file] })){
@@ -1736,7 +1731,10 @@ async function exportElementImage(targetId, filename, btn){
       URL.revokeObjectURL(url);
       if(btn){ btn.textContent = originalText; btn.disabled = false; }
     });
-  }catch(e){ if(btn){ btn.textContent = originalText; btn.disabled = false; } }
+  }catch(e){
+    scrollers.forEach((el,i) => { el.style.overflowX = prevOverflows[i]; });
+    if(btn){ btn.textContent = originalText; btn.disabled = false; }
+  }
 }
 async function exportLeaderboardImage(){
   await exportElementImage('exportCapture', 'matchday-leaderboard.png', document.getElementById('exportImgBtn'));
@@ -1968,7 +1966,11 @@ function renderTips(){
       ${CONFIG.BRACKET_LINKS.map((link,i) => `<a href="${link.url}" target="_blank" rel="noopener" class="btn btn-ghost" style="text-decoration:none; text-align:center;">🔗 ${link[LANG] || link.en}</a>`).join('')}
     </div>
   </div>
-  <div class="section-title" style="margin-top:24px;">${t('settingsTitle')}</div>
+  <div class="section-title" style="margin-top:24px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+    <span>${t('settingsTitle')}</span>
+    <button class="btn" id="tipsInstallBtn" style="display:none; padding:6px 14px; font-size:12.5px;">📲 ${t('installNowBtn')}</button>
+    <span id="tipsInstalledBadge" style="display:none; font-size:12.5px; font-weight:700; color:var(--green);">✅ ${t('installedLabel')}</span>
+  </div>
   <div class="section-sub">${t('settingsSub')}</div>
   <div class="rules-grid">
     <div class="card">
@@ -3497,7 +3499,6 @@ document.getElementById('langToggle').onclick = () => {
   LANG = LANG==='en' ? 'he' : 'en';
   localStorage.setItem('md_lang', LANG);
   renderAll();
-  if(document.getElementById('installBanner').style.display !== 'none') showInstallBanner();
 };
 document.getElementById('timerToggle').onclick = () => {
   SHOW_TIMER = !SHOW_TIMER;
@@ -3514,37 +3515,38 @@ document.getElementById('themeToggle').onclick = () => {
   document.getElementById('themeToggle').textContent = next==='light' ? '☀️' : '🌙';
 };
 
-/* ---- "Add to Home Screen" install prompt (Android/Chrome; iOS has no such
- *  API — those users still rely on the manual instructions in Tips). ---- */
+/* ---- "Add to Home Screen" install trigger, shown in Tips next to the manual
+ *  instructions (Android/Chrome only; iOS has no such API and always falls
+ *  back to the manual steps). ---- */
 let deferredInstallPrompt = null;
 function isStandalone(){
   return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 }
-function showInstallBanner(){
-  if(isStandalone() || localStorage.getItem('md_installDismissed')==='1') return;
-  document.getElementById('installBannerText').textContent = t('installBannerText');
-  document.getElementById('installBannerBtn').textContent = t('installBannerBtn');
-  document.getElementById('installBannerClose').setAttribute('aria-label', t('installBannerCloseAria'));
-  document.getElementById('installBanner').style.display = 'flex';
+function wireTips(){
+  const btn = document.getElementById('tipsInstallBtn');
+  const badge = document.getElementById('tipsInstalledBadge');
+  if(!btn) return;
+  if(isStandalone()){
+    badge.style.display = 'inline';
+  } else if(deferredInstallPrompt){
+    btn.style.display = 'inline-block';
+    btn.onclick = async () => {
+      deferredInstallPrompt.prompt();
+      await deferredInstallPrompt.userChoice;
+      deferredInstallPrompt = null;
+      renderAll();
+    };
+  }
 }
-function hideInstallBanner(){ document.getElementById('installBanner').style.display = 'none'; }
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredInstallPrompt = e;
-  showInstallBanner();
+  if(currentTab==='tips') renderAll();
 });
-window.addEventListener('appinstalled', () => { deferredInstallPrompt = null; hideInstallBanner(); });
-document.getElementById('installBannerBtn').onclick = async () => {
-  if(!deferredInstallPrompt) return;
-  deferredInstallPrompt.prompt();
-  await deferredInstallPrompt.userChoice;
+window.addEventListener('appinstalled', () => {
   deferredInstallPrompt = null;
-  hideInstallBanner();
-};
-document.getElementById('installBannerClose').onclick = () => {
-  localStorage.setItem('md_installDismissed', '1');
-  hideInstallBanner();
-};
+  if(currentTab==='tips') renderAll();
+});
 
 (function boot(){
   const savedTheme = localStorage.getItem('md_theme') || 'dark';
