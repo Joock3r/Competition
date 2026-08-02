@@ -1519,6 +1519,7 @@ function renderAll(){
   if(currentTab==='home'){
     animateFlaps();
     const eb = document.getElementById('exportImgBtn'); if(eb) eb.onclick = exportLeaderboardImage;
+    wireHome();
   }
   if(currentTab==='general'){ wireGeneralForm(); wireGeneralReveal(); }
   if(currentTab==='teams') wireTeams();
@@ -1661,6 +1662,9 @@ function renderHome(){
   const leader = ranked[0];
   const flapChars = String(leader.totalPoints).padStart(3,'0').split('');
   const { badgesByEmail } = computeAllParticipantBadges();
+  // Freeze rank+player like Excel's frozen columns; player's offset = rank column's live measured width (set by wireHome()).
+  const stickyRank = `position:sticky; ${LANG==='he'?'right':'left'}:0; z-index:2; background:var(--surface);`;
+  const stickyPlayer = `position:sticky; ${LANG==='he'?'right':'left'}:var(--rank-col-w, 56px); z-index:1; background:var(--surface);`;
   return `
   <div class="card">
     <div class="card-title">${t('leaderLabel')}</div>
@@ -1683,13 +1687,13 @@ function renderHome(){
       </div>
     </div>
     <div style="overflow-x:auto;">
-      <table class="leaderboard" style="min-width:620px;">
-        <thead><tr><th>${t('rank')}</th><th>${t('player')}</th><th>${t('form')}</th><th style="text-align:center">${t('exactPctShort')}</th><th title="${t('badgesTitle')}">${t('badgeColHeader')}</th><th style="text-align:right">${t('points')}</th></tr></thead>
+      <table class="leaderboard" id="homeLeaderboardTable" style="min-width:620px;">
+        <thead><tr><th style="${stickyRank}">${t('rank')}</th><th style="${stickyPlayer}">${t('player')}</th><th>${t('form')}</th><th style="text-align:center">${t('exactPctShort')}</th><th title="${t('badgesTitle')}">${t('badgeColHeader')}</th><th style="text-align:right">${t('points')}</th></tr></thead>
         <tbody>
           ${ranked.map(p => `
             <tr>
-              <td class="rank-cell ${p.rank<=3?'top'+p.rank:''}">${medal(p.rank)}<span class="iso-num">${p.rank}</span> ${rankDeltaBadge(p.rankDelta)}</td>
-              <td><div class="player-name-cell"><div class="avatar">${initials(p.displayName)}</div>${p.displayName}</div></td>
+              <td class="rank-cell ${p.rank<=3?'top'+p.rank:''}" style="${stickyRank}">${medal(p.rank)}<span class="iso-num">${p.rank}</span> ${rankDeltaBadge(p.rankDelta)}</td>
+              <td style="${stickyPlayer}"><div class="player-name-cell"><div class="avatar">${initials(p.displayName)}</div>${p.displayName}</div></td>
               <td><div class="form-dots">${formDots(p.form)}</div></td>
               <td style="text-align:center; color:var(--text-dim); font-size:13px;"><span class="iso-num">${p.exactPct}%</span></td>
               <td><div class="badges-cell">${renderBadgeIcons(badgesByEmail[normEmail(p.email)])}</div></td>
@@ -1749,6 +1753,12 @@ function rankDeltaBadge(delta){
 function initials(name){ return (name||'?').split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase(); }
 function formDots(form){ return (form||[]).map(pts => `<span class="form-dot ${playerPtsColor(+pts)}" title="${pts}"></span>`).join(''); }
 function animateFlaps(){ document.querySelectorAll('.flap-char').forEach((el,i) => setTimeout(()=>el.classList.add('flip'), i*90)); }
+/** Measures the rank column's live rendered width so the frozen player column can start right after it. */
+function wireHome(){
+  const table = document.getElementById('homeLeaderboardTable');
+  const rankCell = table && table.querySelector('.rank-cell');
+  if(rankCell) table.style.setProperty('--rank-col-w', rankCell.getBoundingClientRect().width + 'px');
+}
 
 /* ---- PROFILE ---- */
 function renderProfile(){
@@ -3547,6 +3557,7 @@ window.addEventListener('appinstalled', () => {
   deferredInstallPrompt = null;
   if(currentTab==='tips') renderAll();
 });
+window.addEventListener('resize', () => { if(currentTab==='home') wireHome(); });
 
 (function boot(){
   const savedTheme = localStorage.getItem('md_theme') || 'dark';
