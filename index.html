@@ -1282,12 +1282,20 @@ function isAdmin(){ return !!STATE.user && String(STATE.user.email||'').trim().t
 /* =========================================================
    ============  4. Data layer (Google Sheets)  ==============
    ========================================================= */
-async function fetchTab(tabName){
+async function fetchTab(tabName, timeoutMs=12000){
   if(STATE.user && isIdTokenExpired(STATE.user.idToken)) clearExpiredSession();
   const idToken = STATE.user ? STATE.user.idToken : '';
   const url = `${CONFIG.APPS_SCRIPT_URL}?tab=${encodeURIComponent(tabName)}&idToken=${encodeURIComponent(idToken)}`;
-  const res = await fetch(url);
-  return res.json();
+  // Apps Script's redirect-to-content-key hop can occasionally hang/404 for many
+  // seconds instead of failing fast — bail out early so callers can fall back.
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try{
+    const res = await fetch(url, { signal: controller.signal });
+    return await res.json();
+  } finally {
+    clearTimeout(timer);
+  }
 }
 async function postBet(payload){
   // Apps Script web app handles auth + writes + server-side lock checks. See Code.gs
@@ -1319,7 +1327,8 @@ async function loadAllDataImpl(){
     // separate ones in parallel (one per tab) let Apps Script serialize them
     // against the same Sheet, so the last ones could queue behind all the
     // others (each also independently re-verifying the same idToken).
-    let data = await fetchTab('all');
+    let data = null;
+    try{ data = await fetchTab('all'); }catch(_e){ /* falls through to the per-tab fetch below */ }
     if(!data || data.error || !Array.isArray(data.participants)){
       // Backend not yet redeployed with the "all" route (or some other hiccup
       // with it) — fall back to the old per-tab requests instead of giving up
