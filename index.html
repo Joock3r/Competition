@@ -1645,7 +1645,7 @@ function computeParticipantStats(email, ranked){
     if(outcome(betA,betB)===outcome(actualA,actualB)) outcomeCount++;
     if(b.betTopPlayer){
       const events = STATE.gameEvents.filter(ev => String(ev.gameId)===String(game.id) && ev.player===b.betTopPlayer);
-      if(events.length && computePlayerGamePoints(events) > 0) topPlayerHits++;
+      if(events.length && computePlayerGamePoints(events) >= 0.5) topPlayerHits++;
     }
     if(isKnockout(game) && b.betAdvancing && game.advancingTeam && String(b.betAdvancing)===String(game.advancingTeam)) advancingHits++;
     if(isDoubleFlag(b.betDouble) && b.pointsEarned!=='' && b.pointsEarned!=null && +b.pointsEarned>0) doublePaidOff = true;
@@ -1882,16 +1882,18 @@ function renderProfile(){
     <div class="section-sub" style="margin-bottom:14px;">${isSelf ? t('myBetsSub') : t('myBetsSubOther')}</div>
     ${myGames.length ? `
     <table class="leaderboard">
-      <thead><tr><th>${t('gamesTitle')}</th><th>${t('yourScore')}</th><th>${t('myBetResult')}</th><th style="text-align:${LANG==='he'?'left':'right'}">${t('points')}</th></tr></thead>
+      <thead><tr><th>${t('gamesTitle')}</th><th>${t('yourScore')}</th><th>${t('topPlayerOfGame')}</th><th>${t('myBetResult')}</th><th style="text-align:${LANG==='he'?'left':'right'}">${t('points')}</th></tr></thead>
       <tbody>
         ${myGames.map(g => {
           const b = gameBetForEmail(targetEmail, g.id);
           const isFinal = g.status==='final' && g.scoreA!=='' && g.scoreA!=null && g.scoreB!=='' && g.scoreB!=null;
           const pts = (b.pointsEarned!==undefined && b.pointsEarned!=='') ? b.pointsEarned : null;
           const isDouble = isDoubleFlag(b.betDouble);
+          const tp = findPlayer(b.betTopPlayer);
           return `<tr>
             <td>${teamNameOrTBDHTML(g.teamA)} <span class="iso-num" style="color:var(--text-faint);">vs</span> ${teamNameOrTBDHTML(g.teamB)}${isDouble ? ` <span class="rule-value" style="background:var(--amber-dim); color:var(--amber);" title="${t('doubleLabel')}">🔥×2</span>` : ''}</td>
             <td class="mono"><span class="iso-num">${b.betA ?? '—'}:${b.betB ?? '—'}</span></td>
+            <td>${tp ? playerName(tp) : (b.betTopPlayer || '—')}</td>
             <td class="mono"><span class="iso-num">${isFinal ? `${g.scoreA}:${g.scoreB}` : t('notPlayedYet')}</span></td>
             <td class="points-cell"><span class="iso-num">${pts!==null ? pts : '—'}</span></td>
           </tr>`;
